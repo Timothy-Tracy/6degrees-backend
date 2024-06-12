@@ -1,15 +1,14 @@
-
-var RequestService = require('../../domain/RequestService.js')
+var UserService = require('../../domain/UserService.js')
 var express = require('express');
 var router = express.Router();
-const apiRoot = '/api/requests'
+const apiRoot = '/api/users';
 
 
 router.post('/create', function(req, res) {
     console.log('receiving data ...');
     console.log('body is ',req.body);
     const data = req.body;
-    RequestService.createRequest(data.UUUID, data.title, data.description);
+    UserService.createUser(data.email, data.password,data.first_name, data.last_name,  data.mobile);
     res.send(req.body);
 });
 module.exports = {apiRoot, router};
