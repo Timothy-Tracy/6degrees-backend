@@ -1,4 +1,3 @@
-
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -7,7 +6,6 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-var requestsRouter = require('./apps/requests/entry-points/api/RequestController.js');
 
 var app = express();
 
@@ -21,8 +19,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-app.use('/api/requests', requestsRouter.router);
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -40,7 +38,4 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-
-
 module.exports = app;
-
