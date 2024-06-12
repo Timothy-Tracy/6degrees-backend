@@ -21,6 +21,10 @@ var crypto = require('crypto');
         return (newUser);
     }
 
+    async function fetchUserByUUID(UUUID){
+        return UserRepository.fetchUserByUUID(UUUID);
+    }
 
 
-module.exports = {createUser};
+
+module.exports = {createUser,fetchUserByUUID};
