@@ -1,0 +1,11 @@
+POST http://localhost:3000/api/users/
+Content-Type: application/json
+
+{
+    "email" : "timothydtracy@gmail.com",
+    "password" : 1234,
+    "first_name" : "Timothy",
+    "last_name" : "Tracy",
+    "mobile" : "8185548291"
+}
+###

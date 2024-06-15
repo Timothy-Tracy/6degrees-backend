@@ -11,7 +11,7 @@ var requestsRouter = require('./apps/requests/entry-points/api/RequestController
 var usersRouter = require('./apps/users/entry-points/api/UserController.js');
 
 var app = express();
-
+app.use(express.json())
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');

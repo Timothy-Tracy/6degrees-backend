@@ -5,24 +5,35 @@ const UserRepository = require('../data-access/UserRepository.js')
 var crypto = require('crypto');
 
 
-    function createUser(email, pwd,firstName, lastName,  mobile){
-        console.log("Creating a new user")
+    async function createUser(req, res, next){
+        console.log("Creating a new user", JSON.stringify(req.body))
         let newUserUUID = uuidv7();
-        var hash = crypto.createHash('sha256').update(pwd.toString()).digest('base64');
+        var hash = crypto.createHash('sha256').update(req.body.password.toString()).digest('base64');
         const newUser = {
             USER_UUID : newUserUUID,
-            first_name : firstName,
-            last_name : lastName,
-            email : email,
+            first_name : req.body.firstName,
+            last_name : req.body.lastName,
+            email : req.body.email,
             password : hash,
-            mobile : mobile,
+            mobile : req.body.mobile,
         }
-        UserRepository.createUser(newUser);
-        return (newUser);
+        res.user = newUser;
+        next()
+
+
     }
 
     async function fetchUserByUUID(UUUID){
-        return UserRepository.fetchUserByUUID(UUUID);
+        
+        let promise = new Promise((resolve, reject) => {
+                resolve(UserRepository.fetchUserByUUID(UUUID));
+                reject("Error");
+            
+
+        })
+
+        promise.then(result => {console.log(result); return result})
+        return result;
     }
 
 
