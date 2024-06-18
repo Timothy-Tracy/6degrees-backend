@@ -2,14 +2,14 @@ const jwt = require("jsonwebtoken");
 
 const JWT_SECRET_KEY = "78E630E665D0B27FE133175F0E4EAB9D847999938B959CB0310C0A590120C69C"
 
-function sign(UUUID, email){
+function sign(user){
     let token;
     try {
         //Creating jwt token
         token = jwt.sign(
             {
-                userId: existingUser.id,
-                email: existingUser.email
+                USER_UUID: user.USER_UUID,
+                email: user.email
             },
             JWT_SECRET_KEY,
             { expiresIn: "1h" }
