@@ -38,7 +38,6 @@ async function findOneByUUID(req, res, next) {
 }
 
 async function deleteUser(req, res, next) {
-
     const myresult = await UserRepository.deleteUser(req.body.USER_UUID);
     res.result = { "data": myresult }
     next()

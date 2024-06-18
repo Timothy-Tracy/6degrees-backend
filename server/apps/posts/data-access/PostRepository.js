@@ -9,11 +9,11 @@ const {
     DB_DATABASE
 } = process.env;
 
-async function findOneByUUID(NUUID) {
+async function findOneByUUID(PUUID) {
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
-    await session.run(`Match (n:NODE{NODE_UUID: ${NUUID}}) return p`)
+    await session.run(`Match (p:POST{POST_UUID: ${PUUID}}) return p`)
         .then(result => {
             result.records.map(i => i.get('u').properties);
             console.log("Fulfilled, result is", result.records)
@@ -32,7 +32,7 @@ async function findAll() {
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
-    await session.run('Match (n:NODE) return n')
+    await session.run('Match (p:POST) return p')
         .then(result => {
             result.records.map(i => i.get('u').properties);
             console.log("Fulfilled, result is", result.records)
@@ -49,35 +49,27 @@ async function findAll() {
 
 };
 
-async function create(newObj) {
-    console.log("NodeRepository: creating new Node")
-
+async function create(newPost) {
+    console.log("PostRepository: creating new post")
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     await session.run(`
-    CREATE (n:NODE 
+    CREATE (p:POST 
         {
-            \`NODE_UUID\`: "${newObj.NODE_UUID}",
-            NODE_TYPE: "${newObj.NODE_TYPE}",
-            degree: "${newObj.degree}", 
-            \`POST_UUID\`: "${newObj.POST_UUID}",
-            \`USER_UUID\`: "${newObj.USER_UUID}", 
-            \`SOURCE_NODE_UUID\`: "${newObj.ORIGIN_NODE_UUID}", 
-            \`ORIGIN_NODE_UUID\`: "${newObj.ORIGIN_NODE_UUID}",
-            isSourceNode: "${newObj.isSourceNode}", 
-            metadata: "${JSON.stringify(newObj.metadata)}" 
-            })
-            WITH n
-            MATCH (p:POST {POST_UUID: "${newObj.POST_UUID}"})
-            MATCH (u:USER {USER_UUID: "${newObj.USER_UUID}"})  
-            CREATE (p)<-[:SOURCE_POST]-(n)<-[:SOURCE_NODE]-(p)
-            CREATE (u)<-[:USER]-(n)<-[:NODES]-(u)
-
-    
-    ;`)
+            \`POST_UUID\`: "${newPost.POST_UUID}",
+            \`USER_UUID\`: "${newPost.USER_UUID}", 
+            \`ORIGIN_NODE_UUID\`: "${newPost.SOURCE_NODE_UUID}", 
+            title: "${newPost.title}", 
+            description: "${newPost.description}", 
+            fulfilled: "${newPost.fulfilled}" })
+            
+        WITH p
+        MATCH (u:USER {USER_UUID: "${newPost.USER_UUID}"})
+        CREATE (u)<-[:USER]-(p)<-[:POSTS]-(u)   
+        ;`)
         .then(result => {
-            console.log(`Created a new node ${newObj.NODE_UUID} \n ${result.records}`)
+            console.log(`Created a new post ${newPost.POST_UUID} \n ${result.records}`)
             myobj = { "result": result.records, "summary": result.summary }
         })
         .catch(error => {
@@ -88,14 +80,14 @@ async function create(newObj) {
     return myobj;
 };
 
-async function deleteNode(UUID) {
+async function deletePost(UUID) {
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     var query = `
-    MATCH (n:NODE)
-    WHERE n.NODE_UUID = "${UUID}"
-    DETACH DELETE n;`;
+    MATCH (p:POST)
+    WHERE p.POST_UUID = "${UUID}"
+    DETACH DELETE p;`;
     await session.run(query)
         .then(result => {
             console.log("Fulfilled, result is", result.records)
@@ -109,4 +101,4 @@ async function deleteNode(UUID) {
     return myobj;
 };
 
-module.exports = { deleteNode, create, findAll, findOneByUUID };
+module.exports = { deletePost, create, findAll, findOneByUUID };
