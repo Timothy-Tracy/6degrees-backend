@@ -53,11 +53,18 @@ async function create(newUser) {
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
-    await session.run(`CREATE (u:USER {USER_UUID: "${newUser.USER_UUID}", first_name: "${newUser.first_name}", last_name: "${newUser.last_name}", \`email\`: "${newUser.email}", password: "${newUser.password}", mobile: "${newUser.mobile}" });`)
+    await session.run(`
+    CREATE (u:USER 
+        {
+            USER_UUID: "${newUser.USER_UUID}", 
+            first_name: "${newUser.first_name}", 
+            last_name: "${newUser.last_name}", 
+            \`email\`: "${newUser.email}", 
+            password: "${newUser.password}", 
+            mobile: "${newUser.mobile}" });`)
         .then(result => {
             console.log("Fulfilled, result is", result.records)
             myobj = { "result": result.records, "summary": result.summary }
-
         })
         .catch(error => {
             console.log("error", error);
