@@ -1,5 +1,7 @@
 
 var PostService = require('../../domain/PostService.js')
+var NodeService = require('../../../nodes/domain/NodeService.js')
+
 var express = require('express');
 var router = express.Router();
 const apiRoot = '/api/posts'
@@ -15,6 +17,12 @@ router.post('/create', function(req, res) {
 
 
 router.post('/', PostService.create, function (req, res) {
+    res.status(200).json(res.result)
+});
+router.post('/distribute', NodeService.distribute, function (req, res) {
+    res.status(200).json(res.result)
+});
+router.get('/:id', NodeService.createFromDistribution, function (req, res) {
     res.status(200).json(res.result)
 });
 /*

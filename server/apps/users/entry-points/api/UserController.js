@@ -14,6 +14,8 @@ router.get('/', UserService.findAll, async function (req, res){
 });
 
 router.get('/:UUID', UserService.findOneByUUID, async function (req, res){
+    console.log("UserController: Finding User By UUID ")
+
     res.status(200).json(res.result)
 });
 

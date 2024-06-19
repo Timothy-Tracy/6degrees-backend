@@ -26,12 +26,29 @@ async function create(req, res, next) {
     next()
 }
 
+async function createAnonymous() {
+    
+    console.log("UserService: Creating a new anonymous user")
+    let newUserUUID = uuidv7();
+    let randomName = `AnonymousUser${Math.floor((Math.random()*10000))}`;
+    const newUser = {
+        USER_UUID: newUserUUID,
+        name : randomName,
+        isAnonymous : true
+    }
+    const myresult = await UserRepository.createAnonymous(newUser);
+    console.log("UserService: Anonymous User Result, ", myresult)
+    return {result : myresult, data: newUser};
+}
+
 async function findAll(req, res, next) {
     const myresult = await UserRepository.findAll();
     res.result = { "data": myresult }
     next()
 }
 async function findOneByUUID(req, res, next) {
+    console.log("UserService: Finding User By UUID ")
+
     const myresult = await UserRepository.findOneByUUID(req.params.UUID);
     res.result = { "data": myresult }
     next()
@@ -45,4 +62,4 @@ async function deleteUser(req, res, next) {
 
 
 
-module.exports = {  findAll, findOneByUUID, create, deleteUser };
+module.exports = { createAnonymous, findAll, findOneByUUID, create, deleteUser };
