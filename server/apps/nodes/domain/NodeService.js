@@ -24,8 +24,8 @@ async function createSourceNode(RUUID, UUUID){
 
 async function distribute(req, res, next){
     console.log("NodeService: Distributing")
-    var sourceNode = await NodeRepository.findOneByUUID(req.body.SOURCE_NODE_UUID);
-    console.log("source node ", sourceNode)
+    var sourceNode = await NodeRepository.findOneByUUID(req.params.uuid);
+    console.log("NodeService: Source Node Found", sourceNode.NODE_UUID)
     res.result = await EdgeService.createDistribution(sourceNode.result);
     next()
 }
@@ -69,6 +69,7 @@ async function findOneByUUID(req, res, next) {
 }
 
 async function deleteNode(req, res, next) {
+    console.log("NodeService: Deleting Node ", req.params.uuid)
     const myresult = await NodeRepository.deleteNode(req.params.uuid);
     res.result = { "data": myresult }
     next()

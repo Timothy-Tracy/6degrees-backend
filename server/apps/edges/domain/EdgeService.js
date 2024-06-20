@@ -1,9 +1,10 @@
 const { v7: uuidv7 } = require('uuid');
 const EdgeRepository =require('../data-access/EdgeRepository.js');
-
+const randomWordSlugs = require('random-word-slugs')
 
 async function createDistribution(node){
     console.log("EdgeService: Creating Distribution")
+    
             let UUID = uuidv7();
             console.log('nu', node.NODE_UUID)
             var obj = {
@@ -11,7 +12,7 @@ async function createDistribution(node){
                 POST_UUID : node.POST_UUID,
                 SOURCE_NODE_UUID : node.NODE_UUID,
                 DESTINATION_NODE_UUID : null,
-                EDGE_QUERY : Math.floor((Math.random()*1000)),
+                EDGE_QUERY : randomWordSlugs.generateSlug(),
                 degree : node.degree,
             }
             

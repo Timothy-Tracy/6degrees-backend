@@ -12,7 +12,7 @@ const NodeRepository = require('../../nodes/data-access/NodeRepository.js')
         const newPost = {
             POST_UUID : UUID,
             USER_UUID : req.body.USER_UUID,
-            ORIGIN_NODE_UUID : sourceNode.NODE_UUID,
+            SOURCE_NODE_UUID : sourceNode.NODE_UUID,
             title : req.body.title,
             description : req.body.description,
             fulfilled : false
@@ -22,6 +22,13 @@ const NodeRepository = require('../../nodes/data-access/NodeRepository.js')
         next();
     }
 
+    async function deletePost(req, res, next) {
+        console.log("PostService: Deleting Node ", req.params.uuid)
+        const myresult = await PostRepository.deletePost(req.params.uuid);
+        res.result = { "data": myresult }
+        next()
+    }
 
 
-module.exports = {create};
+
+module.exports = {create, deletePost};

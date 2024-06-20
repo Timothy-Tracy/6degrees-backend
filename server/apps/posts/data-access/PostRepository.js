@@ -59,7 +59,7 @@ async function create(newPost) {
         {
             \`POST_UUID\`: "${newPost.POST_UUID}",
             \`USER_UUID\`: "${newPost.USER_UUID}", 
-            \`ORIGIN_NODE_UUID\`: "${newPost.SOURCE_NODE_UUID}", 
+            \`SOURCE_NODE_UUID\`: "${newPost.SOURCE_NODE_UUID}", 
             title: "${newPost.title}", 
             description: "${newPost.description}", 
             fulfilled: "${newPost.fulfilled}" })
@@ -81,16 +81,18 @@ async function create(newPost) {
 };
 
 async function deletePost(UUID) {
+    console.log("PostRepository: Deleting Post ", UUID)
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     var query = `
-    MATCH (p:POST)
-    WHERE p.POST_UUID = "${UUID}"
-    DETACH DELETE p;`;
+    MATCH (post:POST {POST_UUID: '${UUID}'})
+    OPTIONAL MATCH (nodes:NODE {POST_UUID: post.POST_UUID})
+    DETACH DELETE post, nodes
+`;
     await session.run(query)
         .then(result => {
-            console.log("Fulfilled, result is", result.records)
+            console.log("PostRepository: Deleted post successfully. Result is", result.records)
             myobj = { "result": result.records, "summary": result.summary }
         })
         .catch(error => {
