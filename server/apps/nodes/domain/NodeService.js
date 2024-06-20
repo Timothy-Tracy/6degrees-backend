@@ -33,7 +33,7 @@ async function distribute(req, res, next){
 async function createFromDistribution(req, res, next){
     console.log("NodeService: createFromDistribution")
     console.log("NodeService: Finding Source Edge")
-    var sourceEdge = await EdgeService.findOneByQuery(req.params.id)
+    var sourceEdge = await EdgeService.findOneByQuery(req.params.query)
     console.log("NodeService: Source Edge Found: \n ",sourceEdge)
     console.log("NodeService: Creating Anonymous User")
     var anonUser = await UserService.createAnonymous();

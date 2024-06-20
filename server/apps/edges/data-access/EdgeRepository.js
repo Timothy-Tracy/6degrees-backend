@@ -77,12 +77,10 @@ async function findAll() {
 
 async function create(newObj) {
     console.log("EdgeRepository: creating new Edge")
-
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     console.log("EdgeRepository: received obj, ", newObj)
-
     await session.run(`
     MATCH (n:NODE {
         \`NODE_UUID\` : '${newObj.SOURCE_NODE_UUID}'
@@ -90,7 +88,6 @@ async function create(newObj) {
     WITH n
     CREATE (n)-[:EDGE 
         {
-            
             \`EDGE_UUID\`: '${newObj.EDGE_UUID}',
             \`POST_UUID\`: '${newObj.POST_UUID}',
             \`SOURCE_NODE_UUID\`: '${newObj.SOURCE_NODE_UUID}', 
@@ -111,7 +108,7 @@ async function create(newObj) {
     await driver.close()
     return myobj;
 };
-
+/*
 async function deleteNode(UUID) {
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
@@ -132,5 +129,5 @@ async function deleteNode(UUID) {
     await driver.close()
     return myobj;
 };
-
-module.exports = { deleteNode, create, findAll, findOneByUUID, findOneByQuery };
+*/
+module.exports = { create, findAll, findOneByUUID, findOneByQuery };

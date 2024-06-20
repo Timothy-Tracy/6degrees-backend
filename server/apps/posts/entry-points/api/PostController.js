@@ -7,22 +7,13 @@ var router = express.Router();
 const apiRoot = '/api/posts'
 
 
-router.post('/create', function(req, res) {
-    console.log('receiving data ...');
-    console.log('body is ',req.body);
-    const data = req.body;
-    RequestService.createRequest(data.UUUID, data.title, data.description);
-    res.send(req.body);
-});
-
-
 router.post('/', PostService.create, function (req, res) {
     res.status(200).json(res.result)
 });
 router.post('/distribute/:uuid', NodeService.distribute, function (req, res) {
     res.status(200).json(res.result)
 });
-router.get('/:id', NodeService.createFromDistribution, function (req, res) {
+router.get('/:query', NodeService.createFromDistribution, function (req, res) {
     res.status(200).json(res.result)
 });
 router.delete('/:uuid', PostService.deletePost, async function (req, res){
