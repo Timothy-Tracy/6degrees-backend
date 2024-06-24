@@ -1,5 +1,4 @@
 const fs = require("fs");
-
 const neo4j = require('neo4j-driver');
 require('dotenv').config()
 const {
@@ -8,32 +7,24 @@ const {
     DB_PASSWORD,
     DB_DATABASE
 } = process.env;
+const mylogger = require('../../../lib/logger/logger.js');
+const logger = mylogger.child({ 'module': 'NodeRepository' });
 
 async function findOneByUUID(UUID) {
-    console.log("Finding Node By UUID ", UUID)
+    logger.info("Finding Node By UUID ", UUID)
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     await session.run(`Match (n:NODE{\`NODE_UUID\`: '${UUID}'}) return n`)
         .then(result => {
-            var results = [];
-            result.records.map(i => {
-                results.push(i.get('n').properties)
-            }
-            )
-
-            //NEED TO ADD OTHER CONDITIONS
-            if (results.length > 0) {
-                console.log('helloworld')
-                myobj = results[0]
-            }
-            console.log("Fulfilled, result is", myobj)
-            myobj = { "result": myobj, "summary": result.summary }
-
+            const myresult = result.records.map(i => i.get('n').properties);
+            const msg = 'found node by uuid'
+            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+            myobj = { "result": myresult[0], 'message': msg }
         })
         .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
+            logger.error(error, "Error");
+            myobj = { error: error };
         })
     await driver.close()
     return myobj;
@@ -51,8 +42,8 @@ async function findAll() {
 
         })
         .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
+            logger.error(error, "Error");
+            myobj = { error: error };
         })
     await driver.close()
     return myobj;
@@ -61,7 +52,7 @@ async function findAll() {
 };
 
 async function create(newObj) {
-    console.log("NodeRepository: creating new Node");
+    logger.info("creating new Node");
 
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD));
     const session = driver.session({ DB_DATABASE });
@@ -83,7 +74,7 @@ async function create(newObj) {
             RETURN n
         `);
 
-        console.log(`Created a new node ${newObj.NODE_UUID}`);
+        logger.info(`Created a new node ${newObj.NODE_UUID}`);
 
         // Create relationships with POST and USER nodes
         await session.run(`
@@ -93,7 +84,7 @@ async function create(newObj) {
             CREATE (u)<-[:USER]-(n)<-[:NODES]-(u)
         `);
 
-        console.log(`Created relationships with POST ${newObj.POST_UUID} and USER ${newObj.USER_UUID}`);
+        logger.info(`Created relationships with POST ${newObj.POST_UUID} and USER ${newObj.USER_UUID}`);
 
         // Create SOURCE_NODE relationship if NODE_TYPE is "origin"
         if (newObj.NODE_TYPE === "origin") {
@@ -103,7 +94,7 @@ async function create(newObj) {
                 CREATE (n)<-[:SOURCE_NODE]-(p)
             `);
 
-            console.log(`Created SOURCE_NODE relationship with POST ${newObj.POST_UUID}`);
+            logger.info(`Created SOURCE_NODE relationship with POST ${newObj.POST_UUID}`);
         }
 
         // Create EDGE_FULFILLED relationship if SOURCE_EDGE_UUID is not null
@@ -120,15 +111,24 @@ async function create(newObj) {
                     degree: edge.degree
                 }]-(source)
                 RETURN n
-            `);
+            `).then(result => {
+                const myresult = result.records.map(i => i.get('n').properties);
+                const msg = `Created EDGE_FULFILLED relationship with SOURCE_EDGE_UUID ${newObj.SOURCE_EDGE_UUID}`
+                logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+                myobj = { "result": myresult[0], 'message': msg }
 
-            console.log(`Created EDGE_FULFILLED relationship with SOURCE_EDGE_UUID ${newObj.SOURCE_EDGE_UUID}`);
-            myobj = { result: createEdgeFulfilledResult.records, summary: createEdgeFulfilledResult.summary };
+            }).catch(error=>{
+                logger.error(error, "Error");
+        myobj = { error: error };
+            })
+
+
+
         } else {
             myobj = { result: createNodeResult.records, summary: createNodeResult.summary };
         }
     } catch (error) {
-        console.log("Error:", error);
+        logger.error(error, "Error");
         myobj = { error: error };
     } finally {
         await driver.close();
@@ -138,21 +138,25 @@ async function create(newObj) {
 }
 
 async function deleteNode(UUID) {
-    console.log("NodeRepository: Deleting Node ", UUID)
+    logger.info(`Deleting Node ${UUID}`)
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     var query = `
     MATCH (n:NODE)
     WHERE n.NODE_UUID = '${UUID}'
-    DETACH DELETE n;`;
+    DETACH DELETE n;
+    `;
     await session.run(query)
         .then(result => {
-            console.log("NodeRepository: Node Deleted", result.records)
-            myobj = { "result": result.records, "summary": result.summary }
+            const myresult = result.records.map(i => i.get('n').properties);
+            const msg = `Node Deleted ${UUID}`
+            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+            myobj = { "result": myresult[0], 'message': msg }
+
         })
         .catch(error => {
-            console.log("NodeRepository: error", error);
+            logger.error(error, "error");
             myobj = { "error": error }
         })
     await driver.close()

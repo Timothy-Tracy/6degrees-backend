@@ -2,13 +2,13 @@ const { v7: uuidv7 } = require('uuid');
 const NodeRepository =require('../data-access/NodeRepository.js');
 const EdgeService = require('../../edges/domain/EdgeService.js');
 const UserService = require('../../users/domain/UserService.js');
-
+const mylogger = require('../../../lib/logger/logger.js');
+const logger = mylogger.child({ 'module': 'NodeService' });
 async function createSourceNode(RUUID, UUUID){
-    console.log("NodeService: Creating Source Node")
+    logger.debug("Creating Source Node")
             let newNodeUUID = uuidv7();
             const degree = 0;
             const nodeType = "origin";
-            const edges = [];
             const metadata = {};
             const newNode = {
                 NODE_UUID : newNodeUUID,
@@ -18,24 +18,22 @@ async function createSourceNode(RUUID, UUUID){
                 metadata : {},
                 degree : degree,
             }
-            console.log("NodeService: Source Node Created")
+            logger.debug("Source Node Created")
             return(newNode);
         }
 
 async function distribute(req, res, next){
-    console.log("NodeService: Distributing")
+    logger.info("NodeService: Distributing")
     var sourceNode = await NodeRepository.findOneByUUID(req.params.uuid);
-    console.log("NodeService: Source Node Found", sourceNode.NODE_UUID)
     res.result = await EdgeService.createDistribution(sourceNode.result);
     next()
 }
 
 async function createFromDistribution(req, res, next){
-    console.log("NodeService: createFromDistribution")
-    console.log("NodeService: Finding Source Edge")
+    logger.info("creating from distribution")
     var sourceEdge = await EdgeService.findOneByQuery(req.params.query)
-    console.log("NodeService: Source Edge Found: \n ",sourceEdge)
-    console.log("NodeService: Creating Anonymous User")
+    logger.info('Source Edge Found')
+    logger.info("Creating Anonymous User")
     var anonUser = await UserService.createAnonymous();
     if(anonUser.result.result){
         console.log("NodeService: Anon user was successful")
@@ -54,22 +52,21 @@ async function createFromDistribution(req, res, next){
         
     }
    let result = await NodeRepository.create(newNode);
-    res.result = result;
-    console.log(result)
+    res.POST_UUID = newNode.POST_UUID;
+
 }
     next()
 }
     
 async function findOneByUUID(req, res, next) {
-    console.log("NodeService: Finding Node By UUID ")
-
+    logger.info("Finding Node By UUID ")
     const myresult = await UserRepository.findOneByUUID(req.params.uuid);
     res.result = { "data": myresult }
     next()
 }
 
 async function deleteNode(req, res, next) {
-    console.log("NodeService: Deleting Node ", req.params.uuid)
+    logger.info(`Deleting Node ${req.params.uuid}`)
     const myresult = await NodeRepository.deleteNode(req.params.uuid);
     res.result = { "data": myresult }
     next()

@@ -1,5 +1,4 @@
 const fs = require("fs");
-
 const neo4j = require('neo4j-driver');
 require('dotenv').config()
 const {
@@ -8,22 +7,25 @@ const {
     DB_PASSWORD,
     DB_DATABASE
 } = process.env;
+const mylogger = require('../../../lib/logger/logger.js');
+const logger = mylogger.child({ 'module': 'PostRepository' });
 
-async function findOneByUUID(PUUID) {
+async function findOneByUUID(uuid) {
+    logger.debug(`finding post by uuid ${uuid}`)
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
-    await session.run(`Match (p:POST{POST_UUID: ${PUUID}}) return p`)
-        .then(result => {
-            result.records.map(i => i.get('u').properties);
-            console.log("Fulfilled, result is", result.records)
-            myobj = { "result": result.records, "summary": result.summary }
-
-        })
-        .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
-        })
+    await session.run(`Match (p:POST{\`POST_UUID\`: '${uuid}'}) return p`)
+    .then(result => {
+        const myresult = result.records.map(i => i.get('p').properties);
+        const msg = 'found post by uuid'
+        logger.info({ 'result': myresult, 'result-summary': result.summary._stats }, msg)
+        myobj = { "result": myresult, 'message': msg }
+    })
+    .catch(error => {
+        logger.error(error, "Error");
+        myobj = { error: error };
+    })
         await driver.close()
     return myobj;
 };

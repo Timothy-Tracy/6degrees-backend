@@ -8,32 +8,25 @@ const {
     DB_PASSWORD,
     DB_DATABASE
 } = process.env;
+const mylogger = require('../../../lib/logger/logger.js');
+const logger = mylogger.child({ 'module': 'UserRepository' });
 
-async function findOneByUUID(UUUID) {
-    console.log("Finding User By UUID ", UUUID)
+async function findOneByUUID(uuid) {
+    logger.trace(`Finding User By UUID ${uuid}`)
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
-    await session.run(`Match (u:USER{\`USER_UUID\`: '${UUUID}'}) return u`)
+    await session.run(`Match (u:USER{\`USER_UUID\`: '${uuid}'}) return u`)
         .then(result => {
-            var results = [];
-            result.records.map(i => {
-                results.push(i.get('u').properties)
-            }
-            )
-
-            //NEED TO ADD OTHER CONDITIONS
-            if (results.length > 0) {
-                console.log('helloworld')
-                myobj = results[0]
-            }
-            console.log("Fulfilled, result is", myobj)
-            myobj = { "result": myobj, "summary": result.summary }
+            const myresult = result.records.map(i => i.get('u').properties);
+            const msg = 'found user by uuid'
+            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+            myobj = { "result": myresult[0], 'message': msg }
 
         })
         .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
+            logger.error(error, "Error");
+            myobj = { error: error };
         })
     await driver.close()
     return myobj;
@@ -60,26 +53,31 @@ async function findAll() {
 
 };
 
-async function create(newUser) {
+async function create(obj) {
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     await session.run(`
-    CREATE (u:USER 
-        {
-            USER_UUID: "${newUser.USER_UUID}", 
-            first_name: "${newUser.first_name}", 
-            last_name: "${newUser.last_name}", 
-            \`email\`: "${newUser.email}", 
-            password: "${newUser.password}", 
-            mobile: "${newUser.mobile}" });`)
+        CREATE (u:USER{
+            USER_UUID: "${obj.USER_UUID}", 
+            USER_ROLE: "${obj.USER_ROLE}",
+            username: "${obj.username},
+            first_name: "${obj.first_name}", 
+            last_name: "${obj.last_name}", 
+            \`email\`: "${obj.email}", 
+            password: "${obj.password}", 
+            mobile: "${obj.mobile}" 
+        })
+        return u;`)
         .then(result => {
-            console.log("Fulfilled, result is", result.records)
-            myobj = { "result": result.records, "summary": result.summary }
+            const myresult = result.records.map(i => i.get('u').properties);
+            const msg = 'user created'
+            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+            myobj = { "result": myresult[0], 'message': msg }
         })
         .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
+            logger.error(error, "Error");
+            myobj = { error: error };
         })
     await driver.close()
     return myobj;
@@ -96,14 +94,17 @@ async function createAnonymous(user) {
             USER_UUID: "${user.USER_UUID}", 
             name: "${user.name}",
             isAnonymous : "true"
-        });`)
+        })
+        return u;`)
         .then(result => {
-            console.log("Creating Anonymous User Fulfilled, result is", result)
-            myobj = { "result": result.records, "summary": result.summary }
+            const myresult = result.records.map(i => i.get('u').properties);
+            const msg = 'anonymous user created'
+            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+            myobj = { "result": myresult[0], 'message': msg }
         })
         .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
+            logger.error(error, "Error");
+            myobj = { error: error };
         })
     await driver.close()
     return myobj;
@@ -119,12 +120,14 @@ async function deleteUser(UUID) {
     DETACH DELETE u;`;
     await session.run(query)
         .then(result => {
-            console.log("Fulfilled, result is", result.records)
-            myobj = { "result": result.records, "summary": result.summary }
+            const myresult = result.records.map(i => i.get('u').properties);
+            const msg = 'user deleted'
+            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+            myobj = { "result": myresult[0], 'message': msg }
         })
         .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
+            logger.error(error, "Error");
+            myobj = { error: error };
         })
     await driver.close()
     return myobj;
