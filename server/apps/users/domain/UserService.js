@@ -5,6 +5,10 @@ const UserRepository = require('../data-access/UserRepository.js')
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'UserService' });
 const randomWordSlugs = require('random-word-slugs')
+const AuthService = require('../../auth/domain/AuthService.js');
+const customErrors = require('../../../lib/error/customErrors.js')
+const catchAsync = customErrors.catchAsync;
+
 
 var crypto = require('crypto');
 
@@ -13,7 +17,7 @@ async function create(req, res, next) {
     //req.body is valid
     logger.debug("Creating a new user")
     let newUserUUID = uuidv7();
-    var hash = crypto.createHash('sha256').update(req.body.password.toString()).digest('base64');
+    var hashedPassword = await AuthService.hash(req.body.password.toString());
     const newUser = {
         USER_UUID: newUserUUID,
         USER_ROLE : "USER",
@@ -21,7 +25,7 @@ async function create(req, res, next) {
         first_name: req.body.first_name,
         last_name: req.body.last_name,
         email: req.body.email,
-        password: hash,
+        password: hashedPassword,
         mobile: req.body.mobile,
         isAnonymous : false
     }

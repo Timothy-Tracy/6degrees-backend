@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const {AppError} = require('../../../lib/error/customErrors.js')
 
-const JWT_SECRET_KEY = "78E630E665D0B27FE133175F0E4EAB9D847999938B959CB0310C0A590120C69C"
+const SECRET = process.env.JWT_SECRET_KEY;
 
 function sign(user){
     let token;
@@ -9,9 +10,9 @@ function sign(user){
         token = jwt.sign(
             {
                 USER_UUID: user.USER_UUID,
-                email: user.email
+                USER_ROLE: user.USER_ROLE
             },
-            JWT_SECRET_KEY,
+            SECRET,
             { expiresIn: "1h" }
         );
     } catch (err) {
@@ -23,38 +24,32 @@ function sign(user){
     return token;
 }
 
-function checkForToken(req, res){
-    const token =
-            req.headers
-                .authorization.split(' ')[1];
+async function checkForToken(req){
+    let token;
+    let tokenstatus = false;
+    if(req.headers.authorization){
+        tokenstatus = true;
+    
+    token =req.headers.authorization.split(' ')[1];
         //Authorization: 'Bearer TOKEN'
-        if (!token) {
-            res.status(200)
-                .json(
-                    {
-                        success: false,
-                        message: "Error!Token was not provided."
-                    }
-                );
+    }
+        if (!tokenstatus) {
+            throw new AppError('JWT Token Not Provided', 200)
         }
+        return token;
 }
 
-function decodeToken(req,res){
+async function decodeToken(token){
     let decodedToken;
         try{
-            decodedToken = jwt.verify(token, JWT_SECRET_KEY);
+            decodedToken = jwt.verify(token, SECRET);
         } catch (err){
-            throw err;
+            throw new AppError('JWT Token Not Verified');
         }
+    return decodedToken;
             
-        res.status(200).json(
-            {
-                success: true,
-                data: {
-                    userId: decodedToken.userId,
-                    email: decodedToken.email
-                }
-            }
-        );
-        return decodedToken;
+       
 }
+
+
+module.exports = {sign, checkForToken, decodeToken}

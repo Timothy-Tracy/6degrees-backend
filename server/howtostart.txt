@@ -4,3 +4,11 @@
 
    run the app:
      $ DEBUG=server:* npm start
+
+
+Neo4j Constraints
+CREATE CONSTRAINT constraint_username_unique IF NOT EXISTS
+FOR (n:USER) REQUIRE n.username IS UNIQUE
+
+CREATE CONSTRAINT constraint_email_unique IF NOT EXISTS
+FOR (n:USER) REQUIRE n.email IS UNIQUE

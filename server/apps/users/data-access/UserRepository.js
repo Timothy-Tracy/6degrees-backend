@@ -10,6 +10,8 @@ const {
 } = process.env;
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'UserRepository' });
+const errorHandler = require('../../../lib/error/errorHandler.js')
+
 
 async function findOneByUUID(uuid) {
     logger.trace(`Finding User By UUID ${uuid}`)
@@ -54,6 +56,8 @@ async function findAll() {
 };
 
 async function create(obj) {
+    const log = logger.child({'function': 'create'});
+    const start = process.hrtime();
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
@@ -61,9 +65,9 @@ async function create(obj) {
         CREATE (u:USER{
             USER_UUID: "${obj.USER_UUID}", 
             USER_ROLE: "${obj.USER_ROLE}",
-            username: "${obj.username},
-            first_name: "${obj.first_name}", 
-            last_name: "${obj.last_name}", 
+            username: '${obj.username}',
+            first_name: '${obj.first_name}', 
+            last_name: '${obj.last_name}', 
             \`email\`: "${obj.email}", 
             password: "${obj.password}", 
             mobile: "${obj.mobile}" 
@@ -72,14 +76,18 @@ async function create(obj) {
         .then(result => {
             const myresult = result.records.map(i => i.get('u').properties);
             const msg = 'user created'
-            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+            log.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
             myobj = { "result": myresult[0], 'message': msg }
         })
         .catch(error => {
-            logger.error(error, "Error");
-            myobj = { error: error };
+            log.error('Caught an error', error.name)
+            
+            throw error;
+            // log.error(error, "Error");
+            // myobj = { error: error };
         })
-    await driver.close()
+    await driver.close();
+    logperf(log, process.hrtime(start))
     return myobj;
 };
 

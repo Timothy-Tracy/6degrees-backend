@@ -3,9 +3,10 @@ var UserRepository = require('../../data-access/UserRepository.js')
 var express = require('express');
 var router = express.Router();
 const apiRoot = '/api/users';
+const customErrors = require('../../../../lib/error/customErrors.js')
+const catchAsync = customErrors.catchAsync;
 
-
-router.post('/', UserService.create, function (req, res) {
+router.post('/', catchAsync(UserService.create), function (req, res) {
     res.status(200).json(res.result)
 });
 
