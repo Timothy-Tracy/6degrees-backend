@@ -43,7 +43,6 @@ async function login(req,res,next){
 
 async function verify(req,res,next){
     let log = logger.child({'function':'verify'});
-
     const token = await JWTService.checkForToken(req);
     const data = await JWTService.decodeToken(token);
     res.tokenData = data;

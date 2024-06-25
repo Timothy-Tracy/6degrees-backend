@@ -72,4 +72,14 @@ async function deleteNode(req, res, next) {
     next()
 }
 
-module.exports = {deleteNode, findOneByUUID, createSourceNode, distribute, createFromDistribution};
+async function takeOwnership(req,res,next){
+    const node = req.body.NODE_UUID;
+    const user = res.tokenData.USER_UUID;
+
+    let result = await NodeRepository.takeOwnership({"NODE_UUID" : node, "USER_UUID": user});
+    res.result = result;
+    next()
+    
+}
+
+module.exports = {deleteNode, findOneByUUID, createSourceNode, distribute, createFromDistribution, takeOwnership};

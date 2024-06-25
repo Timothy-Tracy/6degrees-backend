@@ -163,4 +163,37 @@ async function deleteNode(UUID) {
     return myobj;
 };
 
-module.exports = { deleteNode, create, findAll, findOneByUUID };
+async function takeOwnership(obj){
+    const log = logger.child({'function': 'takeOwnership', 'params': obj});
+    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+    const session = driver.session({ DB_DATABASE });
+    var myobj = null;
+    var query = `
+    MATCH (n:NODE {NODE_UUID: '${obj.NODE_UUID}'})
+    WITH n
+    MATCH (n)-[:USER]->(a:USER)
+    MATCH (u:USER {USER_UUID: '${obj.USER_UUID}'})
+    CREATE (u)-[:NODES]->(n)
+    CREATE (n)-[:USER]->(u)
+    SET n.USER_UUID = '${obj.USER_UUID}'
+    DETACH DELETE a
+    RETURN u;
+    `;
+    await session.run(query)
+        .then( result => {
+            const myresult = result.records.map(i => i.get('u').properties);
+            const msg = `User ${myresult.username} successfully took ownership of node ${obj.NODE_UUID}`
+            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+            myobj = { 'message': msg , 'success':true}
+        }
+            
+        ).catch(error => {
+            throw error;
+        })
+
+        await session.close;
+        await driver.close;
+        return myobj;
+}
+
+module.exports = { deleteNode, create, findAll, findOneByUUID, takeOwnership };

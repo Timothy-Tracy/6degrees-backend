@@ -8,10 +8,10 @@ const logger = mylogger.child({ 'module': 'PostService' });
 async function create(req, res, next) {
     logger.debug("creating new post")
     let UUID = uuidv7();
-    const sourceNode = await NodeService.createSourceNode(UUID, req.body.USER_UUID);
+    const sourceNode = await NodeService.createSourceNode(UUID, res.tokenData.USER_UUID);
     const newPost = {
         POST_UUID: UUID,
-        USER_UUID: req.body.USER_UUID,
+        USER_UUID: res.tokenData.USER_UUID,
         SOURCE_NODE_UUID: sourceNode.NODE_UUID,
         POST_TYPE: req.body.POST_TYPE,
         title: req.body.title,
