@@ -9,6 +9,10 @@ const catchAsync = customErrors.catchAsync;
 const AuthService = require('../../../auth/domain/AuthService.js');
 
 
+
+router.get('/', catchAsync(AuthService.verify), catchAsync(NodeService.findAllOwnedBy), async function (req, res){
+    res.status(200).json(res.result)
+});
 router.get('/:uuid', NodeService.findOneByUUID, async function (req, res){
     res.status(200).json(res.result)
 });
@@ -28,9 +32,7 @@ router.post('/create', function(req, res) {
 
 
 /*
-router.get('/', PostService.getAll, async function (req, res){
-    res.status(200).json(res.result)
-});
+
 router.get('/', PostService.getAllFromUser, async function (req, res){
     res.status(200).json(res.result)
 });

@@ -87,7 +87,7 @@ async function create(obj) {
             // myobj = { error: error };
         })
     await driver.close();
-    logperf(log, process.hrtime(start))
+    log.logperf(process.hrtime(start))
     return myobj;
 };
 

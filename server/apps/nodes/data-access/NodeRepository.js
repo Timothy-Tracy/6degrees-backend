@@ -9,6 +9,7 @@ const {
 } = process.env;
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'NodeRepository' });
+const {AppError} = require('../../../lib/error/customErrors.js')
 
 async function findOneByUUID(UUID) {
     logger.info("Finding Node By UUID ", UUID)
@@ -30,20 +31,23 @@ async function findOneByUUID(UUID) {
     return myobj;
 };
 
-async function findAll() {
+async function findAllOwnedBy(obj) {
+    const log = logger.child({'function' : 'findAllOwnedBy'});
+    log.debug(`finding all nodes owned by ${obj.USER_UUID}`);
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
-    await session.run('Match (n:NODE) return n')
+    await session.run(`Match (n:NODE {USER_UUID : '${obj.USER_UUID}'}) return n`)
         .then(result => {
-            result.records.map(i => i.get('u').properties);
-            console.log("Fulfilled, result is", result.records)
-            myobj = { "result": result.records, "summary": result.summary }
+            const myresult = result.records.map(i => i.get('n').properties);
+            console.log(result.records)
+            const msg = ("found all nodes owned by ", result.records)
+            myobj = { "result": myresult, "summary": result.summary }
 
         })
         .catch(error => {
-            logger.error(error, "Error");
-            myobj = { error: error };
+            throw error
+            
         })
     await driver.close()
     return myobj;
@@ -82,6 +86,8 @@ async function create(newObj) {
             MATCH (p:POST {POST_UUID: "${newObj.POST_UUID}"})
             MATCH (u:USER {USER_UUID: "${newObj.USER_UUID}"})
             CREATE (u)<-[:USER]-(n)<-[:NODES]-(u)
+            SET n.owned = CASE WHEN u.isAnonymous = 'true' THEN 'false' ELSE 'true' 
+            END
         `);
 
         logger.info(`Created relationships with POST ${newObj.POST_UUID} and USER ${newObj.USER_UUID}`);
@@ -167,7 +173,9 @@ async function takeOwnership(obj){
     const log = logger.child({'function': 'takeOwnership', 'params': obj});
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
-    var myobj = null;
+    let node = await findOneByUUID(obj.NODE_UUID);
+    if (node.owned == false){
+        var myobj = null;
     var query = `
     MATCH (n:NODE {NODE_UUID: '${obj.NODE_UUID}'})
     WITH n
@@ -190,10 +198,14 @@ async function takeOwnership(obj){
         ).catch(error => {
             throw error;
         })
+    } else {
+        throw new AppError('Node is already owned', 201);
+    }
+    
 
         await session.close;
         await driver.close;
         return myobj;
 }
 
-module.exports = { deleteNode, create, findAll, findOneByUUID, takeOwnership };
+module.exports = { deleteNode, create, findAllOwnedBy, findOneByUUID, takeOwnership };

@@ -6,8 +6,6 @@ const Neo4jRepository = require('../../db/neo4j/data-access/Neo4jRepository.js')
 const JWTService = require('../../jwt/domain/JWTService.js');
 const {AppError} = require('../../../lib/error/customErrors.js')
 
-
-
 async function hash(data){
     let log = logger.child({'function':'hash'});
     const start = process.hrtime();
@@ -51,5 +49,16 @@ async function verify(req,res,next){
     next();
 }
 
+async function optionalAuth(req, res, next){
+    const log = logger.child({'function' : 'optionalAuth'});
+    if(req.headers.authorization){
+        log.info('auth detected, verifying...')
+        await verify(req,res,next);
+    } else {
+        log.info('no auth')
+        next();
+    }
+}
 
-module.exports = {hash, login, verify}
+
+module.exports = {hash, login, verify, optionalAuth}

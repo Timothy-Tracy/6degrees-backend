@@ -34,7 +34,7 @@ class Neo4jError extends AppError {
     this.name = 'Neo4jError';
   }
 }
-const catchAsync = fn => {
+const catchAsync = (fn) => {
 const log = logger.child({'function':'catchAsync'});
   return (req, res, next) => {
     log.debug('catchAsync: Before calling function');
