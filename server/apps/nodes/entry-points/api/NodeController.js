@@ -9,14 +9,16 @@ const catchAsync = customErrors.catchAsync;
 const AuthService = require('../../../auth/domain/AuthService.js');
 
 
-
+// Allows an authenticated user to find all nodes that are owned by them
 router.get('/', catchAsync(AuthService.verify), catchAsync(NodeService.findAllOwnedBy), async function (req, res){
     res.status(200).json(res.result)
 });
+
 router.get('/:uuid', NodeService.findOneByUUID, async function (req, res){
     res.status(200).json(res.result)
 });
 
+// Allows an authenticated user to take ownership of a response node that was generated with an anonymous user owner
 router.post('/own', catchAsync(AuthService.verify), catchAsync(NodeService.takeOwnership), async function(req,res){
     res.status(200).json(res.result);
 });

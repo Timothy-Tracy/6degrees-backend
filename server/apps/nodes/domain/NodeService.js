@@ -22,7 +22,14 @@ async function createSourceNode(RUUID, UUUID) {
     logger.debug("Source Node Created")
     return (newNode);
 }
-
+/**
+ * @module NodeService
+ * @description This function is a middleware that creates an "edge" for a respective node. This edge represents a distribution method, or a share
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
 async function distribute(req, res, next) {
     logger.info("NodeService: Distributing")
     var sourceNode = await NodeRepository.findOneByUUID(req.params.uuid);
@@ -30,6 +37,16 @@ async function distribute(req, res, next) {
     next()
 }
 
+/**
+ * 
+ * @module NodeService
+ * @description This middleware function is called when someone opens a post from a distribution, or share. 
+ * If in the API Call there is an authorization header, the new node will be created with the verified user as its owner.
+ * Otherwise, an anonymous user will be created as its owner
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
 async function createFromDistribution(req, res, next) {
     const log = logger.child({'function':'createFromDistribution'});
     log.info("creating from distribution")
@@ -85,7 +102,15 @@ async function deleteNode(req, res, next) {
     res.result = { "data": myresult }
     next()
 }
-
+/**
+ * @module NodeService
+ * @requires JWT
+ * @description This middleware function transfers ownership of a response node from an unauthorized anonymous user to an authenticated user,
+ * who's information is provided by the provided token
+ * @param {} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
 async function takeOwnership(req, res, next) {
     const node = req.body.NODE_UUID;
     const user = res.tokenData.USER_UUID;
