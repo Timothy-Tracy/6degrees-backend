@@ -4,6 +4,7 @@ const randomWordSlugs = require('random-word-slugs')
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'EdgeService' }, {options:{name:'EdgeService'}});
 async function createDistribution(node) {
+    console.log(node)
     let UUID = uuidv7();
     var obj = {
         EDGE_UUID: UUID,

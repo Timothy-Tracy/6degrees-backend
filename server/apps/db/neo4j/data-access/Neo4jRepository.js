@@ -9,7 +9,14 @@ const {
 const mylogger = require('../../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'Neo4jRepository' });
 
-
+/**
+ * 
+ * @param {@} label 
+ * @param {*} searchParam 
+ * @param {*} searchValue 
+ * @param {*} attributesToReturn 
+ * @returns 
+ */
 async function findOneAndGetAttributes(label, searchParam, searchValue, attributesToReturn) {
     const log = logger.child({'function':'findOneAndGetAttributes'});
     log.info('hello')

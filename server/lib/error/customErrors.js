@@ -14,8 +14,10 @@ class AppError extends Error {
 
 // You can create more specific error classes if needed
 class ValidationError extends AppError {
-  constructor(message) {
-    super(message, 400);
+  constructor(error) {
+    const errors = error.details.map(detail => detail.message)
+    console.log(JSON.stringify(error))
+    super(errors, 400);
     this.name = 'ValidationError';
   }
 }
@@ -37,9 +39,9 @@ class Neo4jError extends AppError {
 const catchAsync = (fn) => {
 const log = logger.child({'function':'catchAsync'});
   return (req, res, next) => {
-    log.debug('catchAsync: Before calling function');
+    //log.debug('catchAsync: Before calling function');
     Promise.resolve(fn(req, res, next)).catch(error => {
-      log.error('catchAsync: Caught an error:', error);
+      //log.error('catchAsync: Caught an error:', error);
       if (res.headersSent) {
         log.debug('catchAsync: Headers already sent');
         return next(error);

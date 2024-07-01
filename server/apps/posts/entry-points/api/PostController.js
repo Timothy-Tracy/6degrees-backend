@@ -15,9 +15,14 @@ router.post('/', catchAsync(AuthService.verify), catchAsync(PostService.create),
 router.post('/distribute/:uuid', NodeService.distribute, function (req, res) {
     res.status(200).json(res.result)
 });
-router.get('/:query', catchAsync(AuthService.optionalAuth), catchAsync(NodeService.createFromDistribution), catchAsync(PostService.findOne),  function (req, res) {
+
+//TODO: Need to once again add create from distribution logic
+router.get('/:query', catchAsync(PostService.open), catchAsync(PostService.findOne),  function (req, res) {
     res.status(200).json(res.result)
 });
+// router.get('/:query', catchAsync(AuthService.optionalAuth), catchAsync(NodeService.createFromDistribution), catchAsync(PostService.findOne),  function (req, res) {
+//     res.status(200).json(res.result)
+// });
 router.delete('/:uuid', PostService.deletePost, async function (req, res){
     res.status(200).json(res.result)
 });

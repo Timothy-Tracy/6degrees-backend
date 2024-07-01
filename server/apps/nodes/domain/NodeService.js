@@ -5,6 +5,8 @@ const UserService = require('../../users/domain/UserService.js');
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'NodeService' });
 
+
+
 async function createSourceNode(RUUID, UUUID) {
     logger.debug("Creating Source Node")
     let newNodeUUID = uuidv7();
@@ -23,6 +25,7 @@ async function createSourceNode(RUUID, UUUID) {
     return (newNode);
 }
 /**
+ * 
  * @module NodeService
  * @description This function is a middleware that creates an "edge" for a respective node. This edge represents a distribution method, or a share
  * 
@@ -30,6 +33,7 @@ async function createSourceNode(RUUID, UUUID) {
  * @param {*} res 
  * @param {*} next 
  */
+//TODO: Conditional distribution based off of if one exists
 async function distribute(req, res, next) {
     logger.info("NodeService: Distributing")
     var sourceNode = await NodeRepository.findOneByUUID(req.params.uuid);
@@ -83,6 +87,7 @@ async function createFromDistribution(req, res, next) {
 
         }
         let result = await NodeRepository.create(newNode);
+        await NodeRepository.findDistributionPathAndAward(newNodeUUID);
         res.POST_UUID = newNode.POST_UUID;
 
     
@@ -127,6 +132,11 @@ async function findAllOwnedBy(req, res, next) {
     const nodes = await NodeRepository.findAllOwnedBy({ "USER_UUID": user });
     res.result = nodes.result;
     next()
+}
+
+async function updatePointsRecursive(){
+
+
 }
 
 module.exports = { deleteNode, findOneByUUID, createSourceNode, distribute, createFromDistribution, takeOwnership, findAllOwnedBy };

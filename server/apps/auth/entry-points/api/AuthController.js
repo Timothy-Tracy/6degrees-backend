@@ -4,8 +4,10 @@ const apiRoot = '/api/auth';
 const customErrors = require('../../../../lib/error/customErrors.js')
 const catchAsync = customErrors.catchAsync;
 const AuthService = require('../../domain/AuthService.js')
+const AuthValidation = require('../../domain/AuthValidation.js')
 
-router.post('/login', catchAsync(AuthService.login), function (req, res) {
+
+router.post('/login', catchAsync(AuthValidation.login), catchAsync(AuthService.login), function (req, res) {
     res.status(200).json(res.token)
 });
 router.post('/verify', catchAsync(AuthService.verify), function (req, res) {

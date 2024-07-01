@@ -208,4 +208,42 @@ async function takeOwnership(obj){
         return myobj;
 }
 
-module.exports = { deleteNode, create, findAllOwnedBy, findOneByUUID, takeOwnership };
+/**
+ * @function findDistributionPathAndAward
+ * @param {*} uuid 
+ * @description Find the distribution path from the source node to the provided node
+ * Every node in that chain will be awarded 1 point.
+ */
+
+//TODO: Proper logging
+async function findDistributionPathAndAward(uuid){
+    const log = logger.child({'function': 'findDistributionPath', 'params': uuid});
+    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+    const session = driver.session({ DB_DATABASE });
+    const query = `
+    MATCH (start:NODE {NODE_UUID: '01904dee-9f20-799d-a766-d532981fe67a'})
+    MATCH path = (start)<-[:EDGE_FULFILLED*]-(end:NODE)
+    WHERE end.degree = '0' 
+    WITH path
+    FOREACH (n IN nodes(path) | 
+        SET n.points = CASE 
+            WHEN n.points IS NULL THEN 1 
+            ELSE n.points + 1 
+        END
+    )
+    RETURN path, [n IN nodes(path) | n.points] AS node_points
+`;
+await session.run(query)
+.then( result => {
+    const myresult = result.records.map(i => i.get('path').properties);
+    const msg = `Found all nodes in path and rewarded them with a point`
+    log.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+    myobj = { 'message': msg , 'success':true}
+}
+    
+).catch(error => {
+    throw error;
+})
+}
+
+module.exports = { deleteNode, create, findAllOwnedBy, findOneByUUID, takeOwnership,findDistributionPathAndAward };

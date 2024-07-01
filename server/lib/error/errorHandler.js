@@ -1,4 +1,4 @@
-const { AppError, DatabaseError ,Neo4jError} = require('./customErrors');
+const { AppError, DatabaseError ,Neo4jError, ValidationError} = require('./customErrors');
 const mylogger = require('../logger/logger.js');
 //const { Neo4jError } = require('neo4j-driver');
 const logger = mylogger.child({'module':'errorHandler.js'});
@@ -20,7 +20,9 @@ const globalErrorHandler = (err, req, res, next) => {
   // Process specific error types
   if (error.name === 'CastError') error = handleCastErrorDB(error);
   if (error.code === 11000) error = handleDuplicateFieldsDB(error);
-  if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
+  if (error.name === 'InputValidationError') error = handleInputValidationError(error);
+  //if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
+
   if (error.name === 'JsonWebTokenError') error = handleJWTError();
   if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
   if (error.name === 'Neo4jError') error = handleNeo4jError(error);
@@ -121,6 +123,10 @@ const handleValidationErrorDB = err => {
   const errors = Object.values(err.errors).map(el => el.message);
   const message = `Invalid input data. ${errors.join('. ')}`;
   return new AppError(message, 400);
+};
+const handleInputValidationError = err => {
+  console.log('hiiiii')
+  return new ValidationError(err);
 };
 
 const handleJWTError = () => new AppError('Invalid token. Please log in again!', 401);

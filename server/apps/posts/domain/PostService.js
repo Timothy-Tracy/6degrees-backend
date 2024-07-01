@@ -1,10 +1,28 @@
 
 const { v7: uuidv7 } = require('uuid');
 const NodeService = require('../../nodes/domain/NodeService.js')
+const EdgeService = require('../../edges/domain/EdgeService.js')
 const PostRepository = require('../data-access/PostRepository.js')
 const NodeRepository = require('../../nodes/data-access/NodeRepository.js')
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'PostService' });
+
+/**
+ * @function open
+ * @description Opens a post from an edge query parameter.
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+async function findPostUUIDByQuery(req,res,next){
+    const log = logger.child({'function':'open'});
+    const query = req.params.query;
+    log.info(`opening post from query ${query}`);
+    var sourceEdge = await EdgeService.findOneByQuery(req.params.query)
+    logger.info('Source Edge Found')
+    res.POST_UUID = sourceEdge.POST_UUID;
+}
+
 async function create(req, res, next) {
     logger.debug("creating new post")
     let UUID = uuidv7();
@@ -40,4 +58,4 @@ async function findOne(req, res, next) {
 
 
 
-module.exports = { create, deletePost, findOne };
+module.exports = { create, deletePost, findOne, findPostUUIDByQuery };
