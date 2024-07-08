@@ -8,10 +8,10 @@ const AuthValidation = require('../../domain/AuthValidation.js')
 
 
 router.post('/login', catchAsync(AuthValidation.login), catchAsync(AuthService.login), function (req, res) {
-    res.status(200).json(res.token)
+    res.status(200).json(res.locals.token)
 });
 router.post('/verify', catchAsync(AuthService.verify), function (req, res) {
-    res.status(200).json(res.tokenData)
+    res.status(200).json(res.locals.tokenData)
 });
 
 // router.get('/register', UserService.findAll, async function (req, res){

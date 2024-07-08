@@ -20,16 +20,16 @@ async function findPostUUIDByQuery(req,res,next){
     log.info(`opening post from query ${query}`);
     var sourceEdge = await EdgeService.findOneByQuery(req.params.query)
     logger.info('Source Edge Found')
-    res.POST_UUID = sourceEdge.POST_UUID;
+    res.locals.POST_UUID = sourceEdge.POST_UUID;
 }
 
 async function create(req, res, next) {
     logger.debug("creating new post")
     let UUID = uuidv7();
-    const sourceNode = await NodeService.createSourceNode(UUID, res.tokenData.USER_UUID);
+    const sourceNode = await NodeService.createSourceNode(UUID, res.locals.tokenData.USER_UUID);
     const newPost = {
         POST_UUID: UUID,
-        USER_UUID: res.tokenData.USER_UUID,
+        USER_UUID: res.locals.tokenData.USER_UUID,
         SOURCE_NODE_UUID: sourceNode.NODE_UUID,
         POST_TYPE: req.body.POST_TYPE,
         title: req.body.title,
@@ -50,7 +50,7 @@ async function deletePost(req, res, next) {
 
 async function findOne(req, res, next) {
     logger.debug('Finding Post By UUID')
-    const result = await PostRepository.findOneByUUID(res.POST_UUID);
+    const result = await PostRepository.findOneByUUID(res.locals.POST_UUID);
     res.result = result;
     next()
 

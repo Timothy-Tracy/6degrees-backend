@@ -3,7 +3,7 @@ const pino = require('pino');
 
 
 const logger = pino({
-    level : 'debug',
+    level : process.env.PINO_LOG_LEVEL,
     transport : {
         targets : [
             {
@@ -16,7 +16,7 @@ const logger = pino({
             },
             {
                 target : 'pino-pretty',
-                level : 'debug',
+                level : process.env.PINO_LOG_LEVEL,
                 options : {
                     destination: process.stdout.fd,
                     colorize: true

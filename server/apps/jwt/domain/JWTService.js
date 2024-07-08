@@ -1,9 +1,12 @@
 const jwt = require("jsonwebtoken");
 const {AppError} = require('../../../lib/error/customErrors.js')
-
+const mylogger = require('../../../lib/logger/logger.js');
+const logger = mylogger.child({ 'module': 'JWTService' });
 const SECRET = process.env.JWT_SECRET_KEY;
 
 function sign(user){
+    const log = logger.child({'function': 'sign'});
+    log.trace('');
     let token;
     try {
         //Creating jwt token
@@ -25,6 +28,8 @@ function sign(user){
 }
 
 async function checkForToken(req){
+    const log = logger.child({'function': 'checkForToken'});
+    log.trace('dd');
     let token;
     let tokenstatus = false;
     if(req.headers.authorization){
@@ -40,6 +45,8 @@ async function checkForToken(req){
 }
 
 async function decodeToken(token){
+    const log = logger.child({'function': 'decodeToken'});
+    log.trace();
     let decodedToken;
         try{
             decodedToken = jwt.verify(token, SECRET);

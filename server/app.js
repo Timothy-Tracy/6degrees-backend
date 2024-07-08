@@ -12,6 +12,7 @@ var requestsRouter = require('./apps/posts/entry-points/api/PostController.js');
 var usersRouter = require('./apps/users/entry-points/api/UserController.js');
 var nodesRouter = require('./apps/nodes/entry-points/api/NodeController.js');
 var authRouter = require('./apps/auth/entry-points/api/AuthController.js');
+var commentRouter = require('./apps/comments/entry-points/api/CommentController.js');
 
 var errorHandler = require('./lib/error/errorHandler.js');
 var app = express();
@@ -32,6 +33,7 @@ app.use(requestsRouter.apiRoot, requestsRouter.router);
 app.use(usersRouter.apiRoot, usersRouter.router);
 app.use(nodesRouter.apiRoot, nodesRouter.router);
 app.use(authRouter.apiRoot, authRouter.router);
+app.use(commentRouter.apiRoot, commentRouter.router);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
