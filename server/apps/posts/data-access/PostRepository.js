@@ -68,7 +68,7 @@ async function create(newPost) {
             
         WITH p
         MATCH (u:USER {USER_UUID: "${newPost.USER_UUID}"})
-        CREATE (u)<-[:USER]-(p)<-[:POSTS]-(u)   
+        CREATE (u)<-[:PARENT_USER]-(p)<-[:CHILD_POST]-(u)   
         ;`)
         .then(result => {
             console.log(`Created a new post ${newPost.POST_UUID} \n ${result.records}`)

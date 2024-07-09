@@ -35,10 +35,10 @@ async function comment(req,res,next){
     const NODE_UUID = req.body.NODE_UUID;
 
     //if it has a parent comment
-    if (req.body.parentID){
+    if (req.body.PARENT_COMMENT_UUID){
         parentId = req.body.PARENT_COMMENT_UUID;
     } else {
-        parentId = null;
+        parentId = "";
     }
 
     const date = new Date().toISOString()

@@ -64,22 +64,26 @@ async function create(newObj) {
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD));
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
+    log.info(newObj)
 
     
         // Create the new node
         const createNodeResult = await session.run(`
             CREATE (c:COMMENT {
                 \`COMMENT_UUID\`: "${newObj.COMMENT_UUID}",
-                \`NODE_UUID\`: "${newObj.NODE_UUID}",
-                \`POST_UUID\`: "${newObj.POST_UUID}",
-                \`USER_UUID\`: "${newObj.USER_UUID}",
-                \`PARENT_COMMENT_UUID\`: "${newObj.PARENT_COMMENT_UUID}",
                 \`content\`: "${newObj.content}",
                 \`createdAt\`: "${newObj.createdAt}",
-                \`updatedAt\`: "${newObj.updatedAt}"
-                
+                \`updatedAt\`: "${newObj.createdAt}" 
             })
-            RETURN c
+            WITH c
+MATCH (n:NODE {NODE_UUID: "${newObj.NODE_UUID}"})
+MATCH (p:POST {POST_UUID: "${newObj.POST_UUID}"})
+MATCH (u:USER {USER_UUID: "${newObj.USER_UUID}"})
+MATCH (parentComment:COMMENT {COMMENT_UUID: "${newObj.PARENT_COMMENT_UUID}"})
+
+CREATE (u)<-[:PARENT_USER]-(c)<-[:CHILD_COMMENT]-(u)
+CREATE (c)<-[:CHILD_COMMENT]-(n)<-[:PARENT_NODE]-(c)
+CREATE (c)<-[:CHILD_COMMENT]-(parentComment)<-[:PARENT_COMMENT]-(c);
         `).then(result => {
             const myresult = result.records.map(i => i.get('c').properties);
             log.info(result.records)
@@ -94,32 +98,8 @@ async function create(newObj) {
 
         logger.info(`Created a new comment ${newObj.COMMENT_UUID}`);
 
-        // Create relationships with POST and USER nodes
-        await session.run(`
-            MATCH (c:COMMENT {COMMENT_UUID: "${newObj.COMMENT_UUID}"})
-            MATCH (n:NODE {NODE_UUID: c.NODE_UUID})
-            MATCH (p:POST {POST_UUID: c.POST_UUID})
-            MATCH (u:USER {USER_UUID: c.USER_UUID})
-            CREATE (u)<-[:USER]-(c)<-[:COMMENTS]-(u)
-            CREATE (c)<-[:COMMENTS]-(n)
-            WITH c
-            WHERE c.PARENT_COMMENT_UUID IS NOT NULL
-            MATCH (parent:NODE {COMMENT_UUID: c.PARENT_COMMENT_UUID})
-            CREATE (parent)-[:REPLIES]->(c)
-            
-        `).then(result => {
-            const myresult = result.records.map(i => i.get('c').properties);
-            log.info(myresult)
-            
-            const msg = ("created comment relationships ")
-            log.info(msg)
-            log.info(result.summary)
-            myobj = { "result": myresult, "summary": result.summary }
-        }).catch(error => {
-            logger.error(error, "error");
-            myobj = { "error": error }
-        })
-
+        // Create relationships
+        
 
     
      await driver.close();

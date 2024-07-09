@@ -85,7 +85,8 @@ async function create(newObj) {
             MATCH (n:NODE {NODE_UUID: "${newObj.NODE_UUID}"})
             MATCH (p:POST {POST_UUID: "${newObj.POST_UUID}"})
             MATCH (u:USER {USER_UUID: "${newObj.USER_UUID}"})
-            CREATE (u)<-[:USER]-(n)<-[:NODES]-(u)
+            CREATE (u)<-[:PARENT_USER]-(n)<-[:CHILD_NODE]-(u)
+            CREATE (p)<-[:PARENT_POST]-(n)<-[:CHILD_NODE]-(p)
             SET n.owned = CASE WHEN u.isAnonymous = 'true' THEN 'false' ELSE 'true' 
             END
         `);
