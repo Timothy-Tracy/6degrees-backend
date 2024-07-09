@@ -11,6 +11,7 @@ const AuthValidation = require('../../auth/domain/AuthValidation.js');
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'CommentService' });
 //TODO parentID validation
+//TODO MAJOR REFACTORING
 async function comment(req,res,next){
     const log = logger.child({'function' : 'comment'});
     log.trace();
