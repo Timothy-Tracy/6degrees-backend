@@ -10,6 +10,41 @@ const {
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'PostRepository' });
 
+async function findOneByQuery(query){
+    let output = {data : {}};
+    //Initialize logger
+    const log = logger.child({'function':'findOneByQuery'});
+    log.trace();
+    //Initialize DB
+    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+    const session = driver.session({ DB_DATABASE });
+    await session.run(
+        `
+        MATCH (n:NODE)-[e:EDGE{EDGE_QUERY:"${query}"}]-()
+        MATCH (p:POST)-[:PARENT_POST]-(n)
+        RETURN p,n;
+        `
+    ).then(result=>{
+       
+        const post = result.records.map(i => i.get('p').properties);
+        const node = result.records.map(i => i.get('n').properties);
+
+        output.data.post = post;
+        output.data.node = node;
+
+        log.debug(result.records)
+        log.debug(post)
+        log.debug(node)
+
+    }).catch(error=>{
+        log.error(error);
+        throw error;
+    })
+    driver.close();
+    return output;
+
+}
+
 async function findOneByUUID(uuid) {
     logger.debug(`finding post by uuid ${uuid}`)
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
@@ -64,7 +99,9 @@ async function create(newPost) {
             \`SOURCE_NODE_UUID\`: "${newPost.SOURCE_NODE_UUID}", 
             title: "${newPost.title}", 
             description: "${newPost.description}", 
-            fulfilled: "${newPost.fulfilled}" })
+            fulfilled: "${newPost.fulfilled}" ,
+            views : 0
+    })
             
         WITH p
         MATCH (u:USER {USER_UUID: "${newPost.USER_UUID}"})
@@ -105,4 +142,4 @@ async function deletePost(UUID) {
     return myobj;
 };
 
-module.exports = { deletePost, create, findAll, findOneByUUID };
+module.exports = { deletePost, create, findAll, findOneByUUID, findOneByQuery };

@@ -9,9 +9,14 @@ const {
 } = process.env;
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'NodeRepository' });
-const {AppError} = require('../../../lib/error/customErrors.js')
+const { AppError } = require('../../../lib/error/customErrors.js');
+const Neo4jDriver = require('../../db/neo4j/data-access/Neo4jDriver.js')
+
+
+
 
 async function findOneByUUID(UUID) {
+    let output = { data: {} };
     logger.info("Finding Node By UUID ", UUID)
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
@@ -20,6 +25,7 @@ async function findOneByUUID(UUID) {
         .then(result => {
             const myresult = result.records.map(i => i.get('n').properties);
             const msg = 'found node by uuid'
+            output.data = { ...output.data, 'node': myresult[0] }
             logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
             myobj = { "result": myresult[0], 'message': msg }
         })
@@ -28,120 +34,206 @@ async function findOneByUUID(UUID) {
             myobj = { error: error };
         })
     await driver.close()
-    return myobj;
+    logger.info(output, 'findOneByUUID result')
+    return output;
 };
 
-async function findAllOwnedBy(obj) {
-    const log = logger.child({'function' : 'findAllOwnedBy'});
-    log.debug(`finding all nodes owned by ${obj.USER_UUID}`);
-    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+async function findAllOwnedBy(uuid) {
+    let output = {};
+    const log = logger.child({ 'function': 'findAllOwnedBy' });
+    log.trace();
+    let driver = Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
-    var myobj = null;
-    await session.run(`Match (n:NODE {USER_UUID : '${obj.USER_UUID}'}) return n`)
-        .then(result => {
-            const myresult = result.records.map(i => i.get('n').properties);
-            console.log(result.records)
-            const msg = ("found all nodes owned by ", result.records)
-            myobj = { "result": myresult, "summary": result.summary }
+    
+    await session.run(`Match (u:USER {USER_UUID: "${uuid}"})-[:CHILD_NODE]-(n) return n`)
+    .then(result => {
+        const myresult = result.records.map(i => i.get('n').properties.NODE_UUID);
+        console.log(myresult)
+        output.data = myresult;
+        output.message = `found all nodes owned by ${uuid}`;
+        output.summary = result.summary;
+    })
+    .catch(error => {
+        throw error
 
-        })
-        .catch(error => {
-            throw error
-            
-        })
-    await driver.close()
-    return myobj;
+    })
+    return output;
 
 
 };
-
-async function create(newObj) {
-    logger.info("creating new Node");
-
-    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD));
+/**
+ * @function userHasNodeInPost
+ * 
+ * @param {*} USER_UUID 
+ * @param {*} POST_UUID 
+ * @returns boolean
+ * @description A function that determines if a user already has a node associated with a post
+ */
+async function userHasNodeInPost(USER_UUID, POST_UUID) {
+    let output = true;
+    const log = logger.child({ 'function': 'userHasNodeInPost' });
+    log.trace();
+    //Initialize Drivers
+    let driver = Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
-    var myobj = null;
+    await session.run(
+        `
+            MATCH (p:POST {POST_UUID: "${POST_UUID}"})
+            MATCH (u:USER {USER_UUID: "${USER_UUID}"})
+            RETURN EXISTS((u)-[:CHILD_NODE]->(:NODE)-[:PARENT_POST]->(p))
+        `
+    ).then(result => {
+        output = result.records[0]._fields[0];
+        if (output) {
+            log.info(output)
 
-    try {
-        // Create the new node
-        const createNodeResult = await session.run(`
-            CREATE (n:NODE {
-                \`NODE_UUID\`: "${newObj.NODE_UUID}",
-                \`POST_UUID\`: "${newObj.POST_UUID}",
-                \`USER_UUID\`: "${newObj.USER_UUID}",
-                \`SOURCE_NODE_UUID\`: "${newObj.SOURCE_NODE_UUID}",
-                \`SOURCE_EDGE_UUID\`: "${newObj.SOURCE_EDGE_UUID}",
-                NODE_TYPE: "${newObj.NODE_TYPE}",
-                degree: "${newObj.degree}",
-                metadata: "${JSON.stringify(newObj.metadata)}"
-            })
-            RETURN n
-        `);
-
-        logger.info(`Created a new node ${newObj.NODE_UUID}`);
-
-        // Create relationships with POST and USER nodes
-        await session.run(`
-            MATCH (n:NODE {NODE_UUID: "${newObj.NODE_UUID}"})
-            MATCH (p:POST {POST_UUID: "${newObj.POST_UUID}"})
-            MATCH (u:USER {USER_UUID: "${newObj.USER_UUID}"})
-            CREATE (u)<-[:PARENT_USER]-(n)<-[:CHILD_NODE]-(u)
-            CREATE (p)<-[:PARENT_POST]-(n)<-[:CHILD_NODE]-(p)
-            SET n.owned = CASE WHEN u.isAnonymous = 'true' THEN 'false' ELSE 'true' 
-            END
-        `);
-
-        logger.info(`Created relationships with POST ${newObj.POST_UUID} and USER ${newObj.USER_UUID}`);
-
-        // Create SOURCE_NODE relationship if NODE_TYPE is "origin"
-        if (newObj.NODE_TYPE === "origin") {
-            await session.run(`
-                MATCH (n:NODE {NODE_UUID: "${newObj.NODE_UUID}"})
-                MATCH (p:POST {POST_UUID: "${newObj.POST_UUID}"})
-                CREATE (n)<-[:SOURCE_NODE]-(p)
-            `);
-
-            logger.info(`Created SOURCE_NODE relationship with POST ${newObj.POST_UUID}`);
-        }
-
-        // Create EDGE_FULFILLED relationship if SOURCE_EDGE_UUID is not null
-        if (newObj.SOURCE_EDGE_UUID) {
-            const createEdgeFulfilledResult = await session.run(`
-                MATCH (n:NODE {NODE_UUID: "${newObj.NODE_UUID}"})
-                MATCH (source:NODE)-[edge:EDGE {EDGE_UUID: "${newObj.SOURCE_EDGE_UUID}"}]->()
-                CREATE (n)<-[:EDGE_FULFILLED {
-                    EDGE_UUID: edge.EDGE_UUID,
-                    \`POST_UUID\`: edge.POST_UUID,
-                    \`SOURCE_NODE_UUID\`: edge.SOURCE_NODE_UUID,
-                    \`DESTINATION_NODE_UUID\`: n.NODE_UUID,
-                    EDGE_QUERY: edge.EDGE_QUERY,
-                    degree: edge.degree
-                }]-(source)
-                RETURN n
-            `).then(result => {
-                const myresult = result.records.map(i => i.get('n').properties);
-                const msg = `Created EDGE_FULFILLED relationship with SOURCE_EDGE_UUID ${newObj.SOURCE_EDGE_UUID}`
-                logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
-                myobj = { "result": myresult[0], 'message': msg }
-
-            }).catch(error=>{
-                logger.error(error, "Error");
-        myobj = { error: error };
-            })
-
-
-
+            log.info('User Has Node In Post == true')
         } else {
-            myobj = { result: createNodeResult.records, summary: createNodeResult.summary };
+            log.info(output)
+
+            log.info('User Has Node In Post == false')
+
         }
-    } catch (error) {
-        logger.error(error, "Error");
-        myobj = { error: error };
-    } finally {
-        await driver.close();
+    })
+
+    return output;
+
+}
+
+async function initNode(obj) {
+    //init vars
+    let output = { data: {} };
+    //init logs
+    const log = logger.child({ 'function': 'initNode' });
+    log.trace();
+    //init drivers
+    let driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    await session.run(`
+        CREATE (n:NODE {
+            \`NODE_UUID\`: "${obj.NODE_UUID}",
+            NODE_TYPE: "${obj.NODE_TYPE}",
+            degree: "${obj.degree}",
+            metadata: "${JSON.stringify(obj.metadata)}",
+            createdAt: "${obj.createdAt}",
+            views: 0,
+            points: 0
+        })
+        RETURN n
+    `).then(result => {
+        const x = result.records.map(i => i.get('n').properties);
+        output.data = x[0];
+        output.summary = result.summary.counters._stats;
+        log.info(output, 'Created a new node in the database.')
+    }).catch(error => {
+        throw error
+    });
+    return output;
+}
+async function initNodeRelationships(obj) {
+    //init vars
+    let output = { data: {} };
+    //init logs
+    const log = logger.child({ 'function': 'initNodeRelationships' });
+    log.trace();
+    //init drivers
+    let driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    await session.run(`
+        MATCH (n:NODE {NODE_UUID: "${obj.NODE_UUID}"})
+        MATCH (p:POST {POST_UUID: "${obj.POST_UUID}"})
+        MATCH (u:USER {USER_UUID: "${obj.USER_UUID}"})
+        CREATE (u)<-[:PARENT_USER]-(n)<-[:CHILD_NODE]-(u)
+        CREATE (p)<-[:PARENT_POST]-(n)<-[:CHILD_NODE]-(p)
+        SET n.owned = CASE WHEN u.isAnonymous = 'true' THEN 'false' ELSE 'true' END
+    `).then(result => {
+        output.summary = result.summary.counters._stats;
+        log.info(output, 'Initialized node relationships in the database.')
+    }).catch(error => {
+        throw error
+    });
+    return output;
+}
+async function initSourceNodeRelationships(obj) {
+    //init vars
+    let output = { data: {} };
+    //init logs
+    const log = logger.child({ 'function': 'initSourceNodeRelationships' });
+    log.trace();
+    //init drivers
+    let driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    await session.run(`
+        MATCH (n:NODE {NODE_UUID: "${obj.NODE_UUID}"})
+        MATCH (p:POST {POST_UUID: "${obj.POST_UUID}"})
+        CREATE (n)<-[:SOURCE_NODE]-(p)
+    `).then(result => {
+        output.summary = result.summary.counters._stats;
+        log.info(output, 'Initialized source node relationships in the database.')
+    }).catch(error => {
+        throw error
+    });
+    return output;
+}
+async function initEdgeFulfilledRelationships(obj) {
+    //init vars
+    let output = { data: {} };
+    //init logs
+    const log = logger.child({ 'function': 'initEdgeFulfilledRelationships' });
+    log.trace();
+    //init drivers
+    let driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    await session.run(`
+        MATCH (destination:NODE {NODE_UUID: "${obj.NODE_UUID}"})
+        MATCH (source:NODE)-[edge:EDGE {EDGE_UUID: "${obj.SOURCE_EDGE_UUID}"}]->()
+        CREATE (destination)<-[edgeFulfilled:EDGE_FULFILLED {
+        EDGE_UUID: edge.EDGE_UUID,
+        EDGE_QUERY: edge.EDGE_QUERY,
+        degree: edge.degree
+        }]-(source)
+        RETURN destination,edgeFulfilled,source
+    `).then(result => {
+        output.summary = result.summary.counters._stats;
+        log.info(output, 'Initialized edge fulfilled relationships in the database.')
+    }).catch(error => {
+        throw error
+    });
+    return output;
+}
+
+async function create(obj) {
+    let output = { data: {} };
+    const log = logger.child({ 'function': 'create' });
+    log.trace();
+    log.debug(obj, 'INPUT');
+
+    //Check if a user already has a node in the post
+    const x = await userHasNodeInPost(obj.USER_UUID, obj.POST_UUID);
+    log.info(x)
+    if (x == true) {
+        throw new AppError('User Already Has Node In Post', 403)
+    }
+    //create the node in the db
+    let createNodeResult = await initNode(obj);
+
+    //create the node relationships in the db
+    let createNodeRelationshipsResult = await initNodeRelationships(obj);
+
+    if (obj.NODE_TYPE === "origin") {
+        // Create SOURCE_NODE relationship if NODE_TYPE is "origin"
+        let createSourceNodeRelationshipsResult = await initSourceNodeRelationships(obj);
     }
 
-    return myobj;
+    // if the obj has a SOURCE_EDGE_UUID property 
+    // Create EDGE_FULFILLED relationship
+    if (obj.SOURCE_EDGE_UUID) {
+        let createEdgeFulfilledResult = await initEdgeFulfilledRelationships(obj);
+    }
+
+
+    log.info(output, 'FINAL OUTPUT');
+    return output;
 }
 
 async function deleteNode(UUID) {
@@ -170,14 +262,14 @@ async function deleteNode(UUID) {
     return myobj;
 };
 
-async function takeOwnership(obj){
-    const log = logger.child({'function': 'takeOwnership', 'params': obj});
+async function takeOwnership(obj) {
+    const log = logger.child({ 'function': 'takeOwnership', 'params': obj });
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     let node = await findOneByUUID(obj.NODE_UUID);
-    if (node.owned == false){
+    if (node.owned == false) {
         var myobj = null;
-    var query = `
+        var query = `
     MATCH (n:NODE {NODE_UUID: '${obj.NODE_UUID}'})
     WITH n
     MATCH (n)-[:USER]->(a:USER)
@@ -188,25 +280,25 @@ async function takeOwnership(obj){
     DETACH DELETE a
     RETURN u;
     `;
-    await session.run(query)
-        .then( result => {
-            const myresult = result.records.map(i => i.get('u').properties);
-            const msg = `User ${myresult.username} successfully took ownership of node ${obj.NODE_UUID}`
-            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
-            myobj = { 'message': msg , 'success':true}
-        }
-            
-        ).catch(error => {
-            throw error;
-        })
+        await session.run(query)
+            .then(result => {
+                const myresult = result.records.map(i => i.get('u').properties);
+                const msg = `User ${myresult.username} successfully took ownership of node ${obj.NODE_UUID}`
+                logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+                myobj = { 'message': msg, 'success': true }
+            }
+
+            ).catch(error => {
+                throw error;
+            })
     } else {
         throw new AppError('Node is already owned', 201);
     }
-    
 
-        await session.close;
-        await driver.close;
-        return myobj;
+
+    await session.close;
+    await driver.close;
+    return myobj;
 }
 
 /**
@@ -217,34 +309,34 @@ async function takeOwnership(obj){
  */
 
 //TODO: Proper logging
-async function findDistributionPathAndAward(uuid){
-    const log = logger.child({'function': 'findDistributionPath', 'params': uuid});
+async function findDistributionPathAndAward(uuid, points) {
+    const log = logger.child({ 'function': 'findDistributionPath', 'params': uuid });
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     const query = `
-    MATCH (start:NODE {NODE_UUID: '01904dee-9f20-799d-a766-d532981fe67a'})
+    MATCH (start:NODE {NODE_UUID: '${uuid}'})
     MATCH path = (start)<-[:EDGE_FULFILLED*]-(end:NODE)
     WHERE end.degree = '0' 
     WITH path
     FOREACH (n IN nodes(path) | 
         SET n.points = CASE 
-            WHEN n.points IS NULL THEN 1 
-            ELSE n.points + 1 
+            WHEN n.points IS NULL THEN ${points} 
+            ELSE n.points + ${points} 
         END
     )
     RETURN path, [n IN nodes(path) | n.points] AS node_points
 `;
-await session.run(query)
-.then( result => {
-    const myresult = result.records.map(i => i.get('path').properties);
-    const msg = `Found all nodes in path and rewarded them with a point`
-    log.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
-    myobj = { 'message': msg , 'success':true}
-}
-    
-).catch(error => {
-    throw error;
-})
+    await session.run(query)
+        .then(result => {
+            const myresult = result.records.map(i => i.get('path').properties);
+            const msg = `Found all nodes in path and rewarded them with a point`
+            log.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
+            myobj = { 'message': msg, 'success': true }
+        }
+
+        ).catch(error => {
+            throw error;
+        })
 }
 
-module.exports = { deleteNode, create, findAllOwnedBy, findOneByUUID, takeOwnership,findDistributionPathAndAward };
+module.exports = { deleteNode, create, findAllOwnedBy, findOneByUUID, takeOwnership, findDistributionPathAndAward, userHasNodeInPost };

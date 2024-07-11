@@ -31,23 +31,29 @@ async function findOneByUUID(UUID) {
     return myobj;
 };
 async function findOneByQuery(query) {
+    let output = {data:{}}
     logger.info('finding edge by query')
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
-    await session.run(`MATCH ()-[e:EDGE {EDGE_QUERY: '${query}'}]-() return e`)
+    await session.run(`MATCH (p:POST)-[:CHILD_NODE]-(n:NODE)-[e:EDGE {EDGE_QUERY: '${query}'}]->() return e,n,p`)
         .then(result => {
-            const myresult = result.records.map(i => i.get('e').properties);
-            const msg = 'found edge'
-            logger.info({'result': myresult[0], 'result-summary': result.summary._stats}, msg)
-            myobj = { "result": myresult[0], 'message': msg }
+            const edgeResult = result.records.map(i => i.get('e').properties);
+            const nodeResult = result.records.map(i => i.get('n').properties);
+            const postResult = result.records.map(i => i.get('p').properties);
+
+
+            const msg = 'found edge and node'
+            output.data = {...output.data, 'node' : nodeResult[0], 'edge' :edgeResult[0],'post' :postResult[0]};
+            output = {...output, 'summary': result.summary};
+            output = {...output, 'message': msg}
         })
         .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
+            logger.error(error);
+            output = {...output, "error": error }
         })
     await driver.close()
-    return myobj;
+    return output;
 };
 async function findAll() {
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
@@ -71,21 +77,18 @@ async function findAll() {
 };
 
 async function create(newObj) {
+    const log = logger.child({'function':'create'})
     logger.debug("creating new edge")
+    let output = {data:{}};
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     await session.run(`
-    MATCH (n:NODE {
-        \`NODE_UUID\` : '${newObj.SOURCE_NODE_UUID}'
-    })
+    MATCH (n:NODE  {NODE_UUID: "${newObj.SOURCE_NODE_UUID}"})
     WITH n
     CREATE (n)-[e:EDGE 
         {
             \`EDGE_UUID\`: '${newObj.EDGE_UUID}',
-            \`POST_UUID\`: '${newObj.POST_UUID}',
-            \`SOURCE_NODE_UUID\`: '${newObj.SOURCE_NODE_UUID}', 
-            \`DESTINATION_NODE_UUID\`: 'null',
             EDGE_QUERY: '${newObj.EDGE_QUERY}',
             degree : '${newObj.degree}'
             
@@ -95,16 +98,16 @@ async function create(newObj) {
     ;`)
         .then(result => {
             const myresult = result.records.map(i => i.get('e').properties);
-            const msg = 'successfully created new edge'
-            logger.info({'result': myresult, 'result-summary': result.summary._stats}, msg)
-            myobj = { "result": myresult, 'message': msg }
+            output.data = {...output.data, 'edge':myresult[0]};
+            output = {...output, 'message': 'successfully created new edge'}
         })
         .catch(error => {
             logger.error(error, "error");
-            myobj = { "error": error }
+            output = {...output, "error": error }
         })
     await driver.close()
-    return myobj;
+    log.info(output)
+    return output;
 };
 /*
 async function deleteNode(UUID) {

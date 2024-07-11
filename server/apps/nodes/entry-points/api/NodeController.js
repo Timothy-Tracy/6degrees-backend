@@ -18,6 +18,10 @@ router.get('/:uuid', NodeService.findOneByUUID, async function (req, res){
     res.status(200).json(res.result)
 });
 
+router.get('/interact/:query', catchAsync(NodeService.interact), async function (req, res){
+    res.status(201).json(res.result);
+})
+
 // Allows an authenticated user to take ownership of a response node that was generated with an anonymous user owner
 router.post('/own', catchAsync(AuthService.verify), catchAsync(NodeService.takeOwnership), async function(req,res){
     res.status(200).json(res.result);

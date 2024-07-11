@@ -3,8 +3,12 @@ const EdgeRepository = require('../data-access/EdgeRepository.js');
 const randomWordSlugs = require('random-word-slugs')
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'EdgeService' }, {options:{name:'EdgeService'}});
+
+
 async function createDistribution(node) {
-    console.log(node)
+    const log = logger.child({'function':'createDistribution'});
+    log.trace();
+    log.debug(node)
     let UUID = uuidv7();
     var obj = {
         EDGE_UUID: UUID,
@@ -20,11 +24,26 @@ async function createDistribution(node) {
     logger.info("Edge Created")
     return (result);
 }
+async function createDistributionNew(node) {
+
+    const log = logger.child({'function':'createDistributionNew'});
+    log.trace();
+
+    let uuid = uuidv7();
+    var obj = {
+        EDGE_UUID: uuid,
+        SOURCE_NODE_UUID: node.NODE_UUID,
+        EDGE_QUERY: randomWordSlugs.generateSlug(),
+        degree: node.degree,
+    }
+    
+    const result = await EdgeRepository.create(obj)
+    return (result);
+}
 
 async function findOneByQuery(query) {
     const result = await EdgeRepository.findOneByQuery(query);
-    console.log(result);
-    return (result.result);
+    return (result);
 }
 
-module.exports = { createDistribution, findOneByQuery }
+module.exports = { createDistributionNew,createDistribution, findOneByQuery }

@@ -38,6 +38,7 @@ class Neo4jError extends AppError {
 }
 const catchAsync = (fn) => {
 const log = logger.child({'function':'catchAsync'});
+log.trace();
   return (req, res, next) => {
     //log.debug('catchAsync: Before calling function');
     Promise.resolve(fn(req, res, next)).catch(error => {

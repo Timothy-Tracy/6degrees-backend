@@ -58,19 +58,25 @@ const sendError = (err, res) => {
 const sendErrorDev = (err, res) => {
   const log = logger.child({'function':'sendErrorDev'});
   log.error({
-    name: err.name || 'UnknownError',
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack
+    'data' : {
+      name: err.name || 'UnknownError',
+      status: err.status,
+      error: err,
+      message: err.message,
+      stack: err.stack
+    }
+    
   }, `${err.name} - ${err.statusCode} - ${err.message}`);
   
   res.status(err.statusCode).json({
-    name: err.name || 'UnknownError',
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack
+    'data' : {
+      name: err.name || 'UnknownError',
+      status: err.status,
+      error: err,
+      message: err.message,
+      stack: err.stack
+    }
+    
   });
 };
 

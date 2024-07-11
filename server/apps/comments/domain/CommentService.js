@@ -17,7 +17,7 @@ async function comment(req,res,next){
     log.trace();
     let USER_UUID, parentId;
     let COMMENT_UUID = uuidv7();
-    //check if JWTY is present
+    //check if JWT is present
     await AuthService.optionalAuth(req, res);
     
     if (res.locals.authorization == true){

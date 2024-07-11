@@ -25,8 +25,13 @@ async function findOneAndGetAttributes(label, searchParam, searchValue, attribut
     const session = driver.session();
     
       const attributeString = attributesToReturn.map(attr => `n.${attr} AS ${attr}`).join(', ');
+      if(typeof searchValue === 'string'){
+        log.debug('searchValue is a string')
+        searchValue = `\"${searchValue}\"`;
+        log.debug(searchValue)
+      }
       const query = `
-        MATCH (n:${label} {${searchParam}: $searchValue})
+        MATCH (n:${label} {${searchParam}: ${searchValue}})
         RETURN ${attributeString}
       `;
   
@@ -50,6 +55,61 @@ async function findOneAndGetAttributes(label, searchParam, searchValue, attribut
       }).catch(error =>{
         throw error
         
+      })
+
+    await session.close();
+    return myobj;
+    
+      
+  
+      
+  
+  }
+/**
+ * 
+ * @param {@} label 
+ * @param {*} attr 
+ * @param {*} value 
+ * @param {*} attributesToReturn 
+ * @returns 
+ */
+  async function findOneAndSetAttribute(label, searchParam, searchValue, attr, attrValue, attributesToReturn) {
+    const log = logger.child({'function':'findOneAndSetAttribute'});
+    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+
+    const session = driver.session();
+    
+      const attributeString = attributesToReturn.map(attr => `n.${attr} AS ${attr}`).join(', ');
+      if(typeof searchValue === 'string'){
+        log.debug('searchValue is a string')
+        searchValue = `\"${searchValue}\"`;
+        log.debug(searchValue)
+      }
+      const query = `
+        MATCH (n:${label} {${searchParam}: ${searchValue}})
+        SET n.${attr} = ${attrValue}
+        RETURN ${attributeString};
+      `;
+  
+      const myobj = await session.run(query, { searchValue })
+      .then(result => {
+        if (result.records.length === 0) {
+            return null; // No matching node found
+          }
+      
+          if (result.records.length > 1) {
+            throw new Error(`Multiple nodes found for ${searchParam}: ${searchValue}`);
+          }
+          log.info('hekko2')
+          const record = result.records[0];
+          log.info(record)
+          return attributesToReturn.reduce((acc, attr) => {
+            acc[attr] = record.get(attr);
+            
+            return acc;
+          }, {});
+      }).catch(error =>{
+        throw error
       })
 
     await session.close();
@@ -106,4 +166,4 @@ async function findAll() {
 
 
 
-module.exports = { findOneAndGetAttributes};
+module.exports = { findOneAndGetAttributes, findOneAndSetAttribute};

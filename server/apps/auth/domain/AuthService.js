@@ -61,13 +61,13 @@ async function optionalAuth(req, res, next){
     const log = logger.child({'function' : 'optionalAuth'});
     log.trace();
     if(req.headers.authorization){
-        log.info('auth detected, verifying...')
+        log.debug('auth header detection = true')
         await verify(req,res);
         if (typeof next === 'function') {
             next();
           }
     } else {
-        log.info('no auth')
+        log.info('auth header detection = false')
         res.locals.authorization = false;
         if (typeof next === 'function') {
             next();
