@@ -9,6 +9,31 @@ const {
 } = process.env;
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'PostRepository' });
+const Neo4jDriver = require('../../db/neo4j/data-access/Neo4jDriver.js')
+
+async function findAllOwnedBy(uuid) {
+    let output = {};
+    const log = logger.child({ 'function': 'findAllOwnedBy' });
+    log.trace();
+    let driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    
+    await session.run(`Match (u:USER {USER_UUID: "${uuid}"})-[:PARENT_USER]-(p) return p`)
+    .then(result => {
+        const myresult = result.records.map(i => i.get('p').properties.NODE_UUID);
+        console.log(myresult)
+        output.data = myresult;
+        output.message = `found all nodes owned by ${uuid}`;
+        output.summary = result.summary;
+    })
+    .catch(error => {
+        throw error
+
+    })
+    return output;
+
+
+};
 
 async function findOneByQuery(query){
     let output = {data : {}};
@@ -142,4 +167,4 @@ async function deletePost(UUID) {
     return myobj;
 };
 
-module.exports = { deletePost, create, findAll, findOneByUUID, findOneByQuery };
+module.exports = { deletePost, create, findAll, findOneByUUID, findOneByQuery, findAllOwnedBy };
