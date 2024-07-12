@@ -11,6 +11,8 @@ const {
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'UserRepository' });
 const errorHandler = require('../../../lib/error/errorHandler.js')
+const Neo4jDriver = require('../../db/neo4j/data-access/Neo4jDriver.js')
+
 
 
 async function findOneByUUID(uuid) {
@@ -118,27 +120,34 @@ async function createAnonymous(user) {
     return myobj;
 };
 
-async function deleteUser(UUID) {
-    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+async function deleteUser(uuid) {
+    //initialize vars
+    let output = {};
+    //initialize logs
+    const log = logger.child({ 'function': 'findAllOwnedBy' });
+    log.trace();
+    //initialize driver
+    let driver = Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
+   
     var myobj = null;
     var query = `
-    MATCH (u:USER)
-    WHERE u.USER_UUID = "${UUID}"
-    DETACH DELETE u;`;
+        MATCH (u:USER)
+        WHERE u.USER_UUID = "${uuid}"
+        DETACH DELETE u;
+    `;
     await session.run(query)
         .then(result => {
             const myresult = result.records.map(i => i.get('u').properties);
-            const msg = 'user deleted'
-            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
-            myobj = { "result": myresult[0], 'message': msg }
+            output.message = 'User deleted.'
+            output.data = myresult[0];
+            output.summary = result.summary.counters._stats;
         })
         .catch(error => {
-            logger.error(error, "Error");
-            myobj = { error: error };
+            throw error
         })
-    await driver.close()
-    return myobj;
+    log.info(output)
+    return output;
 };
 
 module.exports = { createAnonymous, deleteUser, create, findAll, findOneByUUID };

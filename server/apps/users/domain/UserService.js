@@ -1,6 +1,7 @@
 
 const { v7: uuidv7 } = require('uuid');
 const NodeService = require('../../nodes/domain/NodeService.js')
+const Neo4jRepository = require('../../db/neo4j/data-access/Neo4jRepository.js');
 const UserRepository = require('../data-access/UserRepository.js')
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'UserService' });
@@ -67,6 +68,20 @@ async function deleteUser(req, res, next) {
     next()
 }
 
+async function update(req,res,next){
+    const log = logger.child({'function':'update'});
+    log.trace()
+    let body = req.body;
+    delete body['USER_UUID']
+    delete body['USER_ROLE']
+    delete body['password']
+    const result = await Neo4jRepository.findOneAndUpdate('USER', "USER_UUID", res.locals.tokenData.USER_UUID, body);
+    const result2 = await Neo4jRepository.hasRelationship(['USER', 'POST'], ['username', 'title'], ['testuser','Potty'], 'CHILD_POST');
+    log.info(result2);
+    res.result = result;
+    next();
+}
 
 
-module.exports = { createAnonymous, findAll, findOneByUUID, create, deleteUser };
+
+module.exports = { createAnonymous, findAll, findOneByUUID, create, deleteUser, update };

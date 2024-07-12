@@ -1,5 +1,6 @@
 var UserService = require('../../domain/UserService.js')
 var UserRepository = require('../../data-access/UserRepository.js')
+let AuthService = require('../../../auth/domain/AuthService.js');
 var express = require('express');
 var router = express.Router();
 const apiRoot = '/api/users';
@@ -21,6 +22,10 @@ router.get('/:UUID', UserService.findOneByUUID, async function (req, res){
 });
 
 router.delete('/', UserService.deleteUser, async function (req, res){
+    res.status(200).json(res.result)
+});
+
+router.patch('/', catchAsync(AuthService.verify), catchAsync(UserService.update), async function (req, res){
     res.status(200).json(res.result)
 });
 
