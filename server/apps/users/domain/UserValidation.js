@@ -82,7 +82,7 @@ async function validateMutableUserInput(req,res,next) {
         }
     );
     if (error){
-        throw new ValidationError(error);
+        throw new ValidationError({'error': error});
     }
 
     res.locals.data = value;
@@ -100,7 +100,7 @@ async function validateNewUserInput(req, res, next){
         }
     );
     if (error){
-        throw new ValidationError(error);
+        throw new ValidationError({'error': error});
     }
 
     res.locals.newUserObj = value;

@@ -38,7 +38,7 @@ async function validateLoginInput(req,res,next){
       }
   );
   if (error){
-      throw new ValidationError(error);
+      throw new ValidationError({'error': error});
   }
 
   res.locals.loginObj = value;
@@ -52,7 +52,7 @@ async function assertUserUUIDInBody(req, res, next) {
     try {
       const { error, value } = userUUIDSchema.validate(req.body);
       if (error) {
-        throw new ValidationError(error.details[0].message);
+        throw new ValidationError({'error': error});
       }
       // Optionally, you can assign the validated value back to req.body
       // req.body = value;
@@ -67,7 +67,7 @@ async function assertNodeUUIDInBody(req, res, next) {
     try {
       const { error, value } = nodeUUIDSchema.validate(req.body);
       if (error) {
-        throw new ValidationError(error.details[0].message);
+        throw new ValidationError({'error': error});
       }
       // Optionally, you can assign the validated value back to req.body
       // req.body = value;

@@ -8,7 +8,7 @@ const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'AuthService' });
 const Neo4jRepository = require('../../db/neo4j/data-access/Neo4jRepository.js');
 const JWTService = require('../../jwt/domain/JWTService.js');
-const {AppError} = require('../../../lib/error/customErrors.js')
+const {AppError, AuthorizationError} = require('../../../lib/error/customErrors.js')
 
 async function hash(data){
     let log = logger.child({'function':'hash'});
@@ -40,7 +40,7 @@ async function verifyPassword(searchParam, searchValue, password){
 async function login(req,res,next){
     //init vars
     let loginResult, searchParam, searchValue;
-
+    res.locals.auth={}
     //init logger
     let log = logger.child({'function':'login'});
     log.trace();
@@ -57,7 +57,7 @@ async function login(req,res,next){
         searchValue = username;
         loginResult = await verifyPassword('username', username, password);
     } else {
-        throw new AppError('Bad Login Info', 204)
+        throw new AuthorizationError({'message':'Bad Login Info', "statusCode": 204})
     }
 
     //verify the password and return a boolean
@@ -69,7 +69,7 @@ async function login(req,res,next){
         res.locals.auth.JwtToken = await JWTService.sign(user);
         next();
     } else {
-        throw new AppError('Bad Login Info', 204)
+        throw new AuthorizationError({'message':'Bad Login Info', "statusCode": 204})
     }
 }
 
@@ -89,11 +89,12 @@ async function verify(req,res,next){
 }
 
 async function requireAuth(req,res,next){
+    res.locals.auth ={}
     let log = logger.child({'function':'requireAuth'});
     log.trace('Authorization required.');
     const token = await JWTService.checkForToken(req);
     if(!token){
-        throw new AppError('JWT Token Not Provided', 401)
+        throw new AuthorizationError({'message':'JWT Token Not Provided', 'statusCode':401})
     }
     const data = await JWTService.decodeToken(token);
     res.locals.auth.tokenData = data;
@@ -106,12 +107,14 @@ async function requireAuth(req,res,next){
 }
 
 async function optionalAuth(req, res, next){
+    res.locals.auth={}
     const log = logger.child({'function' : 'optionalAuth'});
     log.trace('Authorization optional.');
     const token = await JWTService.checkForToken(req);
     if(token){
         log.debug('auth header detection = true')
         const data = await JWTService.decodeToken(token);
+    
         res.locals.auth.tokenData = data;
         res.locals.auth.hasAuth = true;
         if (typeof next === 'function') {
@@ -119,6 +122,7 @@ async function optionalAuth(req, res, next){
           }
     } else {
         log.info('auth header detection = false')
+        log.debug(res)
         res.locals.auth.hasAuth = false;
         if (typeof next === 'function') {
             next();

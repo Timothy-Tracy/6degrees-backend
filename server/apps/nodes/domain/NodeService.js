@@ -114,6 +114,7 @@ async function createFromDistribution(req, res, next) {
 }
 async function interact(req, res, next) {
     const log = logger.child({'function':'interact'});
+    log.trace();
     log.info(`interacting with post using query ${req.params.query}`);
     var result = await EdgeService.findOneByQuery(req.params.query)
     logger.info(result.data)
@@ -122,7 +123,7 @@ async function interact(req, res, next) {
     let user, owned;
 
     //condition: login status
-    await AuthService.optionalAuth(req, res);
+    
     if (res.locals.auth.hasAuth) {
         log.info('auth = yes')
         user = res.locals.auth.tokenData.USER_UUID;

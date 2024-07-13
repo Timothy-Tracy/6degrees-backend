@@ -38,7 +38,7 @@ async function validateComment(comment) {
       if (error instanceof ValidationError) {
         throw error;
       } else {
-        throw new ValidationError('An unexpected error occurred during validation');
+        throw new ValidationError({'error': error});
       }
     }
   }

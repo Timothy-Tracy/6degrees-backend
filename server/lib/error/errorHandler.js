@@ -5,14 +5,16 @@ const logger = mylogger.child({'module':'errorHandler.js'});
 const globalErrorHandler = (err, req, res, next) => {
   const log = logger.child({'function':'globalErrorHandler'});
   log.info('Entering globalErrorHandler');
-
+  log.debug(err)
   // Ensure these properties exist
+  err.name = err.name || "UnknownError";
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
   log.debug(`Error details: ${JSON.stringify(err)}`);
 
   let error = { ...err };
+  console.log(error)
   error.message = err.message;
 
   log.debug(`Processing error of type: ${error.name}`);
@@ -21,7 +23,7 @@ const globalErrorHandler = (err, req, res, next) => {
   if (error.name === 'CastError') error = handleCastErrorDB(error);
   if (error.code === 11000) error = handleDuplicateFieldsDB(error);
   if (error.name === 'InputValidationError') error = handleInputValidationError(error);
-  //if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
+  if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
 
   if (error.name === 'JsonWebTokenError') error = handleJWTError();
   if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
@@ -57,10 +59,13 @@ const sendError = (err, res) => {
 
 const sendErrorDev = (err, res) => {
   const log = logger.child({'function':'sendErrorDev'});
+  log.trace();
   log.error({
-    'data' : {
+    'error' : {
       name: err.name || 'UnknownError',
       status: err.status,
+      statusCode: err.statusCode,
+
       error: err,
       message: err.message,
       stack: err.stack
@@ -69,13 +74,7 @@ const sendErrorDev = (err, res) => {
   }, `${err.name} - ${err.statusCode} - ${err.message}`);
   
   res.status(err.statusCode).json({
-    'data' : {
-      name: err.name || 'UnknownError',
-      status: err.status,
-      error: err,
-      message: err.message,
-      stack: err.stack
-    }
+    'error' : err
     
   });
 };
@@ -131,8 +130,14 @@ const handleValidationErrorDB = err => {
   return new AppError(message, 400);
 };
 const handleInputValidationError = err => {
-  console.log('hiiiii')
-  return new ValidationError(err);
+  let error = err;
+  const log = logger.child({'function':'handleInputValidationError'});
+  log.trace()
+  //process the raw error
+  log.warn(error.error)
+  const errors = error.error.details.map(detail => {return {'path':detail.path, 'type':detail.type, 'message':detail.message }})
+  error.error = errors;
+  return error;
 };
 
 const handleJWTError = () => new AppError('Invalid token. Please log in again!', 401);

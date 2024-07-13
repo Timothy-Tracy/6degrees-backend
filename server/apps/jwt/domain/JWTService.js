@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const {AppError} = require('../../../lib/error/customErrors.js')
+const {AppError, AuthorizationError} = require('../../../lib/error/customErrors.js')
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'JWTService' });
 const SECRET = process.env.JWT_SECRET_KEY;
@@ -21,7 +21,7 @@ async function sign(user){
     } catch (err) {
         console.log(err);
         const error =
-            new AppError("JWTService: Error! Something went wrong.");
+            new AuthorizationError({'message':"JWTService: Error! Something went wrong.",'statusCode':401, 'error':err});
         throw error;
     }
     return token;
@@ -51,7 +51,7 @@ async function decodeToken(token){
         try{
             decodedToken = jwt.verify(token, SECRET);
         } catch (err){
-            throw new AppError('JWT Token Not Verified',401);
+            throw new AuthorizationError({'message':'JWT Token Not Verified','statusCode':401, 'error':err});
         }
     return decodedToken;
             

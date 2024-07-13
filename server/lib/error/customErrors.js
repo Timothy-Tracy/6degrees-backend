@@ -2,25 +2,33 @@ const mylogger = require('../logger/logger.js');
 //const { Neo4jError } = require('neo4j-driver');
 const logger = mylogger.child({'module':'customErrors.js'});
 class AppError extends Error {
-  constructor(message, statusCode) {
+  constructor(message, statusCode, error) {
     super(message);
     this.statusCode = statusCode;
     this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
     this.isOperational = true;
+    this.error = error || null;
 
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
 // You can create more specific error classes if needed
+class AuthorizationError extends AppError {
+  
+  constructor(obj) {
+    
+    super(obj.message || 'UnknownAuthorizationError', obj.statusCode || 401, obj.error||null);
+    this.name = 'AuthorizationError';
+    
+  }
+}
+
 class ValidationError extends AppError {
-  constructor(error) {
-    console.log(error)
-    const errors = error.details.map(detail => detail.message)
-    console.log(JSON.stringify(errors.context))
-    console.log(JSON.stringify(error))
-    super(errors, 400);
-    this.name = 'ValidationError';
+  constructor(obj) {
+    
+    super(obj.message || "", obj.statusCode || 400, obj.error||null);
+    this.name = 'InputValidationError';
   }
 }
 
@@ -54,4 +62,4 @@ log.trace();
   };
 };
 
-module.exports = { AppError, ValidationError, DatabaseError, Neo4jError, catchAsync};
+module.exports = { AppError, ValidationError, DatabaseError, Neo4jError, AuthorizationError, catchAsync};
