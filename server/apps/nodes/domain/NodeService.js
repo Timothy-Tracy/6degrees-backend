@@ -76,9 +76,9 @@ async function createFromDistribution(req, res, next) {
     res.locals.node = result.data.node;
     let user, owned;
 
-    if (res.locals.tokenData) {
+    if (res.locals.auth.tokenData) {
         log.info('tokenData detected')
-        user = res.locals.tokenData.USER_UUID;
+        user = res.locals.auth.tokenData.USER_UUID;
         owned = true;
     } else {
         log.info('no auth')
@@ -123,9 +123,9 @@ async function interact(req, res, next) {
 
     //condition: login status
     await AuthService.optionalAuth(req, res);
-    if (res.locals.authorization) {
+    if (res.locals.auth.hasAuth) {
         log.info('auth = yes')
-        user = res.locals.tokenData.USER_UUID;
+        user = res.locals.auth.tokenData.USER_UUID;
         owned = true;
     } else {
         log.info('auth = no')
@@ -191,7 +191,7 @@ async function deleteNode(req, res, next) {
  */
 async function takeOwnership(req, res, next) {
     const node = req.body.NODE_UUID;
-    const user = res.tokenData.USER_UUID;
+    const user = res.locals.auth.tokenData.USER_UUID;
 
     let result = await NodeRepository.takeOwnership({ "NODE_UUID": node, "USER_UUID": user });
     res.result = result;
@@ -200,7 +200,7 @@ async function takeOwnership(req, res, next) {
 }
 
 async function findAllOwnedBy(req, res, next) {
-    const user = res.locals.tokenData.USER_UUID;
+    const user = res.locals.auth.tokenData.USER_UUID;
     logger.debug(user)
     const result = await NodeRepository.findAllOwnedBy(user);
     res.result = result;

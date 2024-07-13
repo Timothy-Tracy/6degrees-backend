@@ -192,18 +192,22 @@ async function findOneAndUpdate(label, searchParam, searchValue, obj) {
   log.info(output)
   return output;
 }
+/**
+ * @description Check if 2 nodes have a specified relationship with each other
+ * @param {*} labels []
+ * @param {*} searchParams []
+ * @param {*} searchValues []
+ * @param {*} relationship 
+ * @returns boolean
+ */
+//TODO: if something doesn't exist, specify which one
 async function hasRelationship(labels, searchParams, searchValues, relationship) {
   let output = {};
   const log = logger.child({ 'function': 'verifyRelationship' });
   const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
 
   const session = driver.session();
-  searchValues = searchValues.map(element => {
-    if (typeof element === 'string') {
-      return `\"${element}\"`;
-    }
-    return element;
-  });
+  searchValues = stringValues(searchValues);
   
   if(await exists(labels[0], searchParams[0],searchValues[0]) && await exists(labels[1], searchParams[1],searchValues[1])){
 
@@ -231,18 +235,22 @@ async function hasRelationship(labels, searchParams, searchValues, relationship)
   })
   return output;
 }
+
+/**
+ * @description check if a node exists
+ * @param {*} label 
+ * @param {*} searchParam 
+ * @param {*} searchValue 
+ * @returns boolean
+ */
 async function exists(label, searchParam, searchValue) {
   let output = {};
   const log = logger.child({ 'function': 'exists' });
   const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
 
   const session = driver.session();
-  if (typeof searchValue === 'string') {
-    if(!(searchValue[0] == '\"' && searchValue[searchValue.length-1] == '\"')){
-      searchValue = `\"${searchValue}\"`;
-    }
-    
-  }
+  searchValue = stringValue(searchValue);
+  
 
 
   const y = await session.run(`
@@ -257,7 +265,7 @@ async function exists(label, searchParam, searchValue) {
         if (output) {
             log.info(`(:${label} {${searchParam}: ${searchValue}}) exists == true`)
         } else {
-          log.info(`(:${label} {${searchParam}: ${searchValue}}) exists == true`)
+          log.info(`(:${label} {${searchParam}: ${searchValue}}) exists == false`)
         }
 
   })
@@ -270,6 +278,37 @@ async function exists(label, searchParam, searchValue) {
   return output;
 }
 
+/**
+ * @description if a search parameter is a string, wrap it in "" so that it can be read as valid cypher text
+ * @param {*} value 
+ * @returns 
+ */
+function stringValue(value){
+  let output = value;
+  if (typeof value === 'string') {
+    if(!(value[0] == '\"' && value[value.length-1] == '\"')){
+      output = `\"${value}\"`;
+    }
+    
+  }
+  return output;
+}
 
+/**
+ * @description Check search paramaters and if a search parameter is a string, wrap it in "" so that it can be read as valid cypher text
+ * @param {*} values 
+ * @returns 
+ */
+function stringValues(values){
+  let output = values;
+  output = values.map(element => {
+    if (typeof element === 'string') {
+      return stringValue(element);
+    }
+    return element;
+  });
+  return output;
+
+}
 
 module.exports = { findOneAndGetAttributes, findOneAndSetAttribute, findOneAndUpdate, hasRelationship, exists};

@@ -18,11 +18,10 @@ async function comment(req,res,next){
     let USER_UUID, parentId;
     let COMMENT_UUID = uuidv7();
     //check if JWT is present
-    await AuthService.optionalAuth(req, res);
     
-    if (res.locals.authorization == true){
+    if (res.locals.auth.hasAuth == true){
         //if authorization is present
-        USER_UUID = res.locals.tokenData.USER_UUID;
+        USER_UUID = res.locals.auth.tokenData.USER_UUID;
     } else {
         //else if authorization is not present
         await AuthValidation.assertUserUUIDInBody(req, res)

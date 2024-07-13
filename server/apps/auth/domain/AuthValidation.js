@@ -6,12 +6,18 @@
  */
 
 const joi = require('joi');
+const {usernameSchema,passwordSchema} = require('../../users/domain/UserValidation.js');
 const {ValidationError} = require('../../../lib/error/customErrors.js');
+const mylogger = require('../../../lib/logger/logger.js');
+const logger = mylogger.child({ 'module': 'AuthValidation' });
 
+
+//add passWordSchema for strict password rules
 const loginSchema = joi.object().keys({
-    username : joi.string().required(),
+    username : usernameSchema,
+    email : joi.string().email(),
     password : joi.string().required(),
-})
+}).or('username','email').strict()
 
 const userUUIDSchema = joi.object({
     USER_UUID: joi.string().uuid().required()
@@ -20,16 +26,25 @@ const nodeUUIDSchema = joi.object({
     NODE_UUID: joi.string().uuid().required()
   }).unknown(true); 
 
-async function login(req,res,next){
-    
-    try{
-        joi.assert(req.body, loginSchema)
-    } catch (error) {
-        throw new ValidationError(error)
-    }
-    if (typeof next === 'function') {
-        next();
+async function validateLoginInput(req,res,next){
+    const log = logger.child({'function':'validateLoginInput'});
+    log.trace();
+
+
+    const {error, value} = loginSchema.validate(req.body,
+      {
+          abortEarly:false,
+          stripUnknown: true
       }
+  );
+  if (error){
+      throw new ValidationError(error);
+  }
+
+  res.locals.loginObj = value;
+  if (typeof next === 'function') {
+    next();
+  }
     
 }
 
@@ -63,4 +78,4 @@ async function assertNodeUUIDInBody(req, res, next) {
         next();
       }
   }
-module.exports = {login, assertUserUUIDInBody, assertNodeUUIDInBody}
+module.exports = {validateLoginInput, assertUserUUIDInBody, assertNodeUUIDInBody}

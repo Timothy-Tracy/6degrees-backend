@@ -1,3 +1,7 @@
+/**
+ * @module AuthService.js
+ * @description A microservice for performing the logic associated with authorization
+ */
 const bcrypt = require('bcrypt');
 const { v7: uuidv7 } = require('uuid');
 const mylogger = require('../../../lib/logger/logger.js');
@@ -9,47 +13,91 @@ const {AppError} = require('../../../lib/error/customErrors.js')
 async function hash(data){
     let log = logger.child({'function':'hash'});
     log.trace();
-    const start = process.hrtime();
     const saltrounds = parseInt(process.env.SALT_ROUNDS);
     const hash = await bcrypt.hash(data, saltrounds);
-    log.logperf(process.hrtime(start));
     return hash;
 }
 
-async function verifyPassword(username, password){
+async function verifyPassword(searchParam, searchValue, password){
     let log = logger.child({'function':'verifyPassword'});
     log.trace();
-    const start = process.hrtime();
-    var userPasswordObj = await Neo4jRepository.findOneAndGetAttributes('USER','username', username, ['password']);
+    var userPasswordObj = await Neo4jRepository.findOneAndGetAttributes('USER',searchParam, searchValue, ['password']);
     const result = await bcrypt.compare(password, userPasswordObj.password)
-    log.info(`password verification result for ${username} = ${result}`)
-    log.logperf(log, process.hrtime(start))
+    log.info(`password verification result for ${searchParam}: ${searchValue} = ${result}`)
     return result;
 }
-
+/**
+ * @function login
+ * @description A middleware for logging in a user
+ * @requires AuthValidation.validateLoginInput to have succeeded
+ * @requires res.locals.loginObj.username or res.locals.loginObj.email
+ * @requires res.locals.loginObj.password
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+//TODO make db access related to authorization its own repository
 async function login(req,res,next){
+    //init vars
+    let loginResult, searchParam, searchValue;
+
+    //init logger
     let log = logger.child({'function':'login'});
     log.trace();
-    const{username, password} = req.body;
-    const loginResult = await verifyPassword(username, password);
+
+    // destruct res.locals.loginObj
+    const{username, email, password} = res.locals.loginObj;
+
+    //requires an email or a username to have been provided
+    if(email){
+        searchParam = 'email';
+        searchValue = email;
+    } else if (username){
+        searchParam = 'username';
+        searchValue = username;
+        loginResult = await verifyPassword('username', username, password);
+    } else {
+        throw new AppError('Bad Login Info', 204)
+    }
+
+    //verify the password and return a boolean
+    loginResult = await verifyPassword(searchParam,searchValue, password);
+
 
     if (loginResult){
-        let user = await Neo4jRepository.findOneAndGetAttributes('USER','username', username, ['USER_UUID', 'USER_ROLE']);
-        res.locals.token = await JWTService.sign(user);
-        next()
-
+        let user = await Neo4jRepository.findOneAndGetAttributes('USER',searchParam, searchValue, ['USER_UUID', 'USER_ROLE']);
+        res.locals.auth.JwtToken = await JWTService.sign(user);
+        next();
     } else {
         throw new AppError('Bad Login Info', 204)
     }
 }
+
 
 async function verify(req,res,next){
     let log = logger.child({'function':'verify'});
     log.trace();
     const token = await JWTService.checkForToken(req);
     const data = await JWTService.decodeToken(token);
-    res.locals.tokenData = data;
-    res.locals.authorization = true;
+    res.locals.auth.tokenData = data;
+    res.locals.auth.hasAuth = true;
+    log.info('user authorization verified')
+
+    if (typeof next === 'function') {
+        next();
+      }
+}
+
+async function requireAuth(req,res,next){
+    let log = logger.child({'function':'requireAuth'});
+    log.trace('Authorization required.');
+    const token = await JWTService.checkForToken(req);
+    if(!token){
+        throw new AppError('JWT Token Not Provided', 401)
+    }
+    const data = await JWTService.decodeToken(token);
+    res.locals.auth.tokenData = data;
+    res.locals.auth.hasAuth = true;
     log.info('user authorization verified')
 
     if (typeof next === 'function') {
@@ -59,16 +107,19 @@ async function verify(req,res,next){
 
 async function optionalAuth(req, res, next){
     const log = logger.child({'function' : 'optionalAuth'});
-    log.trace();
-    if(req.headers.authorization){
+    log.trace('Authorization optional.');
+    const token = await JWTService.checkForToken(req);
+    if(token){
         log.debug('auth header detection = true')
-        await verify(req,res);
+        const data = await JWTService.decodeToken(token);
+        res.locals.auth.tokenData = data;
+        res.locals.auth.hasAuth = true;
         if (typeof next === 'function') {
             next();
           }
     } else {
         log.info('auth header detection = false')
-        res.locals.authorization = false;
+        res.locals.auth.hasAuth = false;
         if (typeof next === 'function') {
             next();
           }
@@ -76,4 +127,4 @@ async function optionalAuth(req, res, next){
 }
 
 
-module.exports = {hash, login, verify, optionalAuth}
+module.exports = {hash, login, verify, optionalAuth, requireAuth}

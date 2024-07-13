@@ -7,11 +7,11 @@ const AuthService = require('../../domain/AuthService.js')
 const AuthValidation = require('../../domain/AuthValidation.js')
 
 
-router.post('/login', catchAsync(AuthValidation.login), catchAsync(AuthService.login), function (req, res) {
-    res.status(200).json(res.locals.token)
+router.post('/login', catchAsync(AuthValidation.validateLoginInput), catchAsync(AuthService.login), function (req, res) {
+    res.status(200).json(res.locals.auth.JwtToken)
 });
 router.post('/verify', catchAsync(AuthService.verify), function (req, res) {
-    res.status(200).json(res.locals.tokenData)
+    res.status(200).json(res.locals.auth.tokenData)
 });
 
 // router.get('/register', UserService.findAll, async function (req, res){

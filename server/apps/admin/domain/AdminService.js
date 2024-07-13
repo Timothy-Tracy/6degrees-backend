@@ -11,7 +11,7 @@ const { AppError } = require('../../../lib/error/customErrors.js');
 async function verifyAdmin(req,res,next){
     const log = logger.child({'function':'verifyAdmin'});
     log.trace();
-    if(res.locals.tokenData.USER_ROLE =='ADMIN'){
+    if(res.locals.auth.tokenData.USER_ROLE =='ADMIN'){
         log.info('ADMIN = true');
         next()
     } else {

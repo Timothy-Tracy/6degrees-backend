@@ -9,7 +9,7 @@ var router = express.Router();
 const apiRoot = '/api/posts'
 
 
-router.post('/', catchAsync(AuthService.verify), catchAsync(PostService.create), function (req, res) {
+router.post('/', catchAsync(AuthService.requireAuth), catchAsync(PostService.create), function (req, res) {
     res.status(200).json(res.result)
 });
 router.post('/distribute/:uuid', NodeService.distribute, function (req, res) {

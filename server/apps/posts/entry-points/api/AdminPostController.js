@@ -11,7 +11,7 @@ var router = express.Router();
 const apiRoot = '/api/admin/posts'
 
 //get all posts from a specific user
-router.get('/user/:USER_UUID', catchAsync(AuthService.verify), catchAsync(AdminService.verifyAdmin), catchAsync(AdminPostService.findManyByUserUUID), function (req, res) {
+router.get('/user/:USER_UUID', catchAsync(AuthService.requireAuth), catchAsync(AdminService.verifyAdmin), catchAsync(AdminPostService.findManyByUserUUID), function (req, res) {
     res.status(200).json(res.result);
 });
 

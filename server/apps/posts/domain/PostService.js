@@ -57,10 +57,10 @@ async function findPostUUIDByQuery(req,res,next){
 async function create(req, res, next) {
     logger.debug("creating new post")
     let UUID = uuidv7();
-    const sourceNode = await NodeService.createSourceNode(UUID, res.locals.tokenData.USER_UUID);
+    const sourceNode = await NodeService.createSourceNode(UUID, res.locals.auth.tokenData.USER_UUID);
     const newPost = {
         POST_UUID: UUID,
-        USER_UUID: res.locals.tokenData.USER_UUID,
+        USER_UUID: res.locals.auth.tokenData.USER_UUID,
         SOURCE_NODE_UUID: sourceNode.NODE_UUID,
         POST_TYPE: req.body.POST_TYPE,
         title: req.body.title,

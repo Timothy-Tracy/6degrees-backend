@@ -3,6 +3,7 @@ const { v7: uuidv7 } = require('uuid');
 const NodeService = require('../../nodes/domain/NodeService.js')
 const Neo4jRepository = require('../../db/neo4j/data-access/Neo4jRepository.js');
 const UserRepository = require('../data-access/UserRepository.js')
+const UserValidation = require('./UserValidation.js')
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'UserService' });
 const randomWordSlugs = require('random-word-slugs')
@@ -14,24 +15,27 @@ const catchAsync = customErrors.catchAsync;
 var crypto = require('crypto');
 
 async function create(req, res, next) {
-    //todo
-    //req.body is valid
-    logger.debug("Creating a new user")
-    let newUserUUID = uuidv7();
+    
     var hashedPassword = await AuthService.hash(req.body.password.toString());
-    const newUser = {
-        USER_UUID: newUserUUID,
-        USER_ROLE : "USER",
-        username : req.body.username,
-        first_name: req.body.first_name,
-        last_name: req.body.last_name,
-        email: req.body.email,
-        password: hashedPassword,
-        mobile: req.body.mobile,
-        isAnonymous : false
-    }
-    const myresult = await UserRepository.create(newUser);
-    res.result = { "data": myresult }
+    res.locals.newUserObj.password = hashedPassword;
+    res.locals.newUserObj.isAnonymous = false;
+    const date = new Date().toISOString();
+    res.locals.newUserObj.createdAt = date;
+    // const newUser = {
+    //    // USER_UUID: newUserUUID,
+    //     //USER_ROLE : "USER",
+    //     username : req.body.username,
+    //     firstName: req.body.firstName,
+    //     lastName: req.body.lastName,
+    //     email: req.body.email,
+    //     password: req.body.password,
+    //     mobile: req.body.mobile,
+    //     isAnonymous : false
+    // }
+    logger.info(res.locals.newUserObj)
+    console.log(req.ip)
+    //const myresult = await UserRepository.create(newUser);
+    //res.result = { "data": myresult }
     next()
 }
 
@@ -71,16 +75,12 @@ async function deleteUser(req, res, next) {
 async function update(req,res,next){
     const log = logger.child({'function':'update'});
     log.trace()
-    let body = req.body;
-    delete body['USER_UUID']
-    delete body['USER_ROLE']
-    delete body['password']
-    const result = await Neo4jRepository.findOneAndUpdate('USER', "USER_UUID", res.locals.tokenData.USER_UUID, body);
-    const result2 = await Neo4jRepository.hasRelationship(['USER', 'POST'], ['username', 'title'], ['testuser','Potty'], 'CHILD_POST');
-    log.info(result2);
+    const result = await Neo4jRepository.findOneAndUpdate('USER', "USER_UUID", res.locals.auth.tokenData.USER_UUID, req.body);
     res.result = result;
     next();
 }
+
+
 
 
 

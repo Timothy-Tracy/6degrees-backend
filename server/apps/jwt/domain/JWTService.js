@@ -4,7 +4,7 @@ const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'JWTService' });
 const SECRET = process.env.JWT_SECRET_KEY;
 
-function sign(user){
+async function sign(user){
     const log = logger.child({'function': 'sign'});
     log.trace('');
     let token;
@@ -21,7 +21,7 @@ function sign(user){
     } catch (err) {
         console.log(err);
         const error =
-            new Error("JWTService: Error! Something went wrong.");
+            new AppError("JWTService: Error! Something went wrong.");
         throw error;
     }
     return token;
@@ -29,7 +29,7 @@ function sign(user){
 
 async function checkForToken(req){
     const log = logger.child({'function': 'checkForToken'});
-    log.trace('dd');
+    log.trace('Checking for token.');
     let token;
     let tokenstatus = false;
     if(req.headers.authorization){
@@ -38,20 +38,20 @@ async function checkForToken(req){
     token =req.headers.authorization.split(' ')[1];
         //Authorization: 'Bearer TOKEN'
     }
-        if (!tokenstatus) {
-            throw new AppError('JWT Token Not Provided', 200)
-        }
+        // if (!tokenstatus) {
+        //     throw new AppError('JWT Token Not Provided', 200)
+        // }
         return token;
 }
 
 async function decodeToken(token){
     const log = logger.child({'function': 'decodeToken'});
-    log.trace();
+    log.trace('Decoding token.');
     let decodedToken;
         try{
             decodedToken = jwt.verify(token, SECRET);
         } catch (err){
-            throw new AppError('JWT Token Not Verified');
+            throw new AppError('JWT Token Not Verified',401);
         }
     return decodedToken;
             

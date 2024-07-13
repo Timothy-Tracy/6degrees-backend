@@ -15,7 +15,9 @@ class AppError extends Error {
 // You can create more specific error classes if needed
 class ValidationError extends AppError {
   constructor(error) {
+    console.log(error)
     const errors = error.details.map(detail => detail.message)
+    console.log(JSON.stringify(errors.context))
     console.log(JSON.stringify(error))
     super(errors, 400);
     this.name = 'ValidationError';
