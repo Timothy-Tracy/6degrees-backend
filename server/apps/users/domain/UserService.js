@@ -80,8 +80,18 @@ async function update(req,res,next){
     next();
 }
 
+async function changePassword(req,res,next){
+    const log = logger.child({'function':'changePassword'});
+    log.trace();
+    let hash = await AuthService.hash(res.locals.password);
+    let obj = {'password':hash};
+    log.info(obj)
+    const result = await Neo4jRepository.findOneAndUpdate('USER', 'USER_UUID', res.locals.auth.USER_UUID, obj);
+    res.result = result;
+    next()
+}
 
 
 
 
-module.exports = { createAnonymous, findAll, findOneByUUID, create, deleteUser, update };
+module.exports = { createAnonymous, findAll, findOneByUUID, create, deleteUser, update, changePassword };

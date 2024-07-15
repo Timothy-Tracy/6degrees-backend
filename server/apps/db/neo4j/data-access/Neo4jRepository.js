@@ -54,6 +54,52 @@ async function exists(label, searchParam, searchValue) {
   return output;
 }
 
+async function existsThrowsError(label, searchParam, searchValue) {
+  if(!(await exists(label, searchParam, searchValue))){
+    throw new DatabaseError({
+      'message': `${label} {${searchParam} : ${searchValue}} does not exist.`,
+      'statusCode':404
+    })
+}
+}
+
+async function checkExists(label, obj) {
+  let output = {};
+
+  const log = logger.child({ 'function': 'checkExists' });
+
+  const driver = Neo4jDriver.initDriver();
+  const session = driver.session();
+
+  
+
+
+  const y = await session.run(`
+    OPTIONAL MATCH (x:${label}) 
+    WHERE ALL(key IN keys($obj) WHERE x[key] = $obj[key])
+    RETURN CASE WHEN x IS NOT NULL THEN true ELSE false END AS nodeExists;
+    `, {obj:obj})
+  .then(result => {
+    log.info(result, "Exist result")
+    const nodeExists = result.records[0].get('nodeExists');
+    
+    output = nodeExists;
+        if (output) {
+            log.info(`(:${label} {${searchParam}: ${searchValue}}) exists == true`)
+        } else {
+          log.info(`(:${label} {${searchParam}: ${searchValue}}) exists == false`)
+        }
+
+  })
+  .catch(error => {
+    log.error(error)
+    throw error
+  })
+
+  log.info(output)
+  return output;
+}
+
 /**
  * @description Check if 2 nodes have a specified relationship with each other
  * @param {*} labels []
@@ -139,12 +185,9 @@ async function findOneAndGet(label, obj){
   const driver = Neo4jDriver.initDriver();
 
   const session = driver.session();
-  const query = `
-    MATCH (x:${label} $obj}) 
-    RETURN x
-  `
+  
   await session.run(`
-     MATCH (x:${label})
+    MATCH (x:${label})
     WHERE ALL(key IN keys($obj) WHERE x[key] = $obj[key])
     RETURN x
   `,{obj:obj})
@@ -352,4 +395,4 @@ async function findOneAndDelete(label, searchParam, searchValue){
 }
 
 
-module.exports = { findOneAndGet, findOneAndGetAttributes, findOneAndSetAttribute, findOneAndUpdate, findOneAndDelete, hasRelationship, exists};
+module.exports = { findOneAndGet, findOneAndGetAttributes, findOneAndSetAttribute, findOneAndUpdate, findOneAndDelete, hasRelationship, exists, existsThrowsError, checkExists};

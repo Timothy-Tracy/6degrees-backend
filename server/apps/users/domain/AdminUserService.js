@@ -32,4 +32,15 @@ async function deleteUser(req, res, next) {
     next()
 }
 
-module.exports = {findOneAndGet, update, deleteUser}
+async function changePassword(req,res,next){
+    const log = logger.child({'function':'changePassword'});
+    log.trace();
+    let hash = await AuthService.hash(res.locals.password);
+    let obj = {'password':hash};
+    log.info(obj)
+    const result = await Neo4jRepository.findOneAndUpdate('USER', 'USER_UUID', req.params.uuid, obj);
+    res.result = result;
+    next()
+}
+
+module.exports = {findOneAndGet, update, deleteUser, changePassword}

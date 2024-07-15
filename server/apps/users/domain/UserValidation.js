@@ -63,7 +63,11 @@ const userSchema = joi.object().keys({
     mobile: phoneSchema.required(),
     isAnonymous: joi.boolean()
 
-}).strict()
+}).strict();
+
+const passwordSchemaObj = joi.object().keys({
+    password: passwordSchema.required()
+}).strict();
 
 const mutableUserData = joi.object().keys({
     email: joi.string().email(),
@@ -107,4 +111,19 @@ async function validateNewUserInput(req, res, next){
     next()
 }
 
-module.exports = { validateMutableUserInput, validateNewUserInput, usernameSchema, passwordSchema }
+async function validatePasswordInput(req,res,next){
+    const {error, value} = passwordSchema.validate(req.body.password,
+        {
+            abortEarly:false,
+            stripUnknown: true
+        }
+    );
+    if (error){
+        throw new ValidationError({'error': error});
+    }
+
+    res.locals.password = value;
+    next()
+}
+
+module.exports = { validateMutableUserInput, validateNewUserInput, validatePasswordInput, usernameSchema, passwordSchema }

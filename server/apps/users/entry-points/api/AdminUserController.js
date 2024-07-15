@@ -54,4 +54,14 @@ router.delete('/:uuid',
     res.status(200).json(res.result)
 });
 
+router.post('/password/:uuid', 
+    catchAsync(GlobalValidation.validateUUIDParam),
+    catchAsync(AuthService.requireAuth),
+    catchAsync(AdminService.requireAdmin),
+    catchAsync(UserValidation.validatePasswordInput), 
+    catchAsync(AdminUserService.changePassword), 
+    async function (req, res) {
+    res.status(200).json(res.result)
+});
+
 module.exports = {router, apiRoot}
