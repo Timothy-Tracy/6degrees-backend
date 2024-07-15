@@ -10,6 +10,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var postsRouter = require('./apps/posts/entry-points/api/PostController.js');
 var AdminPostsRouter = require('./apps/posts/entry-points/api/AdminPostController.js');
+var AdminUsersRouter = require('./apps/users/entry-points/api/AdminUserController.js');
 
 var usersRouter = require('./apps/users/entry-points/api/UserController.js');
 var nodesRouter = require('./apps/nodes/entry-points/api/NodeController.js');
@@ -31,7 +32,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(AdminPostsRouter.apiRoot, AdminPostsRouter.router);
-
+app.use(AdminUsersRouter.apiRoot, AdminUsersRouter.router);
 app.use(postsRouter.apiRoot, postsRouter.router);
 app.use(usersRouter.apiRoot, usersRouter.router);
 app.use(nodesRouter.apiRoot, nodesRouter.router);

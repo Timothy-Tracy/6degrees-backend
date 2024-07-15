@@ -8,7 +8,7 @@ const logger = mylogger.child({ 'module': 'AdminService' });
 const Neo4jRepository = require('../../db/neo4j/data-access/Neo4jRepository.js');
 const { AppError } = require('../../../lib/error/customErrors.js');
 
-async function verifyAdmin(req,res,next){
+async function requireAdmin(req,res,next){
     const log = logger.child({'function':'verifyAdmin'});
     log.trace();
     if(res.locals.auth.tokenData.USER_ROLE =='ADMIN'){
@@ -16,9 +16,8 @@ async function verifyAdmin(req,res,next){
         next()
     } else {
         log.info('ADMIN = false');
-
         throw new AppError('USER NOT ADMINISTRATOR', 403);
     }
 }
 
-module.exports = {verifyAdmin}
+module.exports = {requireAdmin}

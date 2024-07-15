@@ -34,8 +34,8 @@ async function create(req, res, next) {
     // }
     logger.info(res.locals.newUserObj)
     console.log(req.ip)
-    //const myresult = await UserRepository.create(newUser);
-    //res.result = { "data": myresult }
+    const myresult = await UserRepository.create(res.locals.newUserObj);
+    res.result = myresult
     next()
 }
 
