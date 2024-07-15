@@ -8,8 +8,8 @@ const {
 } = process.env;
 const mylogger = require('../../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'Neo4jRepository' });
-const {AppError} = require('../../../../lib/error/customErrors.js');
-
+const {AppError, DatabaseError} = require('../../../../lib/error/customErrors.js');
+const Neo4jDriver = require('./Neo4jDriver.js');
 /**
  * 
  * @param {@} label 
@@ -21,7 +21,7 @@ const {AppError} = require('../../../../lib/error/customErrors.js');
 async function findOneAndGetAttributes(label, searchParam, searchValue, attributesToReturn) {
   const log = logger.child({ 'function': 'findOneAndGetAttributes' });
   log.info('hello')
-  const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+  const driver = Neo4jDriver.initDriver();
 
   const session = driver.session();
 
@@ -76,7 +76,7 @@ async function findOneAndGetAttributes(label, searchParam, searchValue, attribut
  */
 async function findOneAndSetAttribute(label, searchParam, searchValue, attr, attrValue, attributesToReturn) {
   const log = logger.child({ 'function': 'findOneAndSetAttribute' });
-  const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+  const driver = Neo4jDriver.initDriver();
 
   const session = driver.session();
 
@@ -115,33 +115,8 @@ async function findOneAndSetAttribute(label, searchParam, searchValue, attr, att
 
   await session.close();
   return myobj;
-
-
-
-
-
 }
 
-async function findOneByUUID(uuid) {
-  logger.trace(`Finding User By UUID ${uuid}`)
-  const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
-  const session = driver.session({ DB_DATABASE });
-  var myobj = null;
-  await session.run(`Match (u:USER{\`USER_UUID\`: '${uuid}'}) return u`)
-    .then(result => {
-      const myresult = result.records.map(i => i.get('u').properties);
-      const msg = 'found user by uuid'
-      logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
-      myobj = { "result": myresult[0], 'message': msg }
-
-    })
-    .catch(error => {
-      logger.error(error, "Error");
-      myobj = { error: error };
-    })
-  await driver.close()
-  return myobj;
-};
 
 async function findAll() {
   const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
@@ -167,7 +142,7 @@ async function findAll() {
 async function findOneAndUpdate(label, searchParam, searchValue, obj) {
   let output = {};
   const log = logger.child({ 'function': 'findOneAndUpdate' });
-  const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+  const driver = Neo4jDriver.initDriver();
 
   const session = driver.session();
   if (typeof searchValue === 'string') {
@@ -192,6 +167,39 @@ async function findOneAndUpdate(label, searchParam, searchValue, obj) {
   log.info(output)
   return output;
 }
+
+async function findOneAndDelete(label, searchParam, searchValue){
+  let output = {};
+  searchParam = stringValue(searchParam);
+  const log = logger.child({ 'function': 'findOneAndDelete' });
+  log.trace();
+
+  const exists = await exists(label, searchParam, searchValue);
+  if(!exists){
+    throw new DatabaseError({
+      'message': `${label} {${searchParam} : ${searchValue}} does not exist.`,
+      'statusCode':204
+    })
+  }
+    
+  const driver = Neo4jDriver.initDriver();
+  const session = driver.session();
+  const query = `
+    MATCH(x:${label} {${searchParam} : ${searchValue}});
+    DETATCH DELETE x,
+  `
+  await session.run(query)
+  .then(result =>{
+    log.info(result)
+    output.message = `Successfully deleted and detatched ${label} ${searchParam}: ${searchValue}`
+    output.summary = result.summary.counters._stats;
+  }).catch(error => {
+    throw error;
+  })
+  log.debug(output);
+  return output;
+}
+
 /**
  * @description Check if 2 nodes have a specified relationship with each other
  * @param {*} labels []
@@ -204,7 +212,7 @@ async function findOneAndUpdate(label, searchParam, searchValue, obj) {
 async function hasRelationship(labels, searchParams, searchValues, relationship) {
   let output = {};
   const log = logger.child({ 'function': 'verifyRelationship' });
-  const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+  const driver = Neo4jDriver.initDriver();
 
   const session = driver.session();
   searchValues = stringValues(searchValues);
@@ -246,7 +254,7 @@ async function hasRelationship(labels, searchParams, searchValues, relationship)
 async function exists(label, searchParam, searchValue) {
   let output = {};
   const log = logger.child({ 'function': 'exists' });
-  const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+  const driver = Neo4jDriver.initDriver();
 
   const session = driver.session();
   searchValue = stringValue(searchValue);
@@ -311,4 +319,4 @@ function stringValues(values){
 
 }
 
-module.exports = { findOneAndGetAttributes, findOneAndSetAttribute, findOneAndUpdate, hasRelationship, exists};
+module.exports = { findOneAndGetAttributes, findOneAndSetAttribute, findOneAndUpdate, findOneAndDelete, hasRelationship, exists};

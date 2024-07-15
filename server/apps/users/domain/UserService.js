@@ -67,8 +67,8 @@ async function findOneByUUID(req, res, next) {
 }
 
 async function deleteUser(req, res, next) {
-    const myresult = await UserRepository.deleteUser(req.body.USER_UUID);
-    res.result = { "data": myresult }
+    const myresult = await Neo4jRepository.findOneAndDelete('USER', 'USER_UUID', res.locals.auth.tokenData.USER_UUID);
+    res.result = { myresult}
     next()
 }
 

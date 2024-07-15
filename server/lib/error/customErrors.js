@@ -33,8 +33,8 @@ class ValidationError extends AppError {
 }
 
 class DatabaseError extends AppError {
-  constructor(message) {
-    super(message, 500);
+  constructor(obj) {
+    super(obj.message || message, obj.statusCode || 500, obj.error || null);
     this.name = 'DatabaseError';
   }
 
