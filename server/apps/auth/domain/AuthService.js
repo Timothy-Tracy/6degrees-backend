@@ -73,6 +73,12 @@ async function login(req,res,next){
     }
 }
 
+async function register(req, res, next){
+    const log = logger.child({'function':'register'});
+    log.trace();
+
+}
+
 
 async function verify(req,res,next){
     let log = logger.child({'function':'verify'});

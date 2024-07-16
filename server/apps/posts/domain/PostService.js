@@ -55,20 +55,22 @@ async function findPostUUIDByQuery(req,res,next){
 }
 
 async function create(req, res, next) {
-    logger.debug("creating new post")
+    const log = logger.child({'function':'create'});
+    log.trace()
+    
+    res.locals.newPostObj.USER_UUID = res.locals.auth.tokenData.USER_UUID;
+    // const newPost = {
+    //     POST_UUID: UUID,
+    //     USER_UUID: res.locals.auth.tokenData.USER_UUID,
+    //     POST_TYPE: req.body.POST_TYPE,
+    //     title: req.body.title,
+    //     description: req.body.description,
+    //     fulfilled: false
+    // }
+    const postResult = await PostRepository.create(res.locals.newPostObj);
     let UUID = uuidv7();
-    const sourceNode = await NodeService.createSourceNode(UUID, res.locals.auth.tokenData.USER_UUID);
-    const newPost = {
-        POST_UUID: UUID,
-        USER_UUID: res.locals.auth.tokenData.USER_UUID,
-        SOURCE_NODE_UUID: sourceNode.NODE_UUID,
-        POST_TYPE: req.body.POST_TYPE,
-        title: req.body.title,
-        description: req.body.description,
-        fulfilled: false
-    }
-    res.result = await PostRepository.create(newPost);
-    await NodeRepository.create(sourceNode)
+    const sourceNode = await NodeService.createSourceNode(res.locals.newPostObj.POST_UUID, res.locals.auth.tokenData.USER_UUID);
+    const sourceNodeResult = await NodeRepository.create(sourceNode)
     let distributionResult = await NodeService.distribute(sourceNode.NODE_UUID)
     res.result = {...res.result, 'distributionResult': distributionResult};
     next();

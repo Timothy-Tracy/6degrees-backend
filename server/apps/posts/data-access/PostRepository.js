@@ -66,8 +66,9 @@ async function findOneByQuery(query){
 }
 
 async function findOneByUUID(uuid) {
+    let output = {};
     logger.debug(`finding post by uuid ${uuid}`)
-    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+    const driver = Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     await session.run(`Match (p:POST{\`POST_UUID\`: '${uuid}'}) return p`)
@@ -106,60 +107,64 @@ async function findAll() {
 
 };
 
-async function create(newPost) {
-    console.log("PostRepository: creating new post")
-    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+async function create(obj) {
+    let output = {};
+
+    const log = logger.child({'function':'create'})
+    log.trace();
+
+    const driver = Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
-    var myobj = null;
     await session.run(`
     CREATE (p:POST 
         {
-            \`POST_UUID\`: "${newPost.POST_UUID}",
-            \`USER_UUID\`: "${newPost.USER_UUID}", 
-            \`SOURCE_NODE_UUID\`: "${newPost.SOURCE_NODE_UUID}", 
-            title: "${newPost.title}", 
-            description: "${newPost.description}", 
-            fulfilled: "${newPost.fulfilled}" ,
+            \`POST_UUID\`: "${obj.POST_UUID}",
+            title: "${obj.title}", 
+            body: "${obj.body}", 
             views : 0
     })
             
         WITH p
-        MATCH (u:USER {USER_UUID: "${newPost.USER_UUID}"})
+        MATCH (u:USER {USER_UUID: "${obj.USER_UUID}"})
         CREATE (u)<-[:PARENT_USER]-(p)<-[:CHILD_POST]-(u)   
         ;`)
         .then(result => {
-            console.log(`Created a new post ${newPost.POST_UUID} \n ${result.records}`)
-            myobj = { "result": result.records, "summary": result.summary }
+            log.debug(result)
+            output.summary=result.summary.counters._stats;
+            output.message = `Created a new post ${obj.POST_UUID}`
         })
         .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
+            throw error;
         })
-        await driver.close()
-    return myobj;
+    log.debug(output)
+    return output;
 };
 
-async function deletePost(UUID) {
-    console.log("PostRepository: Deleting Post ", UUID)
-    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+async function deletePost(uuid) {
+    let output = {}
+    const log = logger.child({'function':'deletePost'});
+    log.trace();
+    const driver = Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     var query = `
-    MATCH (post:POST {POST_UUID: '${UUID}'})
-    OPTIONAL MATCH (nodes:NODE {POST_UUID: post.POST_UUID})
-    DETACH DELETE post, nodes
+    MATCH (post:POST {POST_UUID: "${uuid}"})
+    OPTIONAL MATCH (post)<-[:CHILD_NODE]-(node:NODE)
+    OPTIONAL MATCH (node)<-[:PARENT_NODE]-(comment:COMMENT)
+    WITH post, collect(DISTINCT node) AS nodes, collect(DISTINCT comment) AS comments
+    DETACH DELETE post, nodes, comments
 `;
     await session.run(query)
         .then(result => {
-            console.log("PostRepository: Deleted post successfully. Result is", result.records)
-            myobj = { "result": result.records, "summary": result.summary }
+            log.debug(result)
+            output.summary = result.summary.counter._stats;
+            output.message = `Deleted post ${uuid} and all associated nodes and comments`
         })
         .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
+            throw error
         })
-        await driver.close()
-    return myobj;
+    log.debug(output)
+    return output;
 };
 
 module.exports = { deletePost, create, findAll, findOneByUUID, findOneByQuery, findAllOwnedBy };
