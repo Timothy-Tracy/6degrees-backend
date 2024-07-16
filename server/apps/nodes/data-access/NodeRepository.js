@@ -115,9 +115,12 @@ async function initNode(obj) {
             NODE_TYPE: "${obj.NODE_TYPE}",
             degree: "${obj.degree}",
             metadata: "${JSON.stringify(obj.metadata)}",
-            createdAt: "${obj.createdAt}",
+            createdAt: "${new Date().toISOString()}",
             views: 0,
-            points: 0
+            points: 0,
+            comments: 0,
+            shares: 0,
+            visibility:"public",
         })
         RETURN n
     `).then(result => {
@@ -186,12 +189,16 @@ async function initEdgeFulfilledRelationships(obj) {
     const session = driver.session({ DB_DATABASE });
     await session.run(`
         MATCH (destination:NODE {NODE_UUID: "${obj.NODE_UUID}"})
+        MATCH (p:POST {POST_UUID:"${obj.POST_UUID}"})
         MATCH (source:NODE)-[edge:EDGE {EDGE_UUID: "${obj.SOURCE_EDGE_UUID}"}]->()
         CREATE (destination)<-[edgeFulfilled:EDGE_FULFILLED {
         EDGE_UUID: edge.EDGE_UUID,
         EDGE_QUERY: edge.EDGE_QUERY,
         degree: edge.degree
         }]-(source)
+        SET source.shares = source.shares + 1
+        
+        SET p.shares = p.shares + 1
         RETURN destination,edgeFulfilled,source
     `).then(result => {
         output.summary = result.summary.counters._stats;

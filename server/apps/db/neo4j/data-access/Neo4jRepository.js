@@ -85,9 +85,9 @@ async function checkExists(label, obj) {
     
     output = nodeExists;
         if (output) {
-            log.info(`(:${label} {${searchParam}: ${searchValue}}) exists == true`)
+            log.info(`(:${label} {${obj}}) exists == true`)
         } else {
-          log.info(`(:${label} {${searchParam}: ${searchValue}}) exists == false`)
+          log.info(`(:${label} {${obj}}) exists == false`)
         }
 
   })
@@ -127,6 +127,41 @@ async function hasRelationship(labels, searchParams, searchValues, relationship)
     MATCH (x:${labels[0]} {${searchParams[0]}: ${searchValues[0]}}) 
     MATCH (y:${labels[1]} {${searchParams[1]}: ${searchValues[1]}})
     RETURN EXISTS ((x)-[:${relationship}]-(y)); 
+    `)
+  .then(result => {
+    log.info(result)
+    output = result.records[0]._fields[0];
+        if (output) {
+            log.info(`relationship (:${labels[0]} {${searchParams[0]}: ${searchValues[0]}})-[:${relationship}]-(${labels[1]} {${searchParams[1]}: ${searchValues[1]}}) == true`)
+        } else {
+            log.info(`relationship (:${labels[0]} {${searchParams[0]}: ${searchValues[0]}})-[:${relationship}]-(${labels[1]} {${searchParams[1]}: ${searchValues[1]}}) == false`)
+        }
+  })
+  .catch(error => {
+    log.error(error)
+    throw error
+  })
+  return output;
+}
+
+async function hasRelationshipDirectional(labels, searchParams, searchValues, relationship) {
+  let output = {};
+  const log = logger.child({ 'function': 'hasRelationshipDirectional' });
+  const driver = Neo4jDriver.initDriver();
+
+  const session = driver.session();
+  searchValues = stringValues(searchValues);
+  
+  if(await exists(labels[0], searchParams[0],searchValues[0]) && await exists(labels[1], searchParams[1],searchValues[1])){
+
+  } else {
+    throw new AppError('resource does not exist', 500)
+  }
+  
+  const y = await session.run(`
+    MATCH (x:${labels[0]} {${searchParams[0]}: ${searchValues[0]}}) 
+    MATCH (y:${labels[1]} {${searchParams[1]}: ${searchValues[1]}})
+    RETURN EXISTS ((x)-[:${relationship}]->(y)); 
     `)
   .then(result => {
     log.info(result)
@@ -395,4 +430,4 @@ async function findOneAndDelete(label, searchParam, searchValue){
 }
 
 
-module.exports = { findOneAndGet, findOneAndGetAttributes, findOneAndSetAttribute, findOneAndUpdate, findOneAndDelete, hasRelationship, exists, existsThrowsError, checkExists};
+module.exports = { findOneAndGet, findOneAndGetAttributes, findOneAndSetAttribute, findOneAndUpdate, findOneAndDelete, hasRelationship, exists, existsThrowsError, checkExists, hasRelationshipDirectional};

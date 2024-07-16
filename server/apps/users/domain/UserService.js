@@ -8,8 +8,8 @@ const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'UserService' });
 const randomWordSlugs = require('random-word-slugs')
 const AuthService = require('../../auth/domain/AuthService.js');
-const customErrors = require('../../../lib/error/customErrors.js')
-const catchAsync = customErrors.catchAsync;
+const {catchAsync,AppError} = require('../../../lib/error/customErrors.js')
+
 
 
 var crypto = require('crypto');
@@ -91,7 +91,63 @@ async function changePassword(req,res,next){
     next()
 }
 
+async function follow(req,res,next){
+    const log = logger.child({'function':'follow'});
+    log.trace();
+    await Neo4jRepository.checkExists('USER', {username:res.locals.params.username})
+    const alreadyFollows = await Neo4jRepository.hasRelationshipDirectional(
+        ['USER', 'USER'],
+        ['USER_UUID', 'username'],
+        [res.locals.auth.tokenData.USER_UUID,res.locals.params.username],
+        'FOLLOWS'
+    )
+
+    if(alreadyFollows){
+        throw new AppError('user already follows user',403);
+    }
+    const followObj = {
+        source: res.locals.auth.tokenData.USER_UUID,
+        destination: res.locals.params.username
+    }
+    const result = UserRepository.follow(followObj);
+    res.result = result;
+    next()
+
+}
+
+async function unfollow(req,res,next){
+    const log = logger.child({'function':'unfollow'});
+    log.trace();
+    await Neo4jRepository.checkExists('USER', {username:res.locals.params.username})
+    const alreadyFollows = await Neo4jRepository.hasRelationshipDirectional(
+        ['USER', 'USER'],
+        ['USER_UUID', 'username'],
+        [res.locals.auth.tokenData.USER_UUID,res.locals.params.username],
+        'FOLLOWS'
+    )
+
+    if(!alreadyFollows){
+        throw new AppError('user does not follows user',403);
+    }
+    const followObj = {
+        source: res.locals.auth.tokenData.USER_UUID,
+        destination: res.locals.params.username
+    }
+    const result = UserRepository.unfollow(followObj);
+    res.result = result;
+    next()
+
+}
+
+async function sendFriendRequest(){
+
+}
+
+async function acceptFriendRequest(){
+
+}
 
 
 
-module.exports = { createAnonymous, findAll, findOneByUUID, create, deleteUser, update, changePassword };
+
+module.exports = { createAnonymous, findAll, findOneByUUID, create, deleteUser, update, changePassword, follow, unfollow };

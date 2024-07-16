@@ -48,7 +48,7 @@ async function comment(req,res,next){
         POST_UUID: POST_UUID,
         NODE_UUID: NODE_UUID,
         USER_UUID: USER_UUID,
-        content: req.body.content,
+        body: req.body.body,
         PARENT_COMMENT_UUID: parentId,
         createdAt: date,
         updatedAt: null

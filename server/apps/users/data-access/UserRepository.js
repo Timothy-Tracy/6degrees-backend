@@ -68,11 +68,16 @@ async function create(obj) {
             USER_UUID: "${obj.USER_UUID}", 
             USER_ROLE: "${obj.USER_ROLE}",
             username: '${obj.username}',
-            first_name: '${obj.first_name}', 
-            last_name: '${obj.last_name}', 
+            firstName: '${obj.firstName}', 
+            lastName: '${obj.lastName}', 
             \`email\`: "${obj.email}", 
             password: "${obj.password}", 
-            mobile: "${obj.mobile}" 
+            mobile: "${obj.mobile}",
+            followerCount: 0,
+            followingCount: 0,
+            friendCount:0,
+            friendRequestCount:0,
+            createdAt: "${new Date().toISOString()}",
         })
         return u;`)
         .then(result => {
@@ -150,4 +155,60 @@ async function deleteUser(uuid) {
     return output;
 };
 
-module.exports = { createAnonymous, deleteUser, create, findAll, findOneByUUID };
+
+
+async function follow(obj){
+    let output = {};
+
+    const log = logger.child({'function' : 'follow'});
+    log.trace();
+
+    const driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    const query = `
+        MATCH (source:USER {USER_UUID:"${obj.source}"})
+        MATCH (destination:USER {username:"${obj.destination}"})
+        CREATE (source)-[:FOLLOWS]->(destination)
+        SET source.followingCount = source.followingCount +1
+        set destination.followerCount = destination.followerCount+1;
+    `
+    await session.run(query)
+    .then(result =>{
+        output.summary = result.summary.counters._stats;
+        output.message = `User ${obj.source} followed ${obj.destination} in the database`
+    })
+    .catch(error=>{
+        throw error
+    })
+    log.info(output);
+    return output;
+}
+
+async function unfollow(obj){
+    let output = {};
+
+    const log = logger.child({'function' : 'follow'});
+    log.trace();
+
+    const driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    const query = `
+        MATCH (source:USER {USER_UUID:"${obj.source}"})
+        MATCH (destination:USER {username:"${obj.destination}"})
+        MATCH (source)-[rel:FOLLOWS]->(destination)
+        DELETE rel
+        SET source.followingCount = source.followingCount -1
+        set destination.followerCount = destination.followerCount-1;
+    `
+    await session.run(query)
+    .then(result =>{
+        output.summary = result.summary.counters._stats;
+        output.message = `User ${obj.source} unfollowed ${obj.destination} in the database`
+    })
+    .catch(error=>{
+        throw error
+    })
+    log.info(output);
+    return output;
+}
+module.exports = { createAnonymous, deleteUser, create, findAll, findOneByUUID, follow, unfollow };

@@ -1,4 +1,3 @@
-const fs = require("fs");
 const neo4j = require('neo4j-driver');
 require('dotenv').config()
 const { DB_URL, DB_USERNAME, DB_PASSWORD, DB_DATABASE} = process.env;
@@ -86,26 +85,6 @@ async function findOneByUUID(uuid) {
     return myobj;
 };
 
-async function findAll() {
-    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
-    const session = driver.session({ DB_DATABASE });
-    var myobj = null;
-    await session.run('Match (p:POST) return p')
-        .then(result => {
-            result.records.map(i => i.get('u').properties);
-            console.log("Fulfilled, result is", result.records)
-            myobj = { "result": result.records, "summary": result.summary }
-
-        })
-        .catch(error => {
-            console.log("error", error);
-            myobj = { "error": error }
-        })
-        await driver.close()
-    return myobj;
-
-
-};
 
 async function create(obj) {
     let output = {};
@@ -121,7 +100,10 @@ async function create(obj) {
             \`POST_UUID\`: "${obj.POST_UUID}",
             title: "${obj.title}", 
             body: "${obj.body}", 
-            views : 0
+            views : 0,
+            comments:0,
+            shares: 0,
+            visibility:"public"
     })
             
         WITH p
@@ -149,15 +131,17 @@ async function deletePost(uuid) {
     var myobj = null;
     var query = `
     MATCH (post:POST {POST_UUID: "${uuid}"})
-    OPTIONAL MATCH (post)<-[:CHILD_NODE]-(node:NODE)
+    OPTIONAL MATCH (post)-[:CHILD_NODE]->(node:NODE)
     OPTIONAL MATCH (node)<-[:PARENT_NODE]-(comment:COMMENT)
     WITH post, collect(DISTINCT node) AS nodes, collect(DISTINCT comment) AS comments
-    DETACH DELETE post, nodes, comments
+    UNWIND nodes + comments + [post] AS elementToDelete
+    DETACH DELETE elementToDelete
+    RETURN count(elementToDelete) AS deletedCount
 `;
     await session.run(query)
         .then(result => {
             log.debug(result)
-            output.summary = result.summary.counter._stats;
+            output.summary = result.summary.counters._stats;
             output.message = `Deleted post ${uuid} and all associated nodes and comments`
         })
         .catch(error => {
@@ -167,4 +151,4 @@ async function deletePost(uuid) {
     return output;
 };
 
-module.exports = { deletePost, create, findAll, findOneByUUID, findOneByQuery, findAllOwnedBy };
+module.exports = { deletePost, create,  findOneByUUID, findOneByQuery, findAllOwnedBy };

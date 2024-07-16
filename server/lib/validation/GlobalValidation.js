@@ -24,6 +24,22 @@ async function validateUUIDParam(req,res,next){
     next();
 }
 
+async function validateUsernameParam(req,res,next){
+    const log = logger.child({'function':'validateUUIDParam'});
+    log.trace();
+    const {error, value} = GlobalSchemas.usernameSchema.validate(req.params.username,
+        {
+            abortEarly:false,
+        }
+    )
+    if(error){
+        throw new ValidationError({'error': error, 'message': `${req.params.uuid} not a valid uuid`})
+    }
+    res.locals.params = {}
+    res.locals.params.username = value;
+    next();
+}
 
 
-module.exports = {validateUUIDParam}
+
+module.exports = {validateUUIDParam, validateUsernameParam}
