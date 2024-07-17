@@ -40,6 +40,25 @@ async function validateUsernameParam(req,res,next){
     next();
 }
 
+const validateParam = (schema) => (req,res,next) => {
+    const log = logger.child({'function':'validateParam'});
+    log.trace();
+    log.info(req.params)
+
+    const {error, value} = schema.validate(req.params,
+        {
+            abortEarly:false,
+        }
+    )
+    if(error){
+        throw new ValidationError({'error': error, 'message': `Paramater Error - ${req.param} not valid`})
+    }
+    log.info('Paramater validated')
+    res.locals.params = value;
+    log.info(`Paramater validated - ${res.locals.params}`)
+    next();
+}
 
 
-module.exports = {validateUUIDParam, validateUsernameParam}
+
+module.exports = {validateUUIDParam, validateUsernameParam, validateParam}

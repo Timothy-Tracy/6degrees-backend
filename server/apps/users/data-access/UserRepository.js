@@ -187,7 +187,7 @@ async function follow(obj){
 async function unfollow(obj){
     let output = {};
 
-    const log = logger.child({'function' : 'follow'});
+    const log = logger.child({'function' : 'unfollow'});
     log.trace();
 
     const driver = Neo4jDriver.initDriver();
@@ -211,4 +211,115 @@ async function unfollow(obj){
     log.info(output);
     return output;
 }
-module.exports = { createAnonymous, deleteUser, create, findAll, findOneByUUID, follow, unfollow };
+
+async function createFriendRequest(obj){
+    let output = {};
+
+    const log = logger.child({'function' : 'sendFriendRequest'});
+    log.trace(obj);
+
+    const driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    const query = `
+        MATCH (source:USER {USER_UUID:"${obj.source}"})
+        MATCH (destination:USER {username:"${obj.destination}"})
+        CREATE (source)-[:FRIEND_REQUEST{
+            username:source.username,
+            firstName:source.firstName,
+            lastName:source.lastName
+        }]->(destination)
+    `
+    await session.run(query)
+    .then(result =>{
+        output.summary = result.summary.counters._stats;
+        output.message = `
+        Friend request from ${obj.source} to ${obj.destination} created in the database
+        `
+    })
+    .catch(error=>{
+        throw error
+    })
+    log.info(output);
+    return output;
+}
+
+async function acceptFriendRequest(obj){
+    let output = {};
+
+    const log = logger.child({'function' : 'acceptFriendRequest'});
+    log.trace(obj);
+
+    const driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    const date = new Date().toISOString();
+    //CREATE (destination)-[friend2:FRIEND{createdAt:"${date}"}]->(source)
+    const query = `
+        MATCH (source:USER {username:"${obj.source}"})
+        MATCH (destination:USER {USER_UUID:"${obj.destination}"})
+        MATCH (source)-[friendRequest:FRIEND_REQUEST]->(destination)
+        CREATE (source)-[friend:FRIEND{
+            createdAt:"${date}"
+        }]->(destination)
+        DELETE friendRequest
+        SET source.friendCount = source.friendCount +1
+        set destination.friendCount = destination.friendCount+1;
+    `
+    await session.run(query)
+    .then(result =>{
+        output.summary = result.summary.counters._stats;
+        output.message = `
+        ${obj.source} and ${obj.destination} now friends in the database
+        `
+    })
+    .catch(error=>{
+        throw error
+    })
+    log.info(output);
+    return output;
+}
+
+async function unfriend(obj){
+    let output = {};
+
+    const log = logger.child({'function' : 'unfriend'});
+    log.trace(obj);
+
+    const driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    const date = new Date().toISOString();
+    //CREATE (destination)-[friend2:FRIEND{createdAt:"${date}"}]->(source)
+    const query = `
+        MATCH (source:USER {USER_UUID:"${obj.source}"})
+        MATCH (destination:USER {username:"${obj.destination}"})
+        MATCH (source)-[friend:FRIEND]-(destination)
+        DELETE friend
+        
+        SET source.friendCount = source.friendCount -1
+        set destination.friendCount = destination.friendCount-1;
+    `
+    await session.run(query)
+    .then(result =>{
+        output.summary = result.summary.counters._stats;
+        output.message = `
+        ${obj.source} and ${obj.destination} are no longer friends in the database
+        `
+    })
+    .catch(error=>{
+        throw error
+    })
+    log.info(output);
+    return output;
+}
+
+module.exports = { 
+    createAnonymous, 
+    deleteUser, 
+    create, 
+    findAll, 
+    findOneByUUID, 
+    follow, 
+    unfollow,
+    createFriendRequest, 
+    acceptFriendRequest,
+    unfriend
+};

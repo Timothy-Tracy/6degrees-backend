@@ -109,7 +109,7 @@ async function follow(req,res,next){
         source: res.locals.auth.tokenData.USER_UUID,
         destination: res.locals.params.username
     }
-    const result = UserRepository.follow(followObj);
+    const result = await UserRepository.follow(followObj);
     res.result = result;
     next()
 
@@ -133,21 +133,134 @@ async function unfollow(req,res,next){
         source: res.locals.auth.tokenData.USER_UUID,
         destination: res.locals.params.username
     }
-    const result = UserRepository.unfollow(followObj);
+    const result = await UserRepository.unfollow(followObj);
     res.result = result;
     next()
 
 }
 
-async function sendFriendRequest(){
+async function sendFriendRequest(req,res,next){
+    const log = logger.child({'function':'follow'});
+    log.trace();
+    //check if the user you're sending to exists
+    await Neo4jRepository.checkExists('USER', {username:res.locals.params.username})
 
+    const friends = await Neo4jRepository.hasRelationship(
+        ['USER', 'USER'],
+        ['USER_UUID', 'username'],
+        [res.locals.auth.tokenData.USER_UUID,res.locals.params.username],
+        'FRIEND'
+    )
+    if(friends){
+        throw new AppError('Already friends with requested user',403);
+
+    }
+
+    //check if you've send a freind request already
+    const alreadySentFriendRequest = await Neo4jRepository.hasRelationshipDirectional(
+        ['USER', 'USER'],
+        ['USER_UUID', 'username'],
+        [res.locals.auth.tokenData.USER_UUID,res.locals.params.username],
+        'FRIEND_REQUEST'
+    )
+
+    if(alreadySentFriendRequest){
+        throw new AppError('Pending friend request already exists',403);
+    }
+
+    const pendingFriendRequest = await Neo4jRepository.hasRelationshipDirectional(
+        ['USER', 'USER'],
+        [ 'username','USER_UUID'],
+        [res.locals.params.username,res.locals.auth.tokenData.USER_UUID],
+        'FRIEND_REQUEST'
+    )
+
+    if (pendingFriendRequest){
+        log.info('already have pending friend request from the user to you')
+        const me = await Neo4jRepository.findOneAndGet('USER', {'USER_UUID':res.locals.auth.tokenData.USER_UUID})
+        const they = await Neo4jRepository.findOneAndGet('USER', {'username':res.locals.params.username})
+        const result = await UserRepository.acceptFriendRequest({
+            source: they.data[0].username,
+            destination: me.data[0].USER_UUID
+        })
+        res.result = result;
+        next()
+    } else {
+        const friendRequestObj = {
+            source: res.locals.auth.tokenData.USER_UUID,
+            destination: res.locals.params.username
+        }
+        const result = await UserRepository.createFriendRequest(friendRequestObj);
+        res.result = result;
+        next()
+    }
+    
 }
 
-async function acceptFriendRequest(){
+async function acceptFriendRequest(req,res,next){
+    const log = logger.child({'function':'acceptFriendRequest'});
+    log.trace();
 
+    await Neo4jRepository.checkExists('USER', {username:res.locals.params.username})
+
+    const friendRequestExists = await Neo4jRepository.hasRelationshipDirectional(
+        ['USER', 'USER'],
+        [ 'username','USER_UUID'],
+        [res.locals.params.username,res.locals.auth.tokenData.USER_UUID],
+        'FRIEND_REQUEST'
+    )
+
+    if(!friendRequestExists){
+        throw new AppError('Friend request does not exist',403);
+    }
+    const friendRequestObj = {
+        source: res.locals.params.username,
+        destination: res.locals.auth.tokenData.USER_UUID
+    }
+    const result = await UserRepository.acceptFriendRequest(friendRequestObj);
+    res.result = result;
+    next()
+}
+
+async function unfriend(req,res,next){
+    const log = logger.child({'function':'follow'});
+    log.trace();
+    await Neo4jRepository.checkExists('USER', {username:res.locals.params.username})
+    const friends = await Neo4jRepository.hasRelationship(
+        ['USER', 'USER'],
+        ['USER_UUID', 'username'],
+        [res.locals.auth.tokenData.USER_UUID,res.locals.params.username],
+        'FRIEND'
+    )
+
+    if(!friends){
+        throw new AppError('Not friends with requested user',403);
+    }
+    const friendObj = {
+        source: res.locals.auth.tokenData.USER_UUID,
+        destination: res.locals.params.username
+    }
+    const result = await UserRepository.unfriend(friendObj);
+    res.result = result;
+    next()
 }
 
 
 
 
-module.exports = { createAnonymous, findAll, findOneByUUID, create, deleteUser, update, changePassword, follow, unfollow };
+
+
+module.exports = { 
+    createAnonymous, 
+    findAll, 
+    findOneByUUID, 
+    create, 
+    deleteUser, 
+    update, 
+    changePassword, 
+    follow, 
+    unfollow,
+    sendFriendRequest,
+    acceptFriendRequest,
+    unfriend
+};

@@ -154,6 +154,7 @@ async function interact(req, res, next) {
         }
         //create the new node
         let resultt = await NodeRepository.create(newNode);
+        res.result = resultt;
         //award points
         
         log.info()
@@ -161,7 +162,7 @@ async function interact(req, res, next) {
         await NodeRepository.findDistributionPathAndAward(newNodeUUID, 10);
         res.locals.POST_UUID = newNode.POST_UUID;
         res.locals.NODE_UUID = newNodeUUID;
-        distribute(newNodeUUID)
+        res.result = await distribute(newNodeUUID)
         
             
         

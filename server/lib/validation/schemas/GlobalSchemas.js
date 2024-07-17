@@ -37,7 +37,9 @@ const usernameSchema = joi.string()
         'string.max': 'username cannot be longer than 20 characters',
         'any.required': 'username is required'
     });
-
+const usernameObjSchema = joi.object().keys({
+    username: usernameSchema.required()
+}).strict();
 const phoneSchema = joi.string()
     .replace(/[\(\)\s-]/g, '')  // Remove (, ), spaces, and -
     .pattern(/^\+?[0-9]{10,14}$/)  // Validate the cleaned number
@@ -49,4 +51,4 @@ const passwordSchema = joi.string()
     'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, one special character, and be at least 8 characters long'
   });
 
-module.exports = {validUUIDSchema, generateUUID, nameSchema, passwordSchema, usernameSchema, phoneSchema}
+module.exports = {validUUIDSchema, generateUUID, nameSchema, passwordSchema, usernameSchema, phoneSchema, usernameObjSchema}

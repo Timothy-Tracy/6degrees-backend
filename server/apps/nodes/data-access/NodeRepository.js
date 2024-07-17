@@ -120,9 +120,9 @@ async function initNode(obj) {
             points: 0,
             comments: 0,
             shares: 0,
-            visibility:"public",
+            visibility:"public"
         })
-        RETURN n
+        RETURN n;
     `).then(result => {
         const x = result.records.map(i => i.get('n').properties);
         output.data = x[0];
@@ -169,7 +169,7 @@ async function initSourceNodeRelationships(obj) {
     await session.run(`
         MATCH (n:NODE {NODE_UUID: "${obj.NODE_UUID}"})
         MATCH (p:POST {POST_UUID: "${obj.POST_UUID}"})
-        CREATE (n)<-[:SOURCE_NODE]-(p)
+        CREATE (n)<-[:SOURCE_NODE]-(p);
     `).then(result => {
         output.summary = result.summary.counters._stats;
         log.info(output, 'Initialized source node relationships in the database.')
@@ -199,8 +199,10 @@ async function initEdgeFulfilledRelationships(obj) {
         SET source.shares = source.shares + 1
         
         SET p.shares = p.shares + 1
-        RETURN destination,edgeFulfilled,source
+        RETURN destination,edgeFulfilled,source;
     `).then(result => {
+        const x = result.records.map(i => i.get('edgeFulfilled').properties);
+        output.data = x
         output.summary = result.summary.counters._stats;
         log.info(output, 'Initialized edge fulfilled relationships in the database.')
     }).catch(error => {
@@ -210,7 +212,7 @@ async function initEdgeFulfilledRelationships(obj) {
 }
 
 async function create(obj) {
-    let output = { data: {} };
+    let output = { };
     const log = logger.child({ 'function': 'create' });
     log.trace();
     log.debug(obj, 'INPUT');
@@ -222,20 +224,20 @@ async function create(obj) {
         throw new AppError('User Already Has Node In Post', 403)
     }
     //create the node in the db
-    let createNodeResult = await initNode(obj);
+    output.createNodeResult = await initNode(obj);
 
     //create the node relationships in the db
-    let createNodeRelationshipsResult = await initNodeRelationships(obj);
+    output.createNodeRelationshipsResult = await initNodeRelationships(obj);
 
     if (obj.NODE_TYPE === "origin") {
         // Create SOURCE_NODE relationship if NODE_TYPE is "origin"
-        let createSourceNodeRelationshipsResult = await initSourceNodeRelationships(obj);
+        output.createSourceNodeRelationshipsResult = await initSourceNodeRelationships(obj);
     }
 
     // if the obj has a SOURCE_EDGE_UUID property 
     // Create EDGE_FULFILLED relationship
     if (obj.SOURCE_EDGE_UUID) {
-        let createEdgeFulfilledResult = await initEdgeFulfilledRelationships(obj);
+        output.createEdgeFulfilledResult = await initEdgeFulfilledRelationships(obj);
     }
 
 

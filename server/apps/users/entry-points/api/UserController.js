@@ -6,6 +6,7 @@ const UserService = require('../../domain/UserService.js')
 const UserValidation = require('../../domain/UserValidation.js')
 const AuthService = require('../../../auth/domain/AuthService.js');
 const GlobalValidation = require('../../../../lib/validation/GlobalValidation.js')
+const {usernameObjSchema} = require('../../../../lib/validation/schemas/GlobalSchemas.js')
 
 const {catchAsync} = require('../../../../lib/error/customErrors.js')
 
@@ -41,19 +42,43 @@ router.post('/password',
 
 //Follow
 router.get('/follow/:username', 
-    catchAsync(GlobalValidation.validateUsernameParam),
     catchAsync(AuthService.requireAuth),
+    catchAsync(GlobalValidation.validateParam(usernameObjSchema)),
     catchAsync(UserService.follow),
-    
     async function (req, res) {
     res.status(200).json(res.result)
 });
 //Unfollow
 router.get('/unfollow/:username', 
-    catchAsync(GlobalValidation.validateUsernameParam),
     catchAsync(AuthService.requireAuth),
+    catchAsync(GlobalValidation.validateParam(usernameObjSchema)),
     catchAsync(UserService.unfollow),
-    
+    async function (req, res) {
+    res.status(200).json(res.result)
+});
+
+//Send Friend Request
+router.get('/friend-request/send/:username', 
+    catchAsync(AuthService.requireAuth),
+    catchAsync(GlobalValidation.validateParam(usernameObjSchema)),
+    catchAsync(UserService.sendFriendRequest),
+    async function (req, res) {
+    res.status(200).json(res.result)
+});
+//Accept Friend Request
+router.get('/friend-request/accept/:username', 
+    catchAsync(AuthService.requireAuth),
+    catchAsync(GlobalValidation.validateParam(usernameObjSchema)),
+    catchAsync(UserService.acceptFriendRequest),
+    async function (req, res) {
+    res.status(200).json(res.result)
+});
+
+//Unfollow
+router.get('/unfriend/:username', 
+    catchAsync(AuthService.requireAuth),
+    catchAsync(GlobalValidation.validateParam(usernameObjSchema)),
+    catchAsync(UserService.unfriend),
     async function (req, res) {
     res.status(200).json(res.result)
 });
