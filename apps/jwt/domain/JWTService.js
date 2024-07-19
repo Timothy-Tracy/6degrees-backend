@@ -37,6 +37,8 @@ async function checkForToken(req){
     
     token =req.headers.authorization.split(' ')[1];
         //Authorization: 'Bearer TOKEN'
+    } else if (req.cookies.token){
+        token = req.cookies.token
     }
         // if (!tokenstatus) {
         //     throw new AppError('JWT Token Not Provided', 200)

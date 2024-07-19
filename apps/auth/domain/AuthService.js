@@ -67,6 +67,7 @@ async function login(req,res,next){
     if (loginResult){
         let user = await Neo4jRepository.findOneAndGetAttributes('USER',searchParam, searchValue, ['USER_UUID', 'USER_ROLE']);
         res.locals.auth.JwtToken = await JWTService.sign(user);
+        res.result = {jwt:res.locals.auth.JwtToken}
         next();
     } else {
         throw new AuthorizationError({'message':'Bad Login Info', "statusCode": 204})
@@ -76,6 +77,7 @@ async function login(req,res,next){
 async function register(req, res, next){
     const log = logger.child({'function':'register'});
     log.trace();
+    next();
 
 }
 
@@ -137,4 +139,4 @@ async function optionalAuth(req, res, next){
 }
 
 
-module.exports = {hash, login, verify, optionalAuth, requireAuth}
+module.exports = {hash, login, verify, optionalAuth, requireAuth, register}
