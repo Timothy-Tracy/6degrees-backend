@@ -29,6 +29,37 @@ async function findAllOwnedBy(uuid) {
 
 };
 
+async function findAllCommentsByPostUUID(uuid){
+    let output = {};
+    const log = logger.child({ 'function': 'findAllCommentsByPostUUID' });
+    log.trace(uuid);
+    let driver = await Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    await session.run(`
+        MATCH (c:COMMENT)-[:PARENT_POST]-(p:POST {POST_UUID: "${uuid}"})
+        MATCH (c)-[:PARENT_USER]-(u:USER)
+        RETURN c {.*, username: u.username} AS c
+        `)
+    .then(result => {
+        log.debug(result)
+        if (result.records.length>0){
+            log.debug('comments found')
+            const comments = result.records.map(record => record._fields[0]);
+            output.data = comments
+            log.debug(output.data)
+        } else {
+            log.debug('no comments found')
+        }
+        
+    })
+    .catch(error => {
+        throw error;
+    })
+        
+    log.debug(output)
+    return output;
+}
+
 async function findOneByQuery(query){
     let output = {data : {}};
     //Initialize logger
@@ -47,10 +78,10 @@ async function findOneByQuery(query){
        
         const post = result.records.map(i => i.get('p').properties);
         const node = result.records.map(i => i.get('n').properties);
-
+     
         output.data.post = post;
         output.data.node = node;
-
+        
         log.debug(result.records)
         log.debug(post)
         log.debug(node)
@@ -92,8 +123,9 @@ async function create(obj) {
     const log = logger.child({'function':'create'})
     log.trace();
 
-    const driver = Neo4jDriver.initDriver();
+    const driver = await Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
+    const date = new Date().toISOString()
     await session.run(`
     CREATE (p:POST 
         {
@@ -103,7 +135,8 @@ async function create(obj) {
             views : 0,
             comments:0,
             shares: 0,
-            visibility:"public"
+            visibility:"public",
+            createdAt:"${date}"
     })
             
         WITH p
@@ -151,4 +184,4 @@ async function deletePost(uuid) {
     return output;
 };
 
-module.exports = { deletePost, create,  findOneByUUID, findOneByQuery, findAllOwnedBy };
+module.exports = { deletePost, create,  findOneByUUID, findOneByQuery, findAllOwnedBy, findAllCommentsByPostUUID };

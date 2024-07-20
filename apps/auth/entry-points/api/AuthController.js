@@ -17,7 +17,7 @@ router.post('/login', catchAsync(AuthValidation.validateLoginInput), catchAsync(
       });
     res.status(200).json(res.result)
 });
-router.post('/verify', catchAsync(AuthService.verify), function (req, res) {
+router.get('/verify', catchAsync(AuthService.verify), function (req, res) {
     res.status(200).json(res.locals.auth.tokenData)
 });
 router.post('/register',
@@ -28,6 +28,11 @@ router.post('/register',
         res.status(200).json(res.result)
     }
 )
+
+router.post('/logout', (req, res) => {
+    res.clearCookie('token');
+    res.status(200).json({ message: 'Logged out successfully' });
+  });
 
 
 module.exports = { apiRoot, router };

@@ -36,8 +36,11 @@ async function checkForToken(req){
         tokenstatus = true;
     
     token =req.headers.authorization.split(' ')[1];
+    log.info('token found header')
+
         //Authorization: 'Bearer TOKEN'
     } else if (req.cookies.token){
+        log.info('token found in cookie')
         token = req.cookies.token
     }
         // if (!tokenstatus) {
@@ -48,7 +51,7 @@ async function checkForToken(req){
 
 async function decodeToken(token){
     const log = logger.child({'function': 'decodeToken'});
-    log.trace('Decoding token.');
+    log.trace(token,'Decoding token');
     let decodedToken;
         try{
             decodedToken = jwt.verify(token, SECRET);

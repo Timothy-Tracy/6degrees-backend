@@ -15,6 +15,14 @@ const {catchAsync} = require('../../../../lib/error/customErrors.js')
 //     res.status(200).json(res.result)
 // });
 
+//read
+router.get('/', 
+    catchAsync(AuthService.requireAuth),
+    catchAsync(UserService.findOneAndGet), 
+    async function (req, res) {
+    res.status(200).json(res.result)
+});
+
 //Update
 router.patch('/', 
     catchAsync(AuthService.requireAuth), 

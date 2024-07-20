@@ -32,7 +32,8 @@ async function findOneByQuery(req, res, next){
     log.trace();
     const query = req.params.query;
     let result = await PostRepository.findOneByQuery(query);
-    
+    let comments = await PostRepository.findAllCommentsByPostUUID(result.data.post[0].POST_UUID)
+    result.data.comments = comments.data;
     res.result = result.data;
     res.locals.POST_UUID = result.data.post[0].POST_UUID;
     res.locals.NODE_UUID = result.data.node[0].NODE_UUID

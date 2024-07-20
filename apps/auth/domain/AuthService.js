@@ -85,6 +85,7 @@ async function register(req, res, next){
 async function verify(req,res,next){
     let log = logger.child({'function':'verify'});
     log.trace();
+    res.locals.auth={};
     const token = await JWTService.checkForToken(req);
     const data = await JWTService.decodeToken(token);
     res.locals.auth.tokenData = data;
