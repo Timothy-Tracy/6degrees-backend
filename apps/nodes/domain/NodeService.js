@@ -155,6 +155,11 @@ async function interact(req, res, next) {
         //create the new node
         let resultt = await NodeRepository.create(newNode);
         res.result = resultt;
+        if (res.result.existingNode){
+            const ress = await NodeRepository.findOneByUUID(res.result.existingNode)
+            res.result = ress.data
+            next()
+        }
         //award points
         
         log.info()

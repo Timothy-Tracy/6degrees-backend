@@ -70,21 +70,25 @@ async function findOneByQuery(query){
     const session = driver.session({ DB_DATABASE });
     await session.run(
         `
-        MATCH (n:NODE)-[e:EDGE{EDGE_QUERY:"${query}"}]-()
-        MATCH (p:POST)-[:PARENT_POST]-(n)
-        RETURN p,n;
+        MATCH (source:NODE)-[e:EDGE{EDGE_QUERY:"${query}"}]-()
+        MATCH (source)-[:PARENT_USER]-(sourceUser:USER)
+        MATCH (p:POST)-[:PARENT_POST]-(source)
+        RETURN p,source{.*, user: sourceUser{.username,.firstName,.lastName,.USER_UUID}} AS source;
         `
     ).then(result=>{
        
         const post = result.records.map(i => i.get('p').properties);
-        const node = result.records.map(i => i.get('n').properties);
-     
+        //const node = result.records.map(i => i.get('source').properties);
+        const node2 = result.records.map(record => (
+            record._fields[record._fieldLookup.source]
+           
+          ));
         output.data.post = post;
-        output.data.node = node;
+        output.data.node = node2;
         
         log.debug(result.records)
         log.debug(post)
-        log.debug(node)
+        log.debug(node2)
 
     }).catch(error=>{
         log.error(error);

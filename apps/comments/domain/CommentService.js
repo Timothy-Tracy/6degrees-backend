@@ -31,7 +31,7 @@ async function comment(req,res,next){
     //Assert Node UUID is present in the body.
     await AuthValidation.assertNodeUUIDInBody(req, res)
 
-    const POST_UUID = req.body.POST_UUID;
+    
     const NODE_UUID = req.body.NODE_UUID;
 
     //if it has a parent comment
@@ -45,7 +45,7 @@ async function comment(req,res,next){
 
     const comment= {
         COMMENT_UUID: COMMENT_UUID,
-        POST_UUID: POST_UUID,
+        
         NODE_UUID: NODE_UUID,
         USER_UUID: USER_UUID,
         body: req.body.body,
@@ -60,4 +60,12 @@ async function comment(req,res,next){
       next();
 }
 
-module.exports = {comment}
+const findOne= (uuid) => async (req,res,next) => {
+    const log = logger.child({'function' : 'findOne'});
+    log.trace();
+    const result = await CommentRepository.findOneByUUID(uuid || req.params.uuid);
+    res.result = result;
+    next()
+}
+
+module.exports = {comment, findOne}

@@ -21,11 +21,15 @@ async function findOneByUUID(UUID) {
     const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
-    await session.run(`Match (n:NODE{\`NODE_UUID\`: '${UUID}'}) return n`)
+    await session.run(`
+        Match (n:NODE{\`NODE_UUID\`: '${UUID}'}) 
+        MATCH (n)-[:PARENT_USER]-(u:USER)
+        return n {.*, username:u.username} AS n
+        `)
         .then(result => {
-            const myresult = result.records.map(i => i.get('n').properties);
+            const node = result.records.map(record => (record._fields[record._fieldLookup.n]))
             const msg = 'found node by uuid'
-            output.data = { ...output.data, 'node': myresult[0] }
+            output.data.node = node[0]
             logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
             myobj = { "result": myresult[0], 'message': msg }
         })
@@ -70,7 +74,7 @@ async function findAllOwnedBy(uuid) {
  * @description A function that determines if a user already has a node associated with a post
  */
 async function userHasNodeInPost(USER_UUID, POST_UUID) {
-    let output = true;
+    let output = {data:{}};
     const log = logger.child({ 'function': 'userHasNodeInPost' });
     log.trace();
     //Initialize Drivers
@@ -80,22 +84,27 @@ async function userHasNodeInPost(USER_UUID, POST_UUID) {
         `
             MATCH (p:POST {POST_UUID: "${POST_UUID}"})
             MATCH (u:USER {USER_UUID: "${USER_UUID}"})
-            RETURN EXISTS((u)-[:CHILD_NODE]->(:NODE)-[:PARENT_POST]->(p))
+            OPTIONAL MATCH (u)-[:CHILD_NODE]->(n:NODE)-[:PARENT_POST]->(p)
+            RETURN EXISTS((u)-[:CHILD_NODE]->(:NODE)-[:PARENT_POST]->(p)) AS result, n
         `
     ).then(result => {
-        output = result.records[0]._fields[0];
-        if (output) {
-            log.info(output)
+        log.info(result)
+        let boolean = result.records.map(record => (record._fields[record._fieldLookup.result]))
+        let node = result.records.map(record => (record._fields[record._fieldLookup.n]))
+        output.data.boolean = boolean[0];
+        output.data.node = node[0].properties.NODE_UUID
+        if (output.data.boolean) {
+            log.info(output.data.boolean)
 
             log.info('User Has Node In Post == true')
         } else {
-            log.info(output)
+            log.info(output.data.boolean)
 
             log.info('User Has Node In Post == false')
 
         }
     })
-
+    log.info(output)
     return output;
 
 }
@@ -220,9 +229,11 @@ async function create(obj) {
     //Check if a user already has a node in the post
     const x = await userHasNodeInPost(obj.USER_UUID, obj.POST_UUID);
     log.info(x)
-    if (x == true) {
+    if (x.data.boolean == true) {
+        output.existingNode = x.data.node;
+        return output;
         throw new AppError('User Already Has Node In Post', 403)
-    }
+    } 
     //create the node in the db
     output.createNodeResult = await initNode(obj);
 
