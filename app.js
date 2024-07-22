@@ -5,7 +5,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const pino = require('pino-http');
-
+const cors = require('cors')
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var postsRouter = require('./apps/posts/entry-points/api/PostController.js');
@@ -30,6 +30,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors({
+  origin:'http://localhost:3000',
+  credentials: true
+}));
 
 app.use(AdminPostsRouter.apiRoot, AdminPostsRouter.router);
 app.use(AdminUsersRouter.apiRoot, AdminUsersRouter.router);

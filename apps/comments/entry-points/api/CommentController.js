@@ -8,7 +8,16 @@ const catchAsync = customErrors.catchAsync;
 var express = require('express');
 var router = express.Router();
 const apiRoot = '/api/comments'
+const GlobalValidation = require('../../../../lib/validation/GlobalValidation.js')
+const {uuidObjSchema} = require('../../../../lib/validation/schemas/GlobalSchemas.js')
 
+router.get('/:uuid', 
+    catchAsync(GlobalValidation.validateParam(uuidObjSchema)),
+    catchAsync(CommentService.findOne()),
+    function(req,res){
+        res.status(200).json(res.result)
+    }
+)
 
 router.post('/', catchAsync(AuthService.optionalAuth),catchAsync(CommentService.comment), function (req, res) {
     res.status(200).json(res.result)

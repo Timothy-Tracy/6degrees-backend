@@ -11,7 +11,7 @@ const GlobalSchemas = require('../../../lib/validation/schemas/GlobalSchemas.js'
 
 const titleSchema = joi.string()
     .trim()
-    .alphanum()
+   
     .min(8)
     .max(240);
 

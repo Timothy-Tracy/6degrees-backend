@@ -66,6 +66,14 @@ async function findOneByUUID(req, res, next) {
     next()
 }
 
+
+async function findOneAndGet(req,res,next){
+    const log = logger.child({'function':'findOneAndGet'});
+    log.trace();
+    const result = await Neo4jRepository.findOneAndGet('USER', {USER_UUID:res.locals.auth.tokenData.USER_UUID});
+    res.result = result;
+    next()
+}
 async function deleteUser(req, res, next) {
     const myresult = await Neo4jRepository.findOneAndDelete('USER', 'USER_UUID', res.locals.auth.tokenData.USER_UUID);
     res.result = { myresult}
@@ -262,5 +270,6 @@ module.exports = {
     unfollow,
     sendFriendRequest,
     acceptFriendRequest,
-    unfriend
+    unfriend, 
+    findOneAndGet
 };

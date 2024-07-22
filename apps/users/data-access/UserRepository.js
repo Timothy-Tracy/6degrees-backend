@@ -77,7 +77,7 @@ async function create(obj) {
             followingCount: 0,
             friendCount:0,
             friendRequestCount:0,
-            createdAt: "${new Date().toISOString()}",
+            createdAt: "${new Date().toISOString()}"
         })
         return u;`)
         .then(result => {

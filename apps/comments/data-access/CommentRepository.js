@@ -47,6 +47,8 @@ async function initComment(obj){
     const driver = Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
     const query = `
+        
+        MATCH (n:NODE{NODE_UUID:"${obj.NODE_UUID}"})-[:PARENT_POST]-(p:POST)
         CREATE (c:COMMENT {
             \`COMMENT_UUID\`: "${obj.COMMENT_UUID}",
             \`body\`: "${obj.body}",
@@ -54,11 +56,12 @@ async function initComment(obj){
             \`updatedAt\`: "${obj.createdAt}",
             visibility: "public" 
         })
+        Return p;
     `
     await session.run(query)
     .then(result =>{
-        const myresult = result.records.map(i => i.get('c').properties);
-        output.data = myresult;
+        const myresult = result.records.map(i => i.get('p').properties);
+        output.data = myresult[0].POST_UUID;
         output.summary = result.summary.counters._stats;
         output.message = `Created comment ${obj.COMMENT_UUID} in the database`
 
@@ -122,7 +125,7 @@ async function createCommentRelationships(obj){
     const query = `
         MATCH (c:COMMENT {COMMENT_UUID:"${obj.COMMENT_UUID}"})
         MATCH (n:NODE {NODE_UUID: "${obj.NODE_UUID}"})
-        MATCH (p:POST {POST_UUID: "${obj.POST_UUID}"})
+        MATCH (p:POST)-[:PARENT_POST]-(n)
         MATCH (u:USER {USER_UUID: "${obj.USER_UUID}"})
 
         CREATE (u)<-[:PARENT_USER]-(c)
@@ -152,6 +155,7 @@ async function create(obj) {
     log.trace();
 
     output.createCommentResult = await initComment(obj);
+    obj.POST_UUID = output.createCommentResult.data
     output.parentCommentResult = await checkParentComment(obj);
     output.createCommentRelationshipsResult = await createCommentRelationships(obj);
 
@@ -184,6 +188,120 @@ async function deleteComment(UUID) {
     return myobj;
 };
 
+async function findOneByUUID(uuid){
+    let output = {};
+
+    const log = logger.child({'function' : 'findOneByUUID'});
+    log.trace();
+
+    const driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    const query = `
+   MATCH (parent:COMMENT {COMMENT_UUID: "${uuid}"})
+MATCH (u:USER)-[:PARENT_USER]-(parent)
+OPTIONAL MATCH (parent)-[:CHILD_COMMENT]->(child:COMMENT)
+WITH parent, u, COLLECT(child.COMMENT_UUID) AS childComments
+RETURN parent {
+    .*, 
+    username: u.username, 
+    childComments: childComments
+}
+    `
+    await session.run(query)
+    .then(result =>{
+        const comment = result.records.map(record => (record._fields[record._fieldLookup.parent]))
+        output.data = comment[0]
+        output.summary = result.summary.counters._stats;
+        output.message = `Found comment ${output.data.COMMENT_UUID} in the database`
+           
+        
 
 
-module.exports = { deleteComment, create, findAllOwnedBy,   };
+    })
+    .catch(error=>{
+        throw error
+    })
+    log.info(output);
+    return output;
+
+}
+
+async function fetchCommentBatch(uuid){
+    let output = {};
+
+    const log = logger.child({'function' : 'fetchCommentBatch'});
+    log.trace();
+
+    const driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    const query = `
+    MATCH (parent:COMMENT {COMMENT_UUID: "${uuid}"})
+MATCH (u:USER)-[:PARENT_USER]-(parent)
+OPTIONAL MATCH (parent)-[:CHILD_COMMENT]->(child:COMMENT)
+OPTIONAL MATCH (child)-[:PARENT_USER]->(childUser:USER)
+WITH parent, u, child, childUser,
+    exists((child)-[:CHILD_COMMENT]->()) AS hasChildren
+WITH parent, u,
+    COLLECT(
+        CASE
+            WHEN hasChildren
+            THEN child {.*, username: childUser.username}
+            ELSE {COMMENT_UUID: child.COMMENT_UUID}
+        END
+    ) AS childComments
+RETURN parent {.*, username: u.username, repliesCount: SIZE(childComments), childComments: childComments};
+    `
+    await session.run(query)
+    .then(result =>{
+        const comment = result.records.map(record => (record._fields[record._fieldLookup.parent]))
+        output.data = comment
+        output.summary = result.summary.counters._stats;
+        output.message = `Found comment ${comment.COMMENT_UUID} in the database`
+           
+        
+
+
+    })
+    .catch(error=>{
+        throw error
+    })
+    log.info(output);
+    return output;
+
+}
+
+async function findManyCommentUuidsByPost(uuid){
+    let output = {};
+
+    const log = logger.child({'function' : 'findManyCommentUuidsByPost'});
+    log.trace();
+
+    const driver = Neo4jDriver.initDriver();
+    const session = driver.session({ DB_DATABASE });
+    const query = `
+    MATCH (p:POST {POST_UUID: "${uuid}"})
+    MATCH (c:COMMENT)-[:PARENT_POST]->(p)
+    WHERE NOT (c)-[:PARENT_COMMENT]->()
+    RETURN collect(c.COMMENT_UUID) AS commentUuids
+    `
+    await session.run(query)
+    .then(result =>{
+        const comment = result.records.map(record => (record._fields[record._fieldLookup.commentUuids]))
+        output.data = comment[0]
+        output.summary = result.summary.counters._stats;
+        output.message = `Found comment ${comment.COMMENT_UUID} in the database`
+           
+        
+
+
+    })
+    .catch(error=>{
+        throw error
+    })
+    log.info(output);
+    return output;
+
+}
+
+
+module.exports = { deleteComment, create, findAllOwnedBy, fetchCommentBatch, findManyCommentUuidsByPost,findOneByUUID   };

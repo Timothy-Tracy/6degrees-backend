@@ -4,6 +4,8 @@ const NodeService = require('../../nodes/domain/NodeService.js')
 const EdgeService = require('../../edges/domain/EdgeService.js')
 const PostRepository = require('../data-access/PostRepository.js')
 const NodeRepository = require('../../nodes/data-access/NodeRepository.js')
+const CommentRepository = require('../../comments/data-access/CommentRepository.js')
+
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'PostService' });
 const Neo4jRepository = require('../../db/neo4j/data-access/Neo4jRepository.js')
@@ -32,8 +34,16 @@ async function findOneByQuery(req, res, next){
     log.trace();
     const query = req.params.query;
     let result = await PostRepository.findOneByQuery(query);
-    
+    // let comments = await PostRepository.findAllCommentsByPostUUID(result.data.post[0].POST_UUID)
+    let commentsArr = await CommentRepository.findManyCommentUuidsByPost(result.data.post[0].POST_UUID);
+    // const commentObjArr = await Promise.all(commentsArr.data.map(element => CommentRepository.findOneByUUID(element)));
+
+    //log.debug(commentObjArr, 'COMMENTS OBJ ARRAY')
+
+    //result.data.comments = comments.data;
     res.result = result.data;
+    res.result.comments = commentsArr.data
+    
     res.locals.POST_UUID = result.data.post[0].POST_UUID;
     res.locals.NODE_UUID = result.data.node[0].NODE_UUID
     log.debug(res.result);
