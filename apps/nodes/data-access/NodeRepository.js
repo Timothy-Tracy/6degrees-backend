@@ -31,7 +31,6 @@ async function findOneByUUID(UUID) {
             const node = result.records.map(record => (record._fields[record._fieldLookup.n]))
             const msg = 'found node by uuid'
             output.data.node = node[0]
-
         })
         .catch(error => {
             throw error
