@@ -45,10 +45,8 @@ async function distribute(uuid) {
     log.debug(sourceNodeResult.data.node, 'SOURCENODERESULT.DATA.NODE')
     var edgeResult = await EdgeService.createDistributionNew(sourceNodeResult.data.node);
     log.debug(edgeResult.data.edge)
-    return {data: {
-        NODE_UUID : sourceNodeResult.data.node.NODE_UUID,
-        EDGE_QUERY : edgeResult.data.edge.EDGE_QUERY
-    }}
+    return edgeResult.data.edge.EDGE_QUERY
+    
     
     
 }
@@ -65,57 +63,11 @@ async function distribute(uuid) {
  * @param {*} next 
  * @requires req.params.query
  */
-async function createFromDistribution(req, res, next) {
-    const log = logger.child({'function':'createFromDistribution'});
-    log.trace();
-    log.info("creating from distribution")
-    var result = await EdgeService.findOneByQuery(req.params.query)
-    logger.info('Source Edge Found')
-    log.info(sourceEdge)
-    res.locals.edge = result.data.edge;
-    res.locals.node = result.data.node;
-    let user, owned;
 
-    if (res.locals.auth.tokenData) {
-        log.info('tokenData detected')
-        user = res.locals.auth.tokenData.USER_UUID;
-        owned = true;
-    } else {
-        log.info('no auth')
-        logger.info("Creating Anonymous User")
-        var anonUser = await UserService.createAnonymous();
-        if (anonUser.result.result) {
-            console.log("NodeService: Anon user was successful")
-            user = anonUser.data.USER_UUID
-            owned = false;
-
-    }}
-
-        let newNodeUUID = uuidv7();
-        const nodeType = "RESPONSE";
-        const newNode = {
-            NODE_UUID: newNodeUUID,
-            POST_UUID: result.data.post.POST_UUID,
-            USER_UUID: user,
-            NODE_TYPE: nodeType,
-            SOURCE_NODE_UUID: result.data.node.NODE_UUID,
-            SOURCE_EDGE_UUID: result.data.edge.EDGE_UUID,
-            metadata: {},
-            degree: parseInt(result.data.edge.degree) + 1,
-            owned: owned
-
-        }
-        await NodeRepository.create(newNode);
-        await NodeRepository.findDistributionPathAndAward(newNodeUUID, 10);
-        res.locals.POST_UUID = newNode.POST_UUID;
-
-    
-    next()
-}
 async function interact(req, res, next) {
     const log = logger.child({'function':'interact'});
-    log.trace();
-    log.info(`interacting with post using query ${req.params.query}`);
+    log.trace(`interacting with post using query ${req.params.query}`);
+   
     var result = await EdgeService.findOneByQuery(req.params.query)
     logger.info(result.data)
     res.locals.edge = result.data.edge;
@@ -153,25 +105,29 @@ async function interact(req, res, next) {
             owned: owned
         }
         //create the new node
-        let resultt = await NodeRepository.create(newNode);
-        res.result = resultt;
-        if (res.result.existingNode){
-            const ress = await NodeRepository.findOneByUUID(res.result.existingNode)
-            res.result = ress.data
+        let createResult = await NodeRepository.create(newNode);
+        
+        if (createResult.existingNode){
+            res.result = createResult;
+            log.debug("User has node in post, therefore I'm moving on to the next middleware.")
             next()
-        }
-        //award points
-        
-        log.info()
-        log.debug('finding distribution path and awarding')
-        await NodeRepository.findDistributionPathAndAward(newNodeUUID, 10);
-        res.locals.POST_UUID = newNode.POST_UUID;
-        res.locals.NODE_UUID = newNodeUUID;
-        res.result = await distribute(newNodeUUID)
-        
+        } else {
+            log.debug('User does not have node in post, moving on')
+            res.result = await NodeRepository.findOneByUUID(newNode.NODE_UUID)
+            //award points
             
-        
-    next()
+           // log.info()
+            //log.debug('finding distribution path and awarding')
+            //await NodeRepository.findDistributionPathAndAward(newNodeUUID, 10);
+            res.locals.POST_UUID = newNode.POST_UUID;
+            res.locals.NODE_UUID = newNodeUUID;
+            res.result.node.EDGE_QUERY = await distribute(newNode.NODE_UUID)
+            
+                
+            
+        next()
+        }
+       
 }
 
 async function findOneByUUID(req, res, next) {
@@ -214,5 +170,10 @@ async function findAllOwnedBy(req, res, next) {
     next()
 }
 
+async function findDistributionPath(req,res,next){
+    const result = await NodeRepository.findDistributionPathByQuery(req.params.query)
+    res.result = result;
+    next()
+}
 
-module.exports = { interact, deleteNode, findOneByUUID, createSourceNode, distribute, createFromDistribution, takeOwnership, findAllOwnedBy };
+module.exports = { interact, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath };

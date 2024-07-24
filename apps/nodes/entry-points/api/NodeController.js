@@ -25,6 +25,9 @@ router.get('/interact/:query', catchAsync(AuthService.optionalAuth), catchAsync(
 router.post('/own', catchAsync(AuthService.requireAuth), catchAsync(NodeService.takeOwnership), async function(req,res){
     res.status(200).json(res.result);
 });
+router.get('/path/:query', catchAsync(NodeService.findDistributionPath), async function (req, res){
+    res.status(200).json(res.result)
+});
 /*
 router.post('/create', function(req, res) {
     console.log('receiving data ...');

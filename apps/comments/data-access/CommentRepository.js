@@ -204,7 +204,8 @@ WITH parent, u, COLLECT(child.COMMENT_UUID) AS childComments
 RETURN parent {
     .*, 
     username: u.username, 
-    childComments: childComments
+    childComments: childComments,
+    repliesCount: SIZE(childComments)
 }
     `
     await session.run(query)

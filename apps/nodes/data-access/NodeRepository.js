@@ -1,4 +1,4 @@
-const fs = require("fs");
+
 const neo4j = require('neo4j-driver');
 require('dotenv').config()
 const {
@@ -18,26 +18,24 @@ const Neo4jDriver = require('../../db/neo4j/data-access/Neo4jDriver.js')
 async function findOneByUUID(UUID) {
     let output = { data: {} };
     logger.info("Finding Node By UUID ", UUID)
-    const driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
+    const driver = Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
     var myobj = null;
     await session.run(`
-        Match (n:NODE{\`NODE_UUID\`: '${UUID}'}) 
+        Match (n:NODE{NODE_UUID: "${UUID}"}) 
         MATCH (n)-[:PARENT_USER]-(u:USER)
-        return n {.*, username:u.username} AS n
+        OPTIONAL MATCH (n)-[e:EDGE]-()
+        return n {.*, username:u.username, EDGE_QUERY:e.EDGE_QUERY} AS n
         `)
         .then(result => {
             const node = result.records.map(record => (record._fields[record._fieldLookup.n]))
             const msg = 'found node by uuid'
             output.data.node = node[0]
-            logger.info({ 'result': myresult[0], 'result-summary': result.summary._stats }, msg)
-            myobj = { "result": myresult[0], 'message': msg }
+
         })
         .catch(error => {
-            logger.error(error, "Error");
-            myobj = { error: error };
+            throw error
         })
-    await driver.close()
     logger.info(output, 'findOneByUUID result')
     return output;
 };
@@ -92,7 +90,7 @@ async function userHasNodeInPost(USER_UUID, POST_UUID) {
         let boolean = result.records.map(record => (record._fields[record._fieldLookup.result]))
         let node = result.records.map(record => (record._fields[record._fieldLookup.n]))
         output.data.boolean = boolean[0];
-        output.data.node = node[0].properties.NODE_UUID
+        if(node[0] != null)output.data.node = node[0].properties.NODE_UUID
         if (output.data.boolean) {
             log.info(output.data.boolean)
 
@@ -230,10 +228,13 @@ async function create(obj) {
     const x = await userHasNodeInPost(obj.USER_UUID, obj.POST_UUID);
     log.info(x)
     if (x.data.boolean == true) {
-        output.existingNode = x.data.node;
+        output.message = 'user has node in post'
+        output.existingNode = true;
+        output.node = await findOneByUUID(x.data.node)
         return output;
         throw new AppError('User Already Has Node In Post', 403)
     } 
+    log.info('user does not have node in post')
     //create the node in the db
     output.createNodeResult = await initNode(obj);
 
@@ -359,4 +360,45 @@ async function findDistributionPathAndAward(uuid, points) {
         })
 }
 
-module.exports = { deleteNode, create, findAllOwnedBy, findOneByUUID, takeOwnership, findDistributionPathAndAward, userHasNodeInPost };
+async function findDistributionPathByQuery(query){
+        //init vars
+        let output = { };
+        //init logs
+        const log = logger.child({ 'function': 'findDistributionPathByQuery' });
+        log.trace();
+        //init drivers
+        let driver = Neo4jDriver.initDriver();
+        const session = driver.session({ DB_DATABASE });
+        await session.run(`
+            MATCH (start:NODE)-[:EDGE {EDGE_QUERY:"${query}"}]-()
+            MATCH path = (start)-[:EDGE_FULFILLED*]-(end:NODE)
+WHERE end.degree = '0'
+WITH path, nodes(path) AS nodesInPath
+UNWIND nodesInPath AS node
+OPTIONAL MATCH (node)-[:PARENT_USER]->(user:USER)
+WITH path, collect({
+  node: node,
+  username: user.username
+}) AS nodesWithUsernames
+RETURN nodesWithUsernames As n
+        `).then(result => {
+            log.info(result)
+            const nodes = result.records[0]._fields[0].map(record => {
+                let out = {}
+                log.info(record, "fields")
+                out = record.node.properties
+                out.username = record.username
+                return out
+            });
+            log.info(nodes)
+            output.nodes = nodes
+            output.summary = result.summary.counters._stats;
+            log.info(output, 'found path')
+        }).catch(error => {
+            throw error
+        });
+        log.info(output)
+        return output;
+}
+
+module.exports = { deleteNode, create, findAllOwnedBy, findOneByUUID, takeOwnership, findDistributionPathAndAward, userHasNodeInPost, findDistributionPathByQuery };

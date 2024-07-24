@@ -1,11 +1,13 @@
 
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+//Libraries
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
 const pino = require('pino-http');
-const cors = require('cors')
+const cors = require('cors');
+//My Routers
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var postsRouter = require('./apps/posts/entry-points/api/PostController.js');
