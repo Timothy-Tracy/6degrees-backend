@@ -1,7 +1,10 @@
+//NodeService.js
 const { v7: uuidv7 } = require('uuid');
 const NodeRepository = require('../data-access/NodeRepository.js');
 const EdgeService = require('../../edges/domain/EdgeService.js');
 const UserService = require('../../users/domain/UserService.js');
+const {findOneByQueryStandalone} = require('../../posts/domain/PostService.js')
+
 const AuthService = require('../../auth/domain/AuthService.js');
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'NodeService' });
@@ -163,11 +166,20 @@ async function takeOwnership(req, res, next) {
 }
 
 async function findAllOwnedBy(req, res, next) {
+    const log = logger.child({'function':'findAllOwnedBy'});
+    log.trace();
     const user = res.locals.auth.tokenData.USER_UUID;
-    logger.debug(user)
-    const result = await NodeRepository.findAllOwnedBy(user);
-    res.result = result;
-    next()
+    const result = await NodeRepository.findAllOwnedBy({USER_UUID:user});
+    res.locals.nodes = result.nodes;
+    
+    for (const item of res.locals.nodes) {
+        const result = await findOneByQueryStandalone(item.node.PREV_EDGE_QUERY || item.node.EDGE_QUERY);
+        item.post = result.post[0]
+      }
+    
+    res.result = res.locals.nodes;
+        next()
+    
 }
 
 async function findDistributionPath(req,res,next){

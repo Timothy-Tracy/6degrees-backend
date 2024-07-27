@@ -39,25 +39,33 @@ async function findOneByUUID(UUID) {
     return output;
 };
 
-async function findAllOwnedBy(uuid) {
+async function findAllOwnedBy(obj) {
     let output = {};
     const log = logger.child({ 'function': 'findAllOwnedBy' });
-    log.trace();
+    log.trace(obj);
     let driver = Neo4jDriver.initDriver();
     const session = driver.session({ DB_DATABASE });
     
-    await session.run(`Match (u:USER {USER_UUID: "${uuid}"})-[:CHILD_NODE]-(n) return n`)
+    await session.run(`
+        MATCH (node:NODE)-[:PARENT_USER]-(u:USER)
+        WHERE ALL(key IN keys($obj) WHERE u[key] = $obj[key])
+        OPTIONAL MATCH (node)-[edge:EDGE]-()
+        OPTIONAL MATCH ()-[ef:EDGE_FULFILLED]-(node)
+        RETURN node {.*, username:u.username, EDGE_QUERY: edge.EDGE_QUERY, PREV_EDGE_QUERY:ef.EDGE_QUERY} as node
+        `, {obj:obj})
     .then(result => {
-        const myresult = result.records.map(i => i.get('n').properties.NODE_UUID);
-        console.log(myresult)
-        output.data = myresult;
-        output.message = `found all nodes owned by ${uuid}`;
-        output.summary = result.summary;
+        log.debug(result, 'findAllOwnedBy query result')
+       const myresult = result.records.map((record)=>{
+        return {node:record._fields[0]}
+       })
+       output.nodes = myresult;
+        
     })
     .catch(error => {
         throw error
 
     })
+    log.debug(output, 'output')
     return output;
 
 

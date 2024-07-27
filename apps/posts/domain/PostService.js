@@ -1,6 +1,6 @@
 
 const { v7: uuidv7 } = require('uuid');
-const NodeService = require('../../nodes/domain/NodeService.js')
+
 const EdgeService = require('../../edges/domain/EdgeService.js')
 const PostRepository = require('../data-access/PostRepository.js')
 const NodeRepository = require('../../nodes/data-access/NodeRepository.js')
@@ -26,7 +26,7 @@ async function open (req,res,next){
     //Do stuff when a post is opened
     Neo4jRepository.findOneAndSetAttribute('NODE', "NODE_UUID",res.locals.NODE_UUID, 'views', "n.views+1", ['views']);
     Neo4jRepository.findOneAndSetAttribute('POST', "POST_UUID",res.locals.POST_UUID, 'views', "n.views+1", ['views']);
-    NodeRepository.findDistributionPathAndAward(res.result.node[0].NODE_UUID, 1);
+    //NodeRepository.findDistributionPathAndAward(res.locals.output.node[0].NODE_UUID, 1);
     next();
 }
 async function findOneByQuery(req, res, next){
@@ -41,8 +41,10 @@ async function findOneByQuery(req, res, next){
     //log.debug(commentObjArr, 'COMMENTS OBJ ARRAY')
 
     //result.data.comments = comments.data;
-    res.result = result.data;
-    res.result.comments = commentsArr.data
+    res.locals.output = {};
+    res.locals.output.post = result.data.post;
+    res.locals.output.node = result.data.node;
+    res.locals.output.comments = commentsArr.data
     
     res.locals.POST_UUID = result.data.post[0].POST_UUID;
     res.locals.NODE_UUID = result.data.node[0].NODE_UUID
@@ -51,10 +53,40 @@ async function findOneByQuery(req, res, next){
     if (typeof next === 'function') {
         log.trace('if type of next is function')
         next();
+      } else {
+        //If it is used as a standalone middleware
+        return res.locals.output
       }
 
 
 }
+async function findOneByQueryStandalone(query){
+    let output = {}
+    const log = logger.child({'function': 'findOneByQueryStandalone'});
+    log.trace();
+
+    let result = await PostRepository.findOneByQuery(query);
+    // let comments = await PostRepository.findAllCommentsByPostUUID(result.data.post[0].POST_UUID)
+    //let commentsArr = await CommentRepository.findManyCommentUuidsByPost(result.data.post[0].POST_UUID);
+    // const commentObjArr = await Promise.all(commentsArr.data.map(element => CommentRepository.findOneByUUID(element)));
+
+    //log.debug(commentObjArr, 'COMMENTS OBJ ARRAY')
+
+    //result.data.comments = comments.data;
+    
+    output.post = result.data.post;
+    output.node = result.data.node;
+    //res.locals.output.comments = commentsArr.data
+    
+   
+    
+        //If it is used as a standalone middleware
+        return output
+      
+
+
+}
+
 async function findPostUUIDByQuery(req,res,next){
     const log = logger.child({'function':'open'});
     const query = req.params.query;
@@ -65,6 +97,7 @@ async function findPostUUIDByQuery(req,res,next){
 }
 
 async function create(req, res, next) {
+    const NodeService = require('../../nodes/domain/NodeService.js')
     const log = logger.child({'function':'create'});
     log.trace()
     
@@ -103,4 +136,4 @@ async function findOne(req, res, next) {
 
 
 
-module.exports = { create, deletePost, findOne, findPostUUIDByQuery, findOneByQuery, open };
+module.exports = { create, deletePost, findOne, findPostUUIDByQuery, findOneByQuery,findOneByQueryStandalone, open };
