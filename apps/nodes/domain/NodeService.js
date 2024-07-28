@@ -9,7 +9,23 @@ const AuthService = require('../../auth/domain/AuthService.js');
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'NodeService' });
 
-
+async function findMyNodeByPostQuery(req,res,next){
+    let PostRepository = require('../../posts/data-access/PostRepository.js')
+    let USER_UUID = "";
+    const log = logger.child({'function':'findMyNodeByPostQuery'});
+    log.trace();
+    
+    let result = await PostRepository.findOneByQuery(req.params.query);
+    if(res.locals.auth.hasAuth){
+        USER_UUID=res.locals.auth.tokenData.USER_UUID;
+    }else{
+        
+    }
+    let result2 = await NodeRepository.userHasNodeInPost(USER_UUID, result.data.post[0].POST_UUID)
+    let result3 = await NodeRepository.findOneByUUID(result2.data.node);
+    res.result = result3.data.node
+    next()
+}
 
 async function createSourceNode(RUUID, UUUID) {
     logger.debug("Creating Source Node")
@@ -124,7 +140,8 @@ async function interact(req, res, next) {
             //await NodeRepository.findDistributionPathAndAward(newNodeUUID, 10);
             res.locals.POST_UUID = newNode.POST_UUID;
             res.locals.NODE_UUID = newNodeUUID;
-            res.result.node.EDGE_QUERY = await distribute(newNode.NODE_UUID)
+           
+            res.result.EDGE_QUERY = await distribute(newNode.NODE_UUID)
             
                 
             
@@ -188,4 +205,4 @@ async function findDistributionPath(req,res,next){
     next()
 }
 
-module.exports = { interact, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath };
+module.exports = { interact, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery };

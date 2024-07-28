@@ -13,6 +13,10 @@ router.get('/', catchAsync(AuthService.requireAuth), catchAsync(NodeService.find
     res.status(200).json(res.result)
 });
 
+router.get('/posts/:query', catchAsync(AuthService.optionalAuth), catchAsync(NodeService.findMyNodeByPostQuery), async function (req, res){
+    res.status(200).json(res.result)
+});
+
 router.get('/:uuid', catchAsync(NodeService.findOneByUUID), async function (req, res){
     res.status(200).json(res.result)
 });
