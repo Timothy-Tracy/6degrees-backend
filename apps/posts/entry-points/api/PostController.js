@@ -35,5 +35,5 @@ router.delete('/:uuid', PostService.deletePost, async function (req, res){
     res.status(200).json(res.result)
 });
 
-PostService.findOneByQueryStandalone('silly-gray-microphone')
+//PostService.findOneByQueryStandalone('silly-gray-microphone')
 module.exports = { apiRoot, router };
