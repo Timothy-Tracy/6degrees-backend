@@ -29,7 +29,9 @@ router.get('/interact/:query', catchAsync(AuthService.optionalAuth), catchAsync(
 router.post('/own', catchAsync(AuthService.requireAuth), catchAsync(NodeService.takeOwnership), async function(req,res){
     res.status(200).json(res.result);
 });
-router.get('/path/:query', catchAsync(NodeService.findDistributionPath), async function (req, res){
+router.get('/path/:query', 
+    catchAsync(AuthService.requireAuth),
+    catchAsync(NodeService.findDistributionPathGraphData), async function (req, res){
     res.status(200).json(res.result)
 });
 /*

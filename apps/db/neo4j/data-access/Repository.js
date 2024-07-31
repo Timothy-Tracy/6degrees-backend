@@ -97,6 +97,8 @@ async function getRelationships({
     relationshipReturnProperties,
     targetReturnProperties
   }) {
+    const log = logger.child({'function':'getRelationships'})
+    log.trace({sourceLabel, sourceProperties, relationshipType})
     const session = driver.session();
   
     try {
@@ -298,30 +300,30 @@ async function getPath({
         WITH startNode, backwardPaths, collect(path2) AS forwardPaths
       `;
   
+      // query += `
+      //   RETURN
+      //     [node IN nodes(backwardPaths[0]) | node {${nodeReturnProperties ? nodeReturnProperties.join(', ') : '.*'}}] AS backwardNodes,
+      //     [rel IN relationships(backwardPaths[0]) | rel {${relationshipReturnProperties ? relationshipReturnProperties.join(', ') : '.*'}}] AS backwardRelationships,
+      //     startNode {${nodeReturnProperties ? nodeReturnProperties.join(', ') : '.*'}} AS startNode,
+      //     [path IN forwardPaths | [
+      //       [node IN nodes(path) | node {${nodeReturnProperties ? nodeReturnProperties.join(', ') : '.*'}}],
+      //       [rel IN relationships(path) | rel {${relationshipReturnProperties ? relationshipReturnProperties.join(', ') : '.*'}}]
+      //     ]] AS forwardPathsData
+      // `;
       query += `
-        RETURN
-          [node IN nodes(backwardPaths[0]) | node {${nodeReturnProperties ? nodeReturnProperties.join(', ') : '.*'}}] AS backwardNodes,
-          [rel IN relationships(backwardPaths[0]) | rel {${relationshipReturnProperties ? relationshipReturnProperties.join(', ') : '.*'}}] AS backwardRelationships,
-          startNode {${nodeReturnProperties ? nodeReturnProperties.join(', ') : '.*'}} AS startNode,
-          [path IN forwardPaths | [
-            [node IN nodes(path) | node {${nodeReturnProperties ? nodeReturnProperties.join(', ') : '.*'}}],
-            [rel IN relationships(path) | rel {${relationshipReturnProperties ? relationshipReturnProperties.join(', ') : '.*'}}]
-          ]] AS forwardPathsData
-      `;
+        RETURN backwardPaths, forwardPaths
+      `
   
       const result = await session.run(query, { startNodeProperties });
       console.log(result)
       let a = result.records.map(record => ({
-        backwardNodes: record.get('backwardNodes'),
-        backwardRelationships: record.get('backwardRelationships'),
-        startNode: record.get('startNode'),
-        forwardPaths: record.get('forwardPathsData').map(pathData => ({
-          nodes: pathData[0],
-          relationships: pathData[1]
-        }))
+        backwardPaths: record.get('backwardPaths'),
+        forwardPaths: record.get('forwardPaths'),
+        
       }));
       console.log(a)
-      return a
+     
+      return a[0]
     } catch (error) {
       console.error('Error retrieving path:', error);
       throw error;
@@ -329,9 +331,57 @@ async function getPath({
       await session.close();
     }
   }
- //const y = async()=> {return await getRelationships({sourceLabel:'USER', sourceProperties:{username:'janesmith'}, relationshipType:'FOLLOWS' , targetReturnProperties:['username'], sourceReturnProperties:['username','mobile']})}
- //logger.info(y())
- //const z = getPath({startNodeLabel:'NODE', startNodeProperties:{'NODE_UUID': '0190d1d8-0202-7ff5-b03b-7e7870a82129'}, endNodeLabel:'NODE', relationshipType:'EDGE_FULFILLED', })
- const a = getPathNoBackForks({startNodeLabel:'NODE', startNodeProperties:{'NODE_UUID': '0190dd05-a20a-7445-818c-25a4af046840'}, endNodeLabel:'NODE', relationshipType:'EDGE_FULFILLED', })
 
- module.exports = {get, processRecord, getRelationships}
+
+  async function transformData(data){
+    let jsonData1 = data.backwardPaths;
+    let jsonData2 = data.forwardPaths;
+    // Combine data from both documents
+    let combinedData = [...jsonData1 || {}, ...jsonData2];
+      let mydata = {
+          nodes: [],
+          links: []
+      };
+
+      let nodeMap = new Map();
+      console.log(nodeMap)
+      combinedData.forEach(path => {
+          // Function to add a node with all its properties
+          function addNode(node) {
+              if (!nodeMap.has(node.identity.toString())) {
+                  let nodeObj = {
+                      id: node.identity.toString(),
+                      label: `NODE ${node.identity}`,
+                      ...node.properties
+                  };
+                  mydata.nodes.push(nodeObj);
+                  nodeMap.set(node.identity.toString(), nodeObj);
+              }
+          }
+
+          // Add start and end nodes
+          addNode(path.start);
+          addNode(path.end);
+
+          // Add links
+          path.segments.forEach(segment => {
+              mydata.links.push({
+                  source: segment.start.identity.toString(),
+                  target: segment.end.identity.toString(),
+                  label: segment.relationship.type,
+                  ...segment.relationship.properties
+              });
+          });
+      });
+
+      return mydata;
+  
+  }
+
+const doStuff = async() =>{
+  const a = await getPathNoBackForks({startNodeLabel:'NODE', startNodeProperties:{'NODE_UUID': '0190dd05-a20a-7445-818c-25a4af046840'}, endNodeLabel:'NODE', relationshipType:'EDGE_FULFILLED', })
+  const b = await transformData(a);
+  console.log(b)
+}
+//doStuff()
+ module.exports = {get, processRecord, getRelationships, getPathNoBackForks, transformData}

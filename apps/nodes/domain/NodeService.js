@@ -9,21 +9,28 @@ const AuthService = require('../../auth/domain/AuthService.js');
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'NodeService' });
 
-async function findMyNodeByPostQuery(req,res,next){
+async function findNodeByQuery({query, USER_UUID}){
     let PostRepository = require('../../posts/data-access/PostRepository.js')
-    let USER_UUID = "";
+    const log = logger.child({'function':'findNodeByQuery'});
+    log.trace();
+    let result = await PostRepository.findOneByQuery(query);
+    let result2 = await NodeRepository.userHasNodeInPost(USER_UUID, result.data.post[0].POST_UUID)
+    let result3 = await NodeRepository.findOneByUUID(result2.data.node);
+    return result3.data.node
+}
+async function findMyNodeByPostQuery(req,res,next){
+   
     const log = logger.child({'function':'findMyNodeByPostQuery'});
     log.trace();
     
-    let result = await PostRepository.findOneByQuery(req.params.query);
+    let USER_UUID = "";
     if(res.locals.auth.hasAuth){
         USER_UUID=res.locals.auth.tokenData.USER_UUID;
     }else{
         
     }
-    let result2 = await NodeRepository.userHasNodeInPost(USER_UUID, result.data.post[0].POST_UUID)
-    let result3 = await NodeRepository.findOneByUUID(result2.data.node);
-    res.result = result3.data.node
+    res.result = await findNodeByQuery({'query': req.params.query, 'USER_UUID': USER_UUID})
+    
     next()
 }
 
@@ -205,4 +212,29 @@ async function findDistributionPath(req,res,next){
     next()
 }
 
-module.exports = { interact, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery };
+async function findDistributionPathGraphData(req,res,next){
+    const log = logger.child({'function':'findDistributionPathGraphData'});
+    log.trace();
+    const Repository = require('../../db/neo4j/data-access/Repository.js');
+    let USER_UUID = ""
+    if(res.locals.auth.hasAuth){
+        USER_UUID=res.locals.auth.tokenData.USER_UUID;
+    }else{
+        
+    }
+    const n = await findNodeByQuery({'query':req.params.query, 'USER_UUID': USER_UUID})
+    const result = await Repository.getPathNoBackForks({startNodeLabel:'NODE', startNodeProperties:{'NODE_UUID': n.NODE_UUID},endNodeLabel:'NODE', relationshipType:'EDGE_FULFILLED'})
+    let transformedData = await Repository.transformData(result);
+    log.debug(JSON.stringify(transformedData.nodes))
+    
+    for (let i = 0; i<transformedData.nodes.length; i++){
+        let node = transformedData.nodes[i]
+        let rel = await Repository.getRelationships({sourceLabel:'NODE', sourceProperties:{'NODE_UUID': node.NODE_UUID}, targetLabel:'USER', relationshipType:'PARENT_USER', targetReturnProperties:['username']})
+        log.debug(rel[0].target.properties)
+        transformedData.nodes[i] = {...node, username: rel[0].target.properties.username}
+    }
+    res.result = transformedData;
+    next()
+}
+
+module.exports = { interact, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery, findDistributionPathGraphData };
