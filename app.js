@@ -18,6 +18,7 @@ var usersRouter = require('./apps/users/entry-points/api/UserController.js');
 var nodesRouter = require('./apps/nodes/entry-points/api/NodeController.js');
 var authRouter = require('./apps/auth/entry-points/api/AuthController.js');
 var commentRouter = require('./apps/comments/entry-points/api/CommentController.js');
+var searchRouter = require('./apps/search/entry-points/api/SearchController.js');
 
 var errorHandler = require('./lib/error/errorHandler.js');
 var app = express();
@@ -36,6 +37,7 @@ app.use(cors({
   origin:'http://localhost:3000',
   credentials: true
 }));
+app.use(searchRouter.apiRoot, searchRouter.router);
 
 app.use(AdminPostsRouter.apiRoot, AdminPostsRouter.router);
 app.use(AdminUsersRouter.apiRoot, AdminUsersRouter.router);
