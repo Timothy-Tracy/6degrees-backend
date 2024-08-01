@@ -18,7 +18,13 @@ const {catchAsync} = require('../../../../lib/error/customErrors.js')
 //read
 router.get('/', 
     catchAsync(AuthService.requireAuth),
-    catchAsync(UserService.findOneAndGet), 
+    catchAsync(UserService.findOneAndGetMiddleware), 
+    async function (req, res) {
+    res.status(200).json(res.result)
+});
+
+router.get('/:username', 
+    catchAsync(UserService.findOneByUsernameMiddleware), 
     async function (req, res) {
     res.status(200).json(res.result)
 });

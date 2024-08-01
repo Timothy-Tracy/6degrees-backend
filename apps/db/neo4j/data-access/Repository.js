@@ -53,7 +53,7 @@ RETURN ${obj.returnedProperties ? `{
   }` : 'x'} as ${obj.returnedKey || 'result'}
   `, { obj: obj })
         .then(result => {
-            log.info(result)
+            //log.info(result)
             const x = result.records.map(record => processRecord(record));
             output.message = `Found }`
             output.data = x;
@@ -61,7 +61,7 @@ RETURN ${obj.returnedProperties ? `{
         }).catch(error => {
             throw error
         })
-    log.info(output)
+    
     return output
 }
 

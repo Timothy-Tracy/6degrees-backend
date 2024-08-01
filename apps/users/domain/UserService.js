@@ -66,8 +66,22 @@ async function findOneByUUID(req, res, next) {
     next()
 }
 
+async function findOneByUsername(username){
+    const Repository = require('../../db/neo4j/data-access/Repository.js')
+    const log = logger.child({'function':'findOnebyUsername'});
+    log.trace(username);
 
-async function findOneAndGet(req,res,next){
+    const result = await Repository.get({label:'USER', searchProperties:{'username':username} });
+    return result;
+}
+async function findOneByUsernameMiddleware(req, res, next){
+    const log = logger.child({'function':'findOnebyUsernameMiddleware'});
+    log.trace();
+    const result = await findOneByUsername(req.params.username)
+    res.result= result;
+    next()
+}
+async function findOneAndGetMiddleware(req,res,next){
     const log = logger.child({'function':'findOneAndGet'});
     log.trace();
     const result = await Neo4jRepository.findOneAndGet('USER', {USER_UUID:res.locals.auth.tokenData.USER_UUID});
@@ -271,5 +285,7 @@ module.exports = {
     sendFriendRequest,
     acceptFriendRequest,
     unfriend, 
-    findOneAndGet
+    findOneAndGetMiddleware,
+    findOneByUsername,
+    findOneByUsernameMiddleware
 };
