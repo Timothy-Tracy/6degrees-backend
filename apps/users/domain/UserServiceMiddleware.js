@@ -268,47 +268,11 @@ async function unfriend(req,res,next){
 }
 
 
-async function getAllPostIds(username){
-    const Repository = require('../../db/neo4j/data-access/Repository.js');
-    const log = logger.child({'function': 'getPosts'})
-    log.trace(username);
+async function getPosts(){
 
-    const result = await Repository.getRelationships({sourceLabel:"POST", relationshipType:'PARENT_USER', targetLabel:'USER', targetProperties:{'username': username}, sourceReturnProperties:['POST_UUID']});
-    const postIds = result.map((result)=>result.source.properties.POST_UUID)
-    log.debug(postIds)
-    return postIds
 }
 
-async function getPrivelidges(){
-    const allIds = await getAllPostIds('timsmith');
-    const reducedIds = await privelidgeReducer(allIds, ['public'], 'POST', 'POST_UUID')
-    console.log(allIds)
 
-    console.log(reducedIds)
-    return ['public']
-}
-
-async function privelidgeReducer(idArray, privelidgeArray, sourceLabel, sourcePropertyKey){
-    const Repository = require('../../db/neo4j/data-access/Repository.js');
-    const log = logger.child({'function': 'privelidgeReducer'})
-    log.trace()
-    let result = []
-    for(let i = 0; i<idArray.length; i++){
-        let x = [sourcePropertyKey]
-        
-        const res = await Repository.get({label:sourceLabel, searchProperties:{[sourcePropertyKey]: idArray[i]} })
-        const item = res.data[0].result.properties
-        if (privelidgeArray.includes(item.visibility)){
-            result.push(item[sourcePropertyKey])
-        }
-        
-        
-    }
-   
-    log.warn(result)
-}
-
-getPrivelidges()
 
 
 module.exports = { 

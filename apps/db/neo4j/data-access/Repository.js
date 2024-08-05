@@ -53,7 +53,8 @@ RETURN ${obj.returnedProperties ? `{
   }` : 'x'} as ${obj.returnedKey || 'result'}
   `, { obj: obj })
         .then(result => {
-            //log.info(result)
+            log.debug(result)
+            
             const x = result.records.map(record => processRecord(record));
             output.message = `Found }`
             output.data = x;
@@ -161,8 +162,8 @@ async function getRelationships({
         target: record.get('target')
       }))
       
-      console.log(l);
-      logger.info(l)
+      //console.log(l);
+      //logger.info(l)
       return l
     } catch (error) {
       console.error('Error retrieving relationships:', error);
