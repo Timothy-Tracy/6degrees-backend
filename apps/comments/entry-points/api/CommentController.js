@@ -2,6 +2,8 @@
 var PostService = require('../../../posts/domain/PostService.js')
 var NodeService = require('../../../nodes/domain/NodeService.js')
 var CommentService = require('../../domain/CommentService.js')
+var CommentServiceMiddleware = require('../../domain/CommentServiceMiddleware.js')
+
 var AuthService = require('../../../auth/domain/AuthService.js');
 const customErrors = require('../../../../lib/error/customErrors.js')
 const catchAsync = customErrors.catchAsync;
@@ -13,7 +15,9 @@ const {uuidObjSchema} = require('../../../../lib/validation/schemas/GlobalSchema
 
 router.get('/:uuid', 
     catchAsync(GlobalValidation.validateParam(uuidObjSchema)),
-    catchAsync(CommentService.findOne()),
+    catchAsync(AuthService.optionalAuth),
+    catchAsync(CommentServiceMiddleware.getComment),
+    catchAsync(CommentServiceMiddleware.commentAccessFirewall),
     function(req,res){
         res.status(200).json(res.result)
     }

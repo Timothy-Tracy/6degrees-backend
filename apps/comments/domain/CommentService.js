@@ -60,12 +60,11 @@ async function comment(req,res,next){
       next();
 }
 
-const findOne= (uuid) => async (req,res,next) => {
+async function findOne (uuid) {
     const log = logger.child({'function' : 'findOne'});
     log.trace();
-    const result = await CommentRepository.findOneByUUID(uuid || req.params.uuid);
-    res.result = result;
-    next()
+    const result = await CommentRepository.findOneByUUID(uuid);
+    return result
 }
 
 module.exports = {comment, findOne}

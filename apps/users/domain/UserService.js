@@ -10,7 +10,7 @@ const randomWordSlugs = require('random-word-slugs')
 const AuthService = require('../../auth/domain/AuthService.js');
 const {catchAsync,AppError} = require('../../../lib/error/customErrors.js')
 
-
+const AccessService = require('../../access/domain/AccessService.js')
 
 var crypto = require('crypto');
 
@@ -270,7 +270,7 @@ async function unfriend(req,res,next){
 
 async function getAllPostIds(username){
     const Repository = require('../../db/neo4j/data-access/Repository.js');
-    const log = logger.child({'function': 'getPosts'})
+    const log = logger.child({'function': 'getAllPostIds'})
     log.trace(username);
 
     const result = await Repository.getRelationships({sourceLabel:"POST", relationshipType:'PARENT_USER', targetLabel:'USER', targetProperties:{'username': username}, sourceReturnProperties:['POST_UUID']});
@@ -287,7 +287,6 @@ async function getPrivelidges(){
     console.log(reducedIds)
     return ['public']
 }
-
 async function privelidgeReducer(idArray, privelidgeArray, sourceLabel, sourcePropertyKey){
     const Repository = require('../../db/neo4j/data-access/Repository.js');
     const log = logger.child({'function': 'privelidgeReducer'})
@@ -308,7 +307,7 @@ async function privelidgeReducer(idArray, privelidgeArray, sourceLabel, sourcePr
     log.warn(result)
 }
 
-getPrivelidges()
+
 
 
 module.exports = { 

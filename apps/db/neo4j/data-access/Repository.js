@@ -32,7 +32,7 @@ const processRecord = (rawRecord) => {
  * @param {*} obj 
  * @requires obj.label === 'string'
  * @optional obj.returnedKey === 'string'
- * @requires obj.properties === 'object'
+ * @requires obj.searchProperties === 'object'
  * @optional obj.returnedProperties === 'array' of strings
  * @returns 
  */
@@ -98,10 +98,12 @@ async function getRelationships({
     relationshipReturnProperties,
     targetReturnProperties
   }) {
+    let l ={};
     const log = logger.child({'function':'getRelationships'})
+    log.warn(sourceProperties)
     log.trace({sourceLabel, sourceProperties, relationshipType})
     const session = driver.session();
-  
+    relationshipType = relationshipType? `:${relationshipType}` : ""
     try {
       let query = `MATCH (source:${sourceLabel})`;
   
@@ -114,11 +116,11 @@ async function getRelationships({
       query += ` MATCH (source)`;
   
       if (direction === 'left') {
-        query += `<-[relationship:${relationshipType}]-`;
+        query += `<-[relationship${relationshipType}]-`;
       } else if (direction === 'right') {
-        query += `-[relationship:${relationshipType}]->`;
+        query += `-[relationship${relationshipType}]->`;
       } else {
-        query += `-[relationship:${relationshipType}]-`;
+        query += `-[relationship${relationshipType}]-`;
       }
   
       if (targetLabel) {
@@ -153,24 +155,26 @@ async function getRelationships({
         query += ', target';
       }
   
-      const result = await session.run(query, { sourceProperties, targetProperties });
-      console.log(result.records[0])
-      const l = result.records.map(record => ({
+      const result = await session.run(query, { sourceProperties:sourceProperties, targetProperties:targetProperties });
+      console.log(result)
+     l = result.records.map(record => ({
         
         source: record.get('source'),
         relationship: record.get('relationship'),
         target: record.get('target')
       }))
       
-      //console.log(l);
+      console.log(l);
       //logger.info(l)
-      return l
+      
     } catch (error) {
       console.error('Error retrieving relationships:', error);
       throw error;
     } finally {
       await session.close();
     }
+
+    return l
   }
 
 
