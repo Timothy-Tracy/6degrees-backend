@@ -23,7 +23,7 @@ router.get('/:uuid',
     }
 )
 
-router.post('/', catchAsync(AuthService.optionalAuth),catchAsync(CommentService.comment), function (req, res) {
+router.post('/', catchAsync(AuthService.optionalAuth),catchAsync(CommentServiceMiddleware.comment), function (req, res) {
     res.status(200).json(res.result)
 });
 

@@ -19,7 +19,8 @@ const commentSchema = Joi.object({
   content: Joi.string().min(1).max(1000).required(),
   parentId: Joi.string().uuid().allow(null),
   createdAt: Joi.date().iso().required(),
-  updatedAt: Joi.date().iso().required().allow(null)
+  updatedAt: Joi.date().iso().required().allow(null),
+  visibility: Joi.array()
 });
 
 // Function to validate a comment

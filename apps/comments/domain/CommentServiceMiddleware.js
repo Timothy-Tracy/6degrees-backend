@@ -48,7 +48,8 @@ async function comment(req,res,next){
         body: req.body.body,
         PARENT_COMMENT_UUID: parentId,
         createdAt: date,
-        updatedAt: null
+        updatedAt: null,
+        visibility: req.body.visibility
       };
 
       await CommentValidation.validateComment(comment);

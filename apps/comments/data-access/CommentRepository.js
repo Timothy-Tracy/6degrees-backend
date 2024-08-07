@@ -54,11 +54,11 @@ async function initComment(obj){
             \`body\`: "${obj.body}",
             \`createdAt\`: "${obj.createdAt}",
             \`updatedAt\`: "${obj.createdAt}",
-            visibility: "public" 
+            visibility: $visibility
         })
         Return p;
     `
-    await session.run(query)
+    await session.run(query, {visibility:obj.visibility})
     .then(result =>{
         const myresult = result.records.map(i => i.get('p').properties);
         output.data = myresult[0].POST_UUID;

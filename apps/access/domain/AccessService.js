@@ -62,7 +62,7 @@ async function getSourceAccessLevels(source = {type, label, sourceProperties}, t
             })
             let relationships = getRelationshipResult.map(item=>item.relationship.type)
             if(relationships.includes('FOLLOWS')){
-                accessLevels.push('followers')
+                accessLevels.push('Followers')
             }
             if(relationships.includes('FRIENDS')){
                 accessLevels.push('friends')
