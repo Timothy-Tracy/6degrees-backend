@@ -1,12 +1,15 @@
 
 var NodeService = require('../../domain/NodeService.js')
+const NodeMiddleware = require('../../domain/NodeMiddleware.js')
+
 var express = require('express');
 var router = express.Router();
 const apiRoot = '/api/nodes'
 const customErrors = require('../../../../lib/error/customErrors.js');
 const catchAsync = customErrors.catchAsync;
 const AuthService = require('../../../auth/domain/AuthService.js');
-
+const mylogger = require('../../../../lib/logger/logger.js');
+const logger = mylogger.child({ 'module': 'NodeController' });
 
 // Allows an authenticated user to find all nodes that are owned by them
 router.get('/', catchAsync(AuthService.requireAuth), catchAsync(NodeService.findAllOwnedBy), async function (req, res){
@@ -33,6 +36,14 @@ router.get('/path/:query',
     catchAsync(AuthService.requireAuth),
     catchAsync(NodeService.findDistributionPathGraphData), async function (req, res){
     res.status(200).json(res.result)
+});
+
+//Create Distribution Link
+router.get('/:uuid/query/', 
+    catchAsync(NodeMiddleware.getQuery), 
+    function (req, res) {
+        logger.info({response:{data:res.result}})
+        res.status(200).json(res.result)
 });
 /*
 router.post('/create', function(req, res) {

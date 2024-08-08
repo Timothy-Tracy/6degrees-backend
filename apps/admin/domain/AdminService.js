@@ -11,7 +11,7 @@ async function requireAdmin(req,res,next){
         next()
     } else {
         log.info('ADMIN = false');
-        throw new AppError('USER NOT ADMINISTRATOR', 403);
+        throw new AppError('Access Denied', 403);
     }
 }
 

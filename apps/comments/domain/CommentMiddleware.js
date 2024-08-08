@@ -1,16 +1,14 @@
-const { v7: uuidv7 } = require('uuid');
-const CommentRepository = require('../data-access/CommentRepository.js');
-const CommentService = require('./CommentService.js')
-const CommentValidation = require('./CommentValidation.js');
-
-const AuthValidation = require('../../auth/domain/AuthValidation.js');
-const AccessService = require('../../access/domain/AccessService.js')
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'CommentServiceMiddleware' });
-//TODO parentID validation
+
+const CommentService = require('./CommentService.js')
+const AuthValidation = require('../../auth/domain/AuthValidation.js');
+const AccessService = require('../../access/domain/AccessService.js')
+
+
 //TODO MAJOR REFACTORING
-async function comment(req,res,next){
-    const log = logger.child({'function' : 'comment'});
+async function createCommentMiddleware(req,res,next){
+    const log = logger.child({'function' : 'createCommentMiddleware'});
     log.trace();
     let USER_UUID, parentId;
     let COMMENT_UUID = uuidv7();
@@ -38,42 +36,30 @@ async function comment(req,res,next){
         parentId = "";
     }
 
-    const date = new Date().toISOString()
-
     const comment= {
-        COMMENT_UUID: COMMENT_UUID,
-        
         NODE_UUID: NODE_UUID,
         USER_UUID: USER_UUID,
         body: req.body.body,
-        PARENT_COMMENT_UUID: parentId,
-        createdAt: date,
-        updatedAt: null,
-        visibility: req.body.visibility
+        visibility: req.body.visibility,
+        PARENT_COMMENT_UUID: parentId
       };
 
-      await CommentValidation.validateComment(comment);
-
-      res.result = await CommentRepository.create(comment);
+      res.result = await CommentService.createComment(comment);
       next();
 }
 
-async function getComment (req,res,next)  {
-    const log = logger.child({'function' : 'findOne'});
+async function getCommentMiddleware (req,res,next)  {
+    const log = logger.child({'function' : 'getCommentMiddleware'});
     log.trace();
-
-
     const result = await CommentService.findOne(req.params.uuid);
     let comment = result.data
     res.result = comment;
-    next()
-    
-
-    
-
-   
+    next() 
 }
-async function commentAccessFirewall(req, res, next){
+
+async function commentAccessFirewallMiddleware(req, res, next){
+    const log = logger.child({'function' : 'commentAccessFirewallMiddleware'});
+    log.trace();
     let comment = res.result;
 
     if(comment.visibility.includes('public')){
@@ -107,11 +93,11 @@ async function commentAccessFirewall(req, res, next){
         const canAcc = await AccessService.canAccess({sourceAccessLevels: sourceAccessLevels, targetAccessLevels:comment.visibility})
 
         if (canAcc.boolean){
-            logger.info('access granted')
+            log.info('access granted')
             res.result = comment;
             next()
         } else {
-            logger.info('access denied')
+            log.info('access denied')
             res.result = {error:'Access Denied'}
             next()
         }
@@ -120,7 +106,7 @@ async function commentAccessFirewall(req, res, next){
 
 
 module.exports = {
-    comment, 
-    getComment,
-    commentAccessFirewall
+    createCommentMiddleware, 
+    getCommentMiddleware,
+    commentAccessFirewallMiddleware
 }

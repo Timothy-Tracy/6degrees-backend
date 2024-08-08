@@ -13,10 +13,9 @@ const logger = mylogger.child({ 'module': 'CommentValidation' });
 // Define the comment schema
 const commentSchema = Joi.object({
   COMMENT_UUID: Joi.string().uuid().required(),
-  POST_UUID: Joi.string().uuid().required(),
   NODE_UUID: Joi.string().uuid().required(),
   USER_UUID: Joi.string().uuid().required(),
-  content: Joi.string().min(1).max(1000).required(),
+  body: Joi.string().min(1).max(240).required(),
   parentId: Joi.string().uuid().allow(null),
   createdAt: Joi.date().iso().required(),
   updatedAt: Joi.date().iso().required().allow(null),

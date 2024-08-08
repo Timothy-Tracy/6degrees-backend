@@ -77,6 +77,24 @@ async function distribute(uuid) {
     
 }
 
+/**
+ * 
+ * @module NodeService
+ * @description This function is a middleware that creates an "edge" for a respective node. This edge represents a distribution method, or a share
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * @requires res.locals.NODE_UUID
+ */
+//TODO: Conditional distribution based off of if one exists
+async function initEdge(NODE_UUID) {
+    const log = logger.child({'function':'initEdge'})
+    log.trace();
+    let edgeResult = await EdgeService.createDistributionNew(NODE_UUID);
+    log.debug(edgeResult.data.edge)
+    return edgeResult.data.edge.EDGE_QUERY
+}
 
 /**
  * 
@@ -148,7 +166,7 @@ async function interact(req, res, next) {
             res.locals.POST_UUID = newNode.POST_UUID;
             res.locals.NODE_UUID = newNodeUUID;
            
-            res.result.EDGE_QUERY = await distribute(newNode.NODE_UUID)
+            res.result.EDGE_QUERY = await initEdge(newNode.NODE_UUID)
             
                 
             
@@ -237,4 +255,4 @@ async function findDistributionPathGraphData(req,res,next){
     next()
 }
 
-module.exports = { interact, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery, findDistributionPathGraphData };
+module.exports = { interact, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery, findDistributionPathGraphData, initEdge };
