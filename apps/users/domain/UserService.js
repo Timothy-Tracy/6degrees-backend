@@ -71,8 +71,8 @@ async function findOneByUsername(username){
     const log = logger.child({'function':'findOnebyUsername'});
     log.trace(username);
 
-    const result = await Repository.get({label:'USER', searchProperties:{'username':username} });
-    return result;
+    const result = await Repository.get({label:'USER', properties:{'username':username}, excludedProperties:['password','USER_UUID','USER_ROLE', 'email'] });
+    return result.data[0].properties;
 }
 async function findOneByUsernameMiddleware(req, res, next){
     const log = logger.child({'function':'findOnebyUsernameMiddleware'});
@@ -295,7 +295,7 @@ async function privelidgeReducer(idArray, privelidgeArray, sourceLabel, sourcePr
     for(let i = 0; i<idArray.length; i++){
         let x = [sourcePropertyKey]
         
-        const res = await Repository.get({label:sourceLabel, searchProperties:{[sourcePropertyKey]: idArray[i]} })
+        const res = await Repository.get({label:sourceLabel, properties:{[sourcePropertyKey]: idArray[i]} })
         const item = res.data[0].result.properties
         if (privelidgeArray.includes(item.visibility)){
             result.push(item[sourcePropertyKey])

@@ -5,7 +5,7 @@ const Neo4jRepository = require('../../db/neo4j/data-access/Neo4jRepository.js')
 const UserRepository = require('../data-access/UserRepository.js')
 const UserValidation = require('./UserValidation.js')
 const mylogger = require('../../../lib/logger/logger.js');
-const logger = mylogger.child({ 'module': 'UserService' });
+const logger = mylogger.child({ 'module': 'UserServiceMiddleware' });
 const randomWordSlugs = require('random-word-slugs')
 const AuthService = require('../../auth/domain/AuthService.js');
 const {catchAsync,AppError} = require('../../../lib/error/customErrors.js')
@@ -71,7 +71,7 @@ async function findOneByUsername(username){
     const log = logger.child({'function':'findOnebyUsername'});
     log.trace(username);
 
-    const result = await Repository.get({label:'USER', searchProperties:{'username':username} });
+    const result = await Repository.get({label:'USER', properties:{'username':username} });
     return result;
 }
 async function findOneByUsernameMiddleware(req, res, next){

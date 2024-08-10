@@ -31,10 +31,10 @@ async function getQuery(req,res,next){
     const nodeResult = await Repository.get(
         {
             label: 'NODE',
-            searchProperties: {'NODE_UUID': NODE_UUID}
+            properties: {'NODE_UUID': NODE_UUID}
         }
     )
-    
+
     if(!nodeResult.data[0]){
         throw new AppError(`Node ${NODE_UUID} does not exist`)
 

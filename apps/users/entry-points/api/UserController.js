@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const apiRoot = '/api/users';
-
+const mylogger = require('../../../../lib/logger/logger.js');
+const logger = mylogger.child({ 'module': 'UserController' });
 const UserService = require('../../domain/UserService.js')
 const UserValidation = require('../../domain/UserValidation.js')
 const AuthService = require('../../../auth/domain/AuthService.js');
@@ -26,6 +27,7 @@ router.get('/',
 router.get('/:username', 
     catchAsync(UserService.findOneByUsernameMiddleware), 
     async function (req, res) {
+        logger.info({response: res.result})
     res.status(200).json(res.result)
 });
 

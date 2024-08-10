@@ -8,7 +8,7 @@ async function getTargetAccessLevels({label, properties}){
     const log = logger.child({'function': 'getAccessById'})
     log.trace();
 
-    const res = await Repository.get({label:label, searchProperties:properties})
+    const res = await Repository.get({label:label, properties:properties})
     const item = res.data[0].result.properties
     return {label: label, properties, visibility: item.visibility}
 }
@@ -90,7 +90,7 @@ async function privelidgeReducer(idArray, privelidgeArray, sourceLabel, sourcePr
     for(let i = 0; i<idArray.length; i++){
         let x = [sourcePropertyKey]
         
-        const res = await Repository.get({label:sourceLabel, searchProperties:{[sourcePropertyKey]: idArray[i]} })
+        const res = await Repository.get({label:sourceLabel, properties:{[sourcePropertyKey]: idArray[i]} })
         const item = res.data[0].result.properties
         if (privelidgeArray.includes(item.visibility)){
             result.push(item[sourcePropertyKey])
