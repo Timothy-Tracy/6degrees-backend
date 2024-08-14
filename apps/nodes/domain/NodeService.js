@@ -8,10 +8,15 @@ const Repository = require('../../db/neo4j/data-access/Repository.js');
 
 const AuthService = require('../../auth/domain/AuthService.js');
 const mylogger = require('../../../lib/logger/logger.js');
+const { AppError } = require('../../../lib/error/customErrors.js');
 const logger = mylogger.child({ 'module': 'NodeService' });
 
 async function getOne(NODE_UUID, options={returnProperties :[], excludedProperties:[], user:{returnProperties:[], excludedProperties:[]}}){
     const log = logger.child({'function':'getOne'});
+    if(NODE_UUID == null){
+        throw new AppError('No Node provided')
+    }
+    log.trace(NODE_UUID);
     log.trace({NODE_UUID, options});
     let output ={}
     let nodeResult = await Repository.get(
@@ -40,13 +45,13 @@ async function getOne(NODE_UUID, options={returnProperties :[], excludedProperti
                 properties: {'NODE_UUID': node.NODE_UUID}
             }
         )
-        log.info(userResult)
+       
         output.data ={...output.data, ...userResult.data[0].source.properties}
 
     }
 
     
-
+    log.info(output)
     return output
 }
 

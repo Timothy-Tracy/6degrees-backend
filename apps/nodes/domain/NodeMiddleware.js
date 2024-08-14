@@ -31,7 +31,7 @@ async function getQueryByNodeUuid(req,res,next){
     const nodeResult = await Repository.get(
         {
             label: 'NODE',
-            properties: {'NODE_UUID': NODE_UUID}
+            properties: {NODE_UUID: NODE_UUID}
         }
     )
 
@@ -74,6 +74,9 @@ async function findDistributionPathGraphData(req,res,next){
 }
 
 async function getNode(req,res,next){
+    if(res.locals.nodeUuid == null){
+        throw new AppError('No node provided in the middleware')
+    }
     const result = await NodeService.getOne(res.locals.nodeUuid, {user:{returnProperties:['username', 'USER_UUID']}});
     res.locals.node = result.data
     next();

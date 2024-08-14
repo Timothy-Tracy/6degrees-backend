@@ -154,7 +154,7 @@ const get = async (obj) => {
     RETURN x
   `, { obj: obj })
     .then(result => {
-      log.debug(result)
+      //log.debug(result)
 
       const x = result.records.map(record => processRecord(record, {x:{included:obj.returnProperties, excluded: obj.excludedProperties}}));
       output.message = `Found entity`
@@ -520,9 +520,10 @@ async function getPathNoBackForks({
     query += `
         RETURN backwardPaths, forwardPaths
       `
-    log.warn(query)
+    logger.warn(query)
     const result = await session.run(query, { startNodeProperties });
-    //console.log(result)
+    logger.warn(result)
+    console.log(result)
     a = result.records.map(record => ({
       backwardPaths: record.get('backwardPaths'),
       forwardPaths: record.get('forwardPaths'),
@@ -532,7 +533,7 @@ async function getPathNoBackForks({
 
     
   } catch (error) {
-    console.error('Error retrieving path:', error);
+   
     throw error;
   } finally {
     await session.close();

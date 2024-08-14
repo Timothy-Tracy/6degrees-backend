@@ -68,17 +68,19 @@ router.delete('/:uuid', NodeService.deleteNode, async function (req, res){
 
 async function validateInput(req,res,next){
     
-    const {error, value} = GlobalSchemas.validUUIDSchema.validate(req.params.input,
+    const {error, value} = await GlobalSchemas.validUUIDSchema.validate(req.params.input,
         {
             abortEarly:false,
         }
     )
     if(error){
         let result = await EdgeService.getUuidByQuery(req.params.input, 'NODE')
-        res.locals.nodeUuid = result[0].NODE_UUID
+        logger.info(result[0][0])
+        res.locals.nodeUuid = result[0][0].NODE_UUID
     }else{
         res.locals.nodeUuid = value
     }
+    logger.info(res.locals.nodeUuid)
     next()
 }
 
