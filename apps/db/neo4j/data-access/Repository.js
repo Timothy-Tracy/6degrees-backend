@@ -35,18 +35,18 @@ const processProperties = (
   const log = logger.child({ function: 'processProperties' });
 
   // Log input parameters for debugging
-  log.debug(
-    { properties, include, exclude },
-    'Unprocessed properties:'
-  );
+  // log.debug(
+  //   { properties, include, exclude },
+  //   'Unprocessed properties:'
+  // );
 
   // Determine if all properties should be included
   const includeAll = include.length === 0;
-  log.trace({ includeAll });
+  //log.trace({ includeAll });
 
   // Early return if no processing is needed
   if (includeAll && exclude.length === 0) {
-    log.debug({ properties }, 'Processed properties:');
+    //log.debug({ properties }, 'Processed properties:');
     return properties;
   }
 
@@ -67,7 +67,7 @@ const processProperties = (
   );
 
   // Log the final processed properties
-  log.debug({ properties: filteredOutput }, 'Processed properties:');
+  //log.debug({ properties: filteredOutput }, 'Processed properties:');
 
   return filteredOutput;
 };
@@ -87,7 +87,7 @@ const processProperties = (
 const processRecord = (rawRecord, keys = { key: { included: [], excluded: [] } }) => {
   // Create a child logger for this function
   const log = logger.child({ function: 'processRecord' });
-  log.trace({ keys });
+  //log.trace({ keys });
 
   // Destructure the raw record to get fields and field lookup
   const { _fields: fields, _fieldLookup: fieldLookup } = rawRecord;
@@ -95,7 +95,7 @@ const processRecord = (rawRecord, keys = { key: { included: [], excluded: [] } }
 
   // Iterate over each field in the fieldLookup
   Object.entries(fieldLookup).forEach(([fieldName, index]) => {
-    log.debug({ message: `Processing field`, fieldName, index });
+    //log.debug({ message: `Processing field`, fieldName, index });
 
     // Check if there are specific keys to process for this field
     if (keys[fieldName]) {
@@ -103,26 +103,26 @@ const processRecord = (rawRecord, keys = { key: { included: [], excluded: [] } }
 
       // Process included keys if any
       if (included?.length > 0) {
-        log.debug({ message: 'Processing included keys', fieldName, included });
+        //log.debug({ message: 'Processing included keys', fieldName, included });
         fields[index].properties = processProperties(fields[index].properties, included);
       } else {
-        log.debug({ message: 'No included keys', fieldName, included });
+        //log.debug({ message: 'No included keys', fieldName, included });
 
       }
 
       // Process excluded keys if any
       if (excluded?.length > 0) {
-        log.debug({ message: 'Processing excluded keys', fieldName, excluded });
+        //log.debug({ message: 'Processing excluded keys', fieldName, excluded });
         fields[index].properties = processProperties(fields[index].properties, [], excluded);
       } else {
-        log.debug({ message: 'No excluded keys', fieldName, excluded });
+        //log.debug({ message: 'No excluded keys', fieldName, excluded });
 
       }
     }
 
     // Add the processed field to the result
     processedRecord[fieldName] = fields[index];
-    log.debug(processedRecord[fieldName])
+    //log.debug(processedRecord[fieldName])
   });
 
   return processedRecord;
@@ -136,7 +136,7 @@ const processRecord = (rawRecord, keys = { key: { included: [], excluded: [] } }
  * @requires obj.label === 'string'
  * @optional obj.returnedKey === 'string'
  * @requires obj.properties === 'object'
- * @optional obj.returnedProperties === 'array' of strings
+ * @optional obj.returnProperties === 'array' of strings
  * @optional obj.excludedProperties === 'array' of strings
 
  * @returns 
@@ -173,6 +173,7 @@ const get = async (obj) => {
  *
  * @async
  * @function getRelationships
+ * @deprecated
  * @param {Object} options - The options for retrieving relationships.
  * @param {string} options.sourceLabel - The label of the source nodes.
  * @param {Object} [options.sourceProperties={}] - Properties to filter the source nodes.
@@ -279,9 +280,12 @@ async function getRel(
   source = { label: "", properties: {}, returnProperties: [] },
   relationship = { type: "", properties: {}, returnProperties: [], direction: "" },
   target = { label: "", properties: {}, returnProperties: [] }) {
-  let l = {};
-  const log = logger.child({ 'function': 'getRelationships' })
-
+  let output = {};
+  const log = logger.child({ 'function': 'getRel' })
+  log.trace({source,relationship,target})
+  let srcReturnProperties = source.returnProperties
+  let relReturnProperties = relationship.returnProperties
+  let tarReturnProperties = target.returnProperties
   const session = driver.session();
   relationship.type = relationship.type ? `:${relationship.type}` : ""
   try {
@@ -324,56 +328,56 @@ async function getRel(
     query += ' RETURN source, relationship, target';
 
     const result = await session.run(query, { source: source, relationship: relationship, target: target });
-    logger.info(result)
-    l = result.records.map(record => {
+    //logger.info(result)
+    output.data = result.records.map(record => {
       return processRecord(record, {
         source: {
-          included: source.returnProperties,
+          included: srcReturnProperties,
           excluded: source.excludedProperties
         },
         relationship: {
-          included: relationship.returnProperties,
+          included: relReturnProperties,
           excluded: relationship.excludedProperties
         },
         target: {
-          included: target.returnProperties,
+          included: tarReturnProperties,
           excluded: target.excludedProperties
         }
       })
     })
 
     //console.log(l);
-    logger.info(l)
+    logger.debug(output)
 
   } catch (error) {
-    console.error('Error retrieving relationships:', error);
-    throw error;
+    throw new DatabaseError({message: 'Error retrieving relationships:', error: error, statusCode:500})
+  
   } finally {
     await session.close();
   }
 
-  return l
+  return output
 }
 
-getRel(
-  {
-    label: 'USER',
-    returnProperties: ['username']
+// getRel(
+//   {
+//     label: 'USER',
+//     returnProperties: ['username']
 
 
-  },
-  {
-    type: 'FRIEND',
-    properties: {
-      createdAt: '2024-08-09T21:36:12.217Z'
-    },
-    returnProperties: ['createdAt']
-  },
-  {
-    label: 'USER',
-    returnProperties: ['username']
-  }
-)
+//   },
+//   {
+//     type: 'FRIEND',
+//     properties: {
+//       createdAt: '2024-08-09T21:36:12.217Z'
+//     },
+//     returnProperties: ['createdAt']
+//   },
+//   {
+//     label: 'USER',
+//     returnProperties: ['username']
+//   }
+// )
 
 /**
 * Retrieves a path from the Neo4j database based on the specified criteria.
@@ -480,7 +484,8 @@ async function getPathNoBackForks({
   relationshipReturnProperties
 }) {
   const session = driver.session();
-
+  logger.trace({startNodeLabel, startNodeProperties, relationshipType})
+  let a={}
   try {
     let query = `MATCH (startNode:${startNodeLabel})`;
 
@@ -515,23 +520,24 @@ async function getPathNoBackForks({
     query += `
         RETURN backwardPaths, forwardPaths
       `
-
+    log.warn(query)
     const result = await session.run(query, { startNodeProperties });
-    console.log(result)
-    let a = result.records.map(record => ({
+    //console.log(result)
+    a = result.records.map(record => ({
       backwardPaths: record.get('backwardPaths'),
       forwardPaths: record.get('forwardPaths'),
 
     }));
     console.log(a)
 
-    return a[0]
+    
   } catch (error) {
     console.error('Error retrieving path:', error);
     throw error;
   } finally {
     await session.close();
   }
+  return a[0]
 }
 
 
@@ -586,4 +592,4 @@ const doStuff = async () => {
   console.log(b)
 }
 //doStuff()
-module.exports = { get, processRecord, getRelationships, getPathNoBackForks, transformData }
+module.exports = { get, processRecord, getRelationships, getPathNoBackForks, transformData, getRel }

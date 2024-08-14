@@ -1,7 +1,7 @@
 
 var NodeService = require('../../domain/NodeService.js')
 const NodeMiddleware = require('../../domain/NodeMiddleware.js')
-
+const joi = require('joi')
 var express = require('express');
 var router = express.Router();
 const apiRoot = '/api/nodes'
@@ -10,6 +10,8 @@ const catchAsync = customErrors.catchAsync;
 const AuthService = require('../../../auth/domain/AuthService.js');
 const mylogger = require('../../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'NodeController' });
+const GlobalSchemas = require('../../../../lib/validation/schemas/GlobalSchemas.js')
+const EdgeService = require('../../../edges/domain/EdgeService.js')
 
 // Allows an authenticated user to find all nodes that are owned by them
 router.get('/', catchAsync(AuthService.requireAuth), catchAsync(NodeService.findAllOwnedBy), async function (req, res){
@@ -32,40 +34,59 @@ router.get('/interact/:query', catchAsync(AuthService.optionalAuth), catchAsync(
 router.post('/own', catchAsync(AuthService.requireAuth), catchAsync(NodeService.takeOwnership), async function(req,res){
     res.status(200).json(res.result);
 });
-router.get('/path/:query', 
+
+//USING QUERY 
+
+router.get('/:input/path/', 
     catchAsync(AuthService.requireAuth),
-    catchAsync(NodeService.findDistributionPathGraphData), async function (req, res){
+    catchAsync(validateInput),
+    catchAsync(NodeMiddleware.getNode),
+    catchAsync(NodeMiddleware.findDistributionPathGraphData), async function (req, res){
+    res.status(200).json(res.result)
+});
+
+router.get('/:query/node', 
+    catchAsync(AuthService.optionalAuth), 
+    catchAsync(NodeService.findMyNodeByPostQuery), 
+    async function (req, res){
     res.status(200).json(res.result)
 });
 
 //Create Distribution Link
 router.get('/:uuid/query/', 
-    catchAsync(NodeMiddleware.getQuery), 
+    catchAsync(NodeMiddleware.getQueryByNodeUuid), 
     function (req, res) {
         logger.info({response:{data:res.result}})
         res.status(200).json(res.result)
 });
-/*
-router.post('/create', function(req, res) {
-    console.log('receiving data ...');
-    console.log('body is ',req.body);
-    const data = req.body;
-    RequestService.createRequest(data.UUUID, data.title, data.description);
-    res.send(req.body);
-});
-*/
 
 
-/*
 
-router.get('/', PostService.getAllFromUser, async function (req, res){
-    res.status(200).json(res.result)
-});
-
-
-*/
 router.delete('/:uuid', NodeService.deleteNode, async function (req, res){
     res.status(200).json(res.result)
 });
+
+async function validateInput(req,res,next){
+    
+    const {error, value} = GlobalSchemas.validUUIDSchema.validate(req.params.input,
+        {
+            abortEarly:false,
+        }
+    )
+    if(error){
+        let result = await EdgeService.getUuidByQuery(req.params.input, 'NODE')
+        res.locals.nodeUuid = result[0].NODE_UUID
+    }else{
+        res.locals.nodeUuid = value
+    }
+    next()
+}
+
+async function test(){
+    let result = await NodeService.getOne('0190dd05-a20a-7445-818c-25a4af046840',{user:{returnProperties:['username','USER_UUID']}});
+    logger.info(result)
+}
+
+//test()
 
 module.exports = { apiRoot, router };

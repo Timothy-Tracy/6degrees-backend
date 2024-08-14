@@ -4,10 +4,51 @@ const NodeRepository = require('../data-access/NodeRepository.js');
 const EdgeService = require('../../edges/domain/EdgeService.js');
 const UserService = require('../../users/domain/UserService.js');
 const {findOneByQueryStandalone} = require('../../posts/domain/PostService.js')
+const Repository = require('../../db/neo4j/data-access/Repository.js');
 
 const AuthService = require('../../auth/domain/AuthService.js');
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'NodeService' });
+
+async function getOne(NODE_UUID, options={returnProperties :[], excludedProperties:[], user:{returnProperties:[], excludedProperties:[]}}){
+    const log = logger.child({'function':'getOne'});
+    log.trace({NODE_UUID, options});
+    let output ={}
+    let nodeResult = await Repository.get(
+        {
+            label: 'NODE',
+            properties: {'NODE_UUID': NODE_UUID},
+            returnProperties: options.returnedProperties,
+            excludedProperties: options.excludedProperties
+        }
+    )
+
+    let node = nodeResult.data[0].properties
+    output.data = node
+
+
+    if(options.user !=null){
+        let userResult = await Repository.getRel(
+            {
+                label: 'USER',
+                returnProperties: options.user.returnProperties
+            
+            },
+            {type:'PARENT_USER'},
+            {
+                label:'NODE',
+                properties: {'NODE_UUID': node.NODE_UUID}
+            }
+        )
+        log.info(userResult)
+        output.data ={...output.data, ...userResult.data[0].source.properties}
+
+    }
+
+    
+
+    return output
+}
 
 async function findNodeByQuery({query, USER_UUID}){
     let PostRepository = require('../../posts/data-access/PostRepository.js')
@@ -230,18 +271,15 @@ async function findDistributionPath(req,res,next){
     next()
 }
 
-async function findDistributionPathGraphData(req,res,next){
+async function findDistributionPathGraphData(node){
     const log = logger.child({'function':'findDistributionPathGraphData'});
-    log.trace();
-    const Repository = require('../../db/neo4j/data-access/Repository.js');
-    let USER_UUID = ""
-    if(res.locals.auth.hasAuth){
-        USER_UUID=res.locals.auth.tokenData.USER_UUID;
-    }else{
-        
-    }
-    const n = await findNodeByQuery({'query':req.params.query, 'USER_UUID': USER_UUID})
-    const result = await Repository.getPathNoBackForks({startNodeLabel:'NODE', startNodeProperties:{'NODE_UUID': n.NODE_UUID},endNodeLabel:'NODE', relationshipType:'EDGE_FULFILLED'})
+    log.trace(node, 'Find path nodeservice start');
+    
+    
+    const result = await Repository.getPathNoBackForks({startNodeLabel:'NODE', startNodeProperties:{'NODE_UUID': node.NODE_UUID},endNodeLabel:'NODE', relationshipType:'EDGE_FULFILLED'})
+    log.debug({result})
+    console.log(result)
+
     let transformedData = await Repository.transformData(result);
     log.debug(JSON.stringify(transformedData.nodes))
     
@@ -251,8 +289,13 @@ async function findDistributionPathGraphData(req,res,next){
         log.debug(rel[0].target.properties)
         transformedData.nodes[i] = {...node, username: rel[0].target.properties.username}
     }
-    res.result = transformedData;
-    next()
+    log.debug(transformedData)
+    return transformedData
 }
 
-module.exports = { interact, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery, findDistributionPathGraphData, initEdge };
+async function getNodeIdByQuery(query){
+    let result = await EdgeService.getUuidByQuery(query,'NODE')
+    return result[0].NODE_UUID
+}
+
+module.exports = {  interact, getOne, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery, findDistributionPathGraphData, initEdge, getNodeIdByQuery };
