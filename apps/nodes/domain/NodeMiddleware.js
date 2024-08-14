@@ -22,7 +22,7 @@ async function getNodeByQuery(req,res,next){
     next()
 }
 
-async function getQuery(req,res,next){
+async function getQueryByNodeUuid(req,res,next){
     let response = {}
     const log = logger.child({'function':'getNodeByQuery'});
     log.trace();
@@ -55,9 +55,33 @@ async function getQuery(req,res,next){
     next();
 
 
+
+}
+
+async function findDistributionPathGraphData(req,res,next){
+    const log = logger.child({'function':'findDistributionPathGraphData'});
+    log.trace(res.locals.node);
+    const Repository = require('../../db/neo4j/data-access/Repository.js');
+    let USER_UUID = ""
+    if(res.locals.auth.hasAuth){
+        USER_UUID=res.locals.auth.tokenData.USER_UUID;
+    }else{
+        
+    }
+    let result = await NodeService.findDistributionPathGraphData(res.locals.node)
+    res.result = result;
+    next()
+}
+
+async function getNode(req,res,next){
+    const result = await NodeService.getOne(res.locals.nodeUuid, {user:{returnProperties:['username', 'USER_UUID']}});
+    res.locals.node = result.data
+    next();
 }
 
 module.exports = {
+    getNode,
+    findDistributionPathGraphData,
     getNodeByQuery,
-    getQuery,
+    getQueryByNodeUuid,
 }
