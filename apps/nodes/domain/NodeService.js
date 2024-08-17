@@ -11,18 +11,14 @@ const mylogger = require('../../../lib/logger/logger.js');
 const { AppError } = require('../../../lib/error/customErrors.js');
 const logger = mylogger.child({ 'module': 'NodeService' });
 
-async function getOne(NODE_UUID, options={returnProperties :[], excludedProperties:[], user:{returnProperties:[], excludedProperties:[]}}){
+async function getOne(properties, options={returnProperties :[], excludedProperties:[], user:{returnProperties:[], excludedProperties:[]}}){
     const log = logger.child({'function':'getOne'});
-    if(NODE_UUID == null){
-        throw new AppError('No Node provided')
-    }
-    log.trace(NODE_UUID);
-    log.trace({NODE_UUID, options});
+log.trace({properties,options})
     let output ={}
     let nodeResult = await Repository.get(
         {
             label: 'NODE',
-            properties: {'NODE_UUID': NODE_UUID},
+            properties: properties,
             returnProperties: options.returnedProperties,
             excludedProperties: options.excludedProperties
         }
@@ -63,6 +59,50 @@ async function findNodeByQuery({query, USER_UUID}){
     let result2 = await NodeRepository.userHasNodeInPost(USER_UUID, result.data.post[0].POST_UUID)
     let result3 = await NodeRepository.findOneByUUID(result2.data.node);
     return result3.data.node
+}
+
+async function findAllNodeQueries(username) {
+    const log = logger.child({'function':'findAllNodeQueries'});
+    log.trace();
+    const result = await NodeRepository.findAllOwnedBy({username:username});
+    const result2= await Repository.getRel(
+        {
+            label:'USER',
+            properties:{username:username},
+            returnProperties:['username']
+        },
+        {
+            type:'PARENT_USER'
+        },
+        {
+            label: 'NODE',
+            returnProperties: ['NODE_UUID']
+        }
+    )
+    let nodeUuids = result2.data.map((record)=>record.target.properties.NODE_UUID)
+
+    let queryResults = []
+    for(let i = 0; i<nodeUuids.length; i++){
+        let res = await Repository.getRel(
+            {
+                label:'NODE',
+                properties: {NODE_UUID: nodeUuids[i]}
+            },
+            {
+                type:'EDGE'
+            }
+
+        )
+        let query = res.data[0].relationship.properties.EDGE_QUERY
+        queryResults.push(query)
+
+    }
+    
+    let nodeQueries = result.nodes.map((node)=>node.node.EDGE_QUERY);
+    return queryResults
+    
+ 
+    
 }
 async function findMyNodeByPostQuery(req,res,next){
    
@@ -300,7 +340,7 @@ async function findDistributionPathGraphData(node){
 
 async function getNodeIdByQuery(query){
     let result = await EdgeService.getUuidByQuery(query,'NODE')
-    return result[0].NODE_UUID
+    return result
 }
 
-module.exports = {  interact, getOne, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery, findDistributionPathGraphData, initEdge, getNodeIdByQuery };
+module.exports = {  findAllNodeQueries, interact, getOne, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery, findDistributionPathGraphData, initEdge, getNodeIdByQuery };

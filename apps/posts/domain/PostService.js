@@ -5,7 +5,7 @@ const EdgeService = require('../../edges/domain/EdgeService.js')
 const PostRepository = require('../data-access/PostRepository.js')
 const NodeRepository = require('../../nodes/data-access/NodeRepository.js')
 const CommentRepository = require('../../comments/data-access/CommentRepository.js')
-
+const Repository = require('../../db/neo4j/data-access/Repository.js')
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'PostService' });
 const Neo4jRepository = require('../../db/neo4j/data-access/Neo4jRepository.js')
@@ -48,6 +48,22 @@ async function findOneByQuery(req, res, next){
     
     res.locals.POST_UUID = result.data.post[0].POST_UUID;
     res.locals.NODE_UUID = result.data.node[0].NODE_UUID
+    let op = await Repository.getRel(
+        {
+            label:'POST',
+            properties: {'POST_UUID': res.locals.POST_UUID}
+        },
+        {
+            type:'PARENT_USER'
+        },
+        {
+            label:'USER',
+            returnProperties: ['username']
+        }
+    )
+    
+    res.locals.output.post[0].username = op.data[0].target.properties.username
+    
     log.debug(res.result);
     
     if (typeof next === 'function') {

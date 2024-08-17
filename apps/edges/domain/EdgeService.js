@@ -92,7 +92,7 @@ async function getUuidByQuery(query, label){
     switch (label){
         case 'NODE' : {
             log.debug('case NODE')
-            result.push([{NODE_UUID : source.NODE_UUID}])
+            result.push(source.NODE_UUID)
             break
         } 
         case 'POST' : {
@@ -109,7 +109,7 @@ async function getUuidByQuery(query, label){
             )
             log.debug(postResult)
             let post = postResult.data[0].target.properties;
-            result.push({POST_UUID : post.POST_UUID})
+            result.push(post.POST_UUID)
             break
         }
 
@@ -125,7 +125,7 @@ async function getUuidByQuery(query, label){
                 }
             )
             let user = userResult.data[0].target.properties;
-            result.push({USER_UUID : user.USER_UUID})
+            result.push(user.USER_UUID)
             break
 
         }
@@ -144,7 +144,7 @@ async function getUuidByQuery(query, label){
             )
           
             let comments = commentResult.data.map((record)=> (record.target.properties.COMMENT_UUID))
-            result = comments.map((commentUuid) => ({COMMENT_UUID: commentUuid}))
+            result = comments.map((commentUuid) => ( commentUuid))
             break
         }
         default:{

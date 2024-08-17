@@ -17,6 +17,11 @@ const EdgeService = require('../../../edges/domain/EdgeService.js')
 router.get('/', catchAsync(AuthService.requireAuth), catchAsync(NodeService.findAllOwnedBy), async function (req, res){
     res.status(200).json(res.result)
 });
+router.get('/:username/node-queries', 
+    catchAsync(NodeMiddleware.findAllNodeQueriesByUsername), 
+    async function (req, res){
+    res.status(200).json(res.result)
+});
 
 router.get('/posts/:query', catchAsync(AuthService.optionalAuth), catchAsync(NodeService.findMyNodeByPostQuery), async function (req, res){
     res.status(200).json(res.result)
@@ -45,9 +50,36 @@ router.get('/:input/path/',
     res.status(200).json(res.result)
 });
 
-router.get('/:query/node', 
+router.get('/:query/my/node', 
     catchAsync(AuthService.optionalAuth), 
     catchAsync(NodeService.findMyNodeByPostQuery), 
+    async function (req, res){
+    res.status(200).json(res.result)
+});
+router.get('/v2/:query/my/node', 
+    catchAsync(AuthService.optionalAuth), 
+    catchAsync(NodeMiddleware.getMyNode), 
+    async function (req, res){
+        let output = {};
+        output.data = res.locals.myNode
+        res.result = output
+        logger.info({response:{data:res.result}})
+    res.status(200).json(res.result)
+});
+
+router.get('/:input/node', 
+    catchAsync(AuthService.optionalAuth), 
+    catchAsync(validateInput),
+    catchAsync(NodeMiddleware.getNode),
+    async function (req, res){
+        let data = res.locals.node
+        res.result = {data:data}
+    res.status(200).json(res.result)
+});
+
+router.get('/:query/postUuid', 
+    catchAsync(AuthService.optionalAuth), 
+    catchAsync(NodeMiddleware.getPostUuidByQuery), 
     async function (req, res){
     res.status(200).json(res.result)
 });
