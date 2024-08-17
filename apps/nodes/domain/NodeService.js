@@ -45,6 +45,11 @@ log.trace({properties,options})
         output.data ={...output.data, ...userResult.data[0].source.properties}
 
     }
+    let {EDGE_QUERY} = await EdgeService.getOne({
+        label: 'NODE',
+        properties: {'NODE_UUID': output.data.NODE_UUID}
+    })
+    output.data ={...output.data, EDGE_QUERY }
 
     
     log.info(output)

@@ -108,7 +108,7 @@ async function validateInput(req,res,next){
     if(error){
         let result = await EdgeService.getUuidByQuery(req.params.input, 'NODE')
         logger.info(result[0][0])
-        res.locals.nodeUuid = result[0][0].NODE_UUID
+        res.locals.nodeUuid = result[0]
     }else{
         res.locals.nodeUuid = value
     }

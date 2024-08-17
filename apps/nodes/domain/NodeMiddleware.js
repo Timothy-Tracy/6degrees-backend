@@ -75,7 +75,7 @@ async function findDistributionPathGraphData(req,res,next){
 
 async function getNode(req,res,next){
     if(res.locals.nodeUuid == null){
-        throw new AppError('No node provided in the middleware')
+        throw new AppError('NodeMiddleware Error: No node provided in the middleware, res.locals.nodeUuid is null')
     }
     const result = await NodeService.getOne({'NODE_UUID': res.locals.nodeUuid}, {user:{returnProperties:['username', 'USER_UUID']}});
     res.locals.node = result.data

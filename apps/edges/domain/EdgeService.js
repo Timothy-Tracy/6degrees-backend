@@ -4,7 +4,41 @@ const randomWordSlugs = require('random-word-slugs')
 const mylogger = require('../../../lib/logger/logger.js');
 const { AppError, catchAsync } = require('../../../lib/error/customErrors.js');
 const logger = mylogger.child({ 'module': 'EdgeService' }, {options:{name:'EdgeService'}});
+const Repository = require('../../db/neo4j/data-access/Repository.js')
 
+async function getOne({label, properties, options}){
+    const log = logger.child({'function':'getOne'});
+    log.trace({label,properties,options});
+    let output;
+    switch (label){
+        case 'NODE':
+            let edgeResult = await Repository.getRel(
+                {
+                    label:'NODE',
+                    properties: properties,
+                },
+                {
+                    type:'EDGE'
+                }
+            )
+            output = edgeResult.data[0].relationship.properties
+
+
+        break
+        case 'EDGE':
+            
+        break
+
+        case 'EDGE_FULFILLED':
+        break
+
+        default:
+            throw new AppError('EdgeServcice.getOne No Label Provided ')
+        
+    }
+
+    return output
+}
 
 async function createDistribution(node) {
     const log = logger.child({'function':'createDistribution'});
@@ -164,4 +198,4 @@ async function test() {
 }
 
 //test()
-module.exports = { createDistributionNew,createDistribution, findOneByQuery,findOneByNodeUUID,getUuidByQuery }
+module.exports = { getOne,createDistributionNew,createDistribution, findOneByQuery,findOneByNodeUUID,getUuidByQuery }
