@@ -104,8 +104,23 @@ async function commentAccessFirewallMiddleware(req, res, next){
     }
 }
 
+async function findManyCommentUuidsByQuery(req,res,next){
+    const log = logger.child({'function' : 'findManyCommentUuidsByQuery'});
+    log.trace();
+    let output ={}
+
+    const query = req.params.query;
+
+    output.data = await CommentService.findManyCommentUuidsByQuery(query);
+    output.message = `Found parent comments by query ${query}`
+    res.result = output
+    next()
+
+}
+
 
 module.exports = {
+    findManyCommentUuidsByQuery,
     createCommentMiddleware, 
     getCommentMiddleware,
     commentAccessFirewallMiddleware

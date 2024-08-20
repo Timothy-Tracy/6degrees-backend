@@ -11,7 +11,8 @@ const AuthService = require('../../../auth/domain/AuthService.js');
 const mylogger = require('../../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'NodeController' });
 const GlobalSchemas = require('../../../../lib/validation/schemas/GlobalSchemas.js')
-const EdgeService = require('../../../edges/domain/EdgeService.js')
+const EdgeService = require('../../../edges/domain/EdgeService.js');
+const CommentMiddleware = require('../../../comments/domain/CommentMiddleware.js');
 
 // Allows an authenticated user to find all nodes that are owned by them
 router.get('/', catchAsync(AuthService.requireAuth), catchAsync(NodeService.findAllOwnedBy), async function (req, res){
@@ -80,6 +81,13 @@ router.get('/:input/node',
 router.get('/:query/postUuid', 
     catchAsync(AuthService.optionalAuth), 
     catchAsync(NodeMiddleware.getPostUuidByQuery), 
+    async function (req, res){
+    res.status(200).json(res.result)
+});
+
+router.get('/:query/parent-comments', 
+
+    catchAsync(CommentMiddleware.findManyCommentUuidsByQuery), 
     async function (req, res){
     res.status(200).json(res.result)
 });
