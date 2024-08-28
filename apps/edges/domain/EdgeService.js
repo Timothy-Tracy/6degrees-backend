@@ -76,6 +76,15 @@ async function createDistributionNew(NODE_UUID) {
     return (result);
 }
 
+async function createEdge(node) {
+    const initEdge = require('./functions/initEdge.js')
+    const log = logger.child({'function':'createEdge'});
+    log.trace();
+    let edgeObj = await initEdge(node)
+    const result = await EdgeRepository.createEdge(edgeObj)
+    return (result[0]);
+}
+
 async function findOneByQuery(query) {
     const result = await EdgeRepository.findOneByQuery(query);
     return (result);
@@ -198,4 +207,4 @@ async function test() {
 }
 
 //test()
-module.exports = { getOne,createDistributionNew,createDistribution, findOneByQuery,findOneByNodeUUID,getUuidByQuery }
+module.exports = { getOne,createDistributionNew,createDistribution, findOneByQuery,findOneByNodeUUID,getUuidByQuery, createEdge }

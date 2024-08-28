@@ -13,6 +13,7 @@ const logger = mylogger.child({ 'module': 'NodeController' });
 const GlobalSchemas = require('../../../../lib/validation/schemas/GlobalSchemas.js')
 const EdgeService = require('../../../edges/domain/EdgeService.js');
 const CommentMiddleware = require('../../../comments/domain/CommentMiddleware.js');
+const GlobalValidation = require('../../../../lib/validation/GlobalValidation.js')
 
 // Allows an authenticated user to find all nodes that are owned by them
 router.get('/', catchAsync(AuthService.requireAuth), catchAsync(NodeService.findAllOwnedBy), async function (req, res){
@@ -48,6 +49,14 @@ router.get('/:input/path/',
     catchAsync(validateInput),
     catchAsync(NodeMiddleware.getNode),
     catchAsync(NodeMiddleware.findDistributionPathGraphData), async function (req, res){
+    res.status(200).json(res.result)
+});
+
+router.get('/:uuid/create-edge/', 
+    catchAsync(GlobalValidation.validateUUIDParam),
+    catchAsync(AuthService.requireAuth), 
+    catchAsync(NodeMiddleware.getNode),
+    catchAsync(NodeMiddleware.createEdge), async function (req, res){
     res.status(200).json(res.result)
 });
 

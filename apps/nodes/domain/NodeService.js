@@ -66,49 +66,6 @@ async function findNodeByQuery({query, USER_UUID}){
     return result3.data.node
 }
 
-async function findAllNodeQueries(username) {
-    const log = logger.child({'function':'findAllNodeQueries'});
-    log.trace();
-    const result = await NodeRepository.findAllOwnedBy({username:username});
-    const result2= await Repository.getRel(
-        {
-            label:'USER',
-            properties:{username:username},
-            returnProperties:['username']
-        },
-        {
-            type:'PARENT_USER'
-        },
-        {
-            label: 'NODE',
-            returnProperties: ['NODE_UUID']
-        }
-    )
-    let nodeUuids = result2.data.map((record)=>record.target.properties.NODE_UUID)
-
-    let queryResults = []
-    for(let i = 0; i<nodeUuids.length; i++){
-        let res = await Repository.getRel(
-            {
-                label:'NODE',
-                properties: {NODE_UUID: nodeUuids[i]}
-            },
-            {
-                type:'EDGE'
-            }
-
-        )
-        let query = res.data[0].relationship.properties.EDGE_QUERY
-        queryResults.push(query)
-
-    }
-    
-    let nodeQueries = result.nodes.map((node)=>node.node.EDGE_QUERY);
-    return queryResults
-    
- 
-    
-}
 async function findMyNodeByPostQuery(req,res,next){
    
     const log = logger.child({'function':'findMyNodeByPostQuery'});
@@ -348,4 +305,4 @@ async function getNodeIdByQuery(query){
     return result
 }
 
-module.exports = {  findAllNodeQueries, interact, getOne, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery, findDistributionPathGraphData, initEdge, getNodeIdByQuery };
+module.exports = {   interact, getOne, deleteNode, findOneByUUID, createSourceNode, distribute,  takeOwnership, findAllOwnedBy, findDistributionPath, findMyNodeByPostQuery, findDistributionPathGraphData, initEdge, getNodeIdByQuery };

@@ -14,11 +14,25 @@ const mylogger = require('../../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'Neo4jDriver' });
 const {AppError} = require('../../../../lib/error/customErrors.js')
 let driver;
+let session;
 function initDriver() {
     if(!driver){
         driver = neo4j.driver(DB_URL, neo4j.auth.basic(DB_USERNAME, DB_PASSWORD))
     }
   return driver;
+}
+
+function initSession() {
+  if(!driver){
+    initDriver()
+  }
+
+  if (!session){
+    session = driver.session({ DB_DATABASE });
+
+  }
+
+  return session
 }
 
 function closeDriver() {
@@ -30,4 +44,5 @@ function closeDriver() {
 module.exports = {
   initDriver,
   closeDriver,
+  initSession
 };

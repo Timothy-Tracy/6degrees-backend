@@ -5,6 +5,8 @@ const logger = mylogger.child({ 'module': 'NodeMiddleware' });
 const Repository = require('../../db/neo4j/data-access/Repository.js');
 const { AppError } = require('../../../lib/error/customErrors.js');
 
+
+
 async function getNodeByQuery(req,res,next){
    
     const log = logger.child({'function':'getNodeByQuery'});
@@ -22,6 +24,7 @@ async function getNodeByQuery(req,res,next){
     next()
 }
 
+//If a query is provided, get the node uuid associated with it
 async function getQueryByNodeUuid(req,res,next){
     let response = {}
     const log = logger.child({'function':'getNodeByQuery'});
@@ -57,7 +60,7 @@ async function getQueryByNodeUuid(req,res,next){
 
 
 }
-
+//Get distribution path by a node
 async function findDistributionPathGraphData(req,res,next){
     const log = logger.child({'function':'findDistributionPathGraphData'});
     log.trace(res.locals.node);
@@ -72,14 +75,27 @@ async function findDistributionPathGraphData(req,res,next){
     res.result = result;
     next()
 }
-
+//Get a node by NODE_UUID
 async function getNode(req,res,next){
-    if(res.locals.nodeUuid == null){
+    if(!res.locals.nodeUuid && !req.params.uuid){
         throw new AppError('NodeMiddleware Error: No node provided in the middleware, res.locals.nodeUuid is null')
     }
-    const result = await NodeService.getOne({'NODE_UUID': res.locals.nodeUuid}, {user:{returnProperties:['username', 'USER_UUID']}});
+    const result = await NodeService.getOne({'NODE_UUID': res.locals.nodeUuid || req.params.uuid}, {user:{returnProperties:['username', 'USER_UUID']}});
     res.locals.node = result.data
     next();
+}
+
+async function createEdge(req,res,next){
+    if(!res.locals.node){
+        throw new AppError('NodeMiddleware Error: No node provided in the middleware, res.locals.node is null')
+    }
+
+    const edge = await EdgeService.createEdge(res.locals.node)
+    res.result = {
+        data: edge.edge.properties,
+        message: `Created a new edge\'${edge.edge.properties.EDGE_QUERY}\' for node ${res.locals.node.NODE_UUID}`
+    }
+    next()
 }
 
 async function getPostUuidByQuery(req,res,next){
@@ -92,11 +108,14 @@ async function getPostUuidByQuery(req,res,next){
         next()
 }
 
+//Find all nodes associated with a user
 async function findAllNodeQueriesByUsername(req, res, next) {
+    const findAllNodeQueriesByUsername = require('./functions/findAllNodeQueriesByUsername.js')
     const log = logger.child({'function':'findAllNodeQueriesByUsername'});
     log.trace();
     let output = {}
-    output.data = await NodeService.findAllNodeQueries(req.params.username);
+    output.data = await findAllNodeQueriesByUsername(req.params.username);
+    
 
     
     res.result = output;
@@ -203,5 +222,6 @@ module.exports = {
     findDistributionPathGraphData,
     getNodeByQuery,
     getQueryByNodeUuid,
-    getPostUuidByQuery
+    getPostUuidByQuery,
+    createEdge
 }

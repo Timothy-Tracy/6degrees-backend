@@ -9,6 +9,7 @@ const {
 } = process.env;
 const mylogger = require('../../../lib/logger/logger.js');
 const logger = mylogger.child({ 'module': 'EdgeRepository' });
+const createEdge = require('./functions/createEdge.js')
 
 
 async function findOneByUUID(UUID) {
@@ -89,7 +90,7 @@ async function create(newObj) {
     CREATE (n)-[e:EDGE 
         {
             \`EDGE_UUID\`: '${newObj.EDGE_UUID}',
-            EDGE_QUERY: '${newObj.EDGE_QUERY}',
+            EDGE_QUERY: '${newObj.EDGE_QUERY}-${newObj.degree}',
             degree : '${newObj.degree}'
             
         }
@@ -131,4 +132,4 @@ async function deleteNode(UUID) {
     return myobj;
 };
 */
-module.exports = { create, findAll, findOneByUUID, findOneByQuery };
+module.exports = { create, findAll, findOneByUUID, findOneByQuery, createEdge };
