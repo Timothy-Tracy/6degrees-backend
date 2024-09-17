@@ -1,3 +1,5 @@
+const EdgeService = require('../../../edges/domain/EdgeService.js');
+
 const mylogger = require('../../../../lib/logger/logger.js');
 const { AppError } = require('../../../lib/error/customErrors.js');
 const log = mylogger.child({ 

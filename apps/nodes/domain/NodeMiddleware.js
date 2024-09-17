@@ -93,7 +93,7 @@ async function createEdge(req,res,next){
     const edge = await EdgeService.createEdge(res.locals.node)
     res.result = {
         data: edge.edge.properties,
-        message: `Created a new edge\'${edge.edge.properties.EDGE_QUERY}\' for node ${res.locals.node.NODE_UUID}`
+        message: `Created a new edge \'${edge.edge.properties.EDGE_QUERY}\' for node ${res.locals.node.NODE_UUID}`
     }
     next()
 }
