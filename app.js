@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const pino = require('pino-http');
 const cors = require('cors');
+const NORM = require('./dist/apps/db/neo4j/norm/NORM')
 //My Routers
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
