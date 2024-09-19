@@ -1,6 +1,6 @@
 import {Query} from 'neo4j-driver-core/types/types'
 import { Parameters } from 'neo4j-driver/types/query-runner';
-export class ClauseBuilder{
+export class CypherBuilder{
     query: Query
     parameters:Parameters
     paramCount: number
@@ -10,7 +10,7 @@ export class ClauseBuilder{
         this.parameters={}
         this.paramCount = 0
     }
-    append(cypher:string, parameters?: Parameters): ClauseBuilder{
+    append(cypher:string, parameters?: Parameters): CypherBuilder{
         this.query+=cypher
         if(parameters){
             const newParamStr = `param${this.paramCount}`
@@ -19,20 +19,20 @@ export class ClauseBuilder{
         }
         return this
     }
-    match():ClauseBuilder{
+    match():CypherBuilder{
         this.query += ' MATCH '
         return this
     }
-    create():ClauseBuilder{
+    create():CypherBuilder{
         this.query += ' CREATE '
         return this
     }
-    optional():ClauseBuilder{
+    optional():CypherBuilder{
         this.query += ' OPTIONAL '
         return this
     }
-    node(variableName:string, label?:string, parameters?:Parameters): ClauseBuilder{
-        this.query+=`(${variableName}${label ? `:${label}`:''} ${parameters? `$${`${variableName}_parameters`}`:''})`
+    node(variableName:string, labels?:Array<string>, parameters?:Parameters): CypherBuilder{
+        this.query+=`(${variableName}${labels ? `:${labels?.join(':')}`:''} ${parameters? `$${`${variableName}_parameters`}`:''})`
         if(parameters){
             const newParamStr = `param${this.paramCount}`
             this.paramCount += 1
@@ -41,7 +41,7 @@ export class ClauseBuilder{
         return this
     }
     
-    relationshipBox(variableName:string, label?:string, parameters?:Parameters): ClauseBuilder{
+    relationshipBox(variableName:string, label?:string, parameters?:Parameters): CypherBuilder{
         this.query+=`[${variableName}${label ? `:${label}`:''} ${parameters? `$${`${variableName}_parameters`}`:''}]`
         if(parameters){
             const newParamStr = `param${this.paramCount}`
@@ -50,70 +50,70 @@ export class ClauseBuilder{
         }
         return this
     }
-    relationship(variableName:string, label?:string, parameters?:Parameters): ClauseBuilder{
+    relationship(variableName:string, label?:string, parameters?:Parameters): CypherBuilder{
         this.query+='-'
         this.relationshipBox(variableName, label, parameters)
         this.query+='-'
         return this
 
     }
-    leftRelationship(variableName:string, label?:string, parameters?:Parameters): ClauseBuilder{
+    leftRelationship(variableName:string, label?:string, parameters?:Parameters): CypherBuilder{
         this.query+='<-'
         this.relationshipBox(variableName, label, parameters)
         this.query+='-'
         return this
 
     }
-    rightRelationship(variableName:string, label?:string, parameters?:Parameters): ClauseBuilder{
+    rightRelationship(variableName:string, label?:string, parameters?:Parameters): CypherBuilder{
         this.query+='-'
         this.relationshipBox(variableName, label, parameters)
         this.query+='->'
         return this
 
     }
-    emptyNode(): ClauseBuilder{
+    emptyNode(): CypherBuilder{
         this.query+='()'
         return this
     }
-    matchByElementId(variableName: string, elementId: string ) : ClauseBuilder{
+    matchByElementId(variableName: string, elementId: string ) : CypherBuilder{
         this.query+= ` MATCH (${variableName}) WHERE elementId(${variableName}) = '${elementId} '
             `
             return this
     }
-    detach():ClauseBuilder{
+    detach():CypherBuilder{
         this.query += ' DETACH '
         return this
     }
-    delete(variables:Array<string>): ClauseBuilder{
+    delete(variables:Array<string>): CypherBuilder{
         this.query += ` DELETE ${variables.join(', ')}`
         return this
     }
-    terminate():ClauseBuilder{
+    terminate():CypherBuilder{
         this.query+=';'
         return this
     }
-    return(variables:Array<string>):ClauseBuilder{
+    return(variables:Array<string>):CypherBuilder{
         this.query +=` RETURN ${variables.join(', ')}`
         return this
     }
 
-    orderBy(variableName:string, someProperty:string):ClauseBuilder{
+    orderBy(variableName:string, someProperty:string):CypherBuilder{
         this.query+=` ORDER BY ${variableName}.${someProperty} `
         return this
     }
-    skip(offset:number):ClauseBuilder{
+    skip(offset:number):CypherBuilder{
         this.query+=` SKIP  ${offset}`
         return this
     }
-    limit(resultCount:number):ClauseBuilder{
+    limit(resultCount:number):CypherBuilder{
         this.query+=` LIMIT  ${resultCount}`
         return this
     }
-    descending():ClauseBuilder{
+    descending():CypherBuilder{
         this.query+= ' DESC '
         return this
     }
-    ascending():ClauseBuilder{
+    ascending():CypherBuilder{
         this.query+= ' ASC '
         return this
     }

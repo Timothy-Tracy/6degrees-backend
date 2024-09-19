@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClauseBuilder = void 0;
-class ClauseBuilder {
+exports.CypherBuilder = void 0;
+class CypherBuilder {
     constructor() {
         this.query = '';
         this.parameters = {};
@@ -110,5 +110,5 @@ class ClauseBuilder {
         return this;
     }
 }
-exports.ClauseBuilder = ClauseBuilder;
-//# sourceMappingURL=ClauseBuilder.js.map
+exports.CypherBuilder = CypherBuilder;
+//# sourceMappingURL=CypherBuilder.js.map

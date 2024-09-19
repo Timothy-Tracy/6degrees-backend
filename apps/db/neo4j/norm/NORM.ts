@@ -11,7 +11,7 @@ import { NodeObj } from '../models/NodeObj';
 import { Parameters } from 'neo4j-driver/types/query-runner';
 import { ResultProcessor } from './ResultProcessor';
 import { RecordProcessor } from './RecordProcessor';
-import { ClauseBuilder } from './ClauseBuilder';
+import { CypherBuilder } from './CypherBuilder';
 dotenv.config();
 
 interface Source{
@@ -98,7 +98,7 @@ class NORM {
     async getNodeByProperty (labels:any, properties:any,variableName?: string) : Promise<QueryResult>{
         const varName = variableName||'x'
         const result = await this.run(`
-          MATCH (${varName}:${labels[0]})
+          MATCH (${varName}:${labels.join(':')})
           WHERE ALL(key IN keys($properties) WHERE ${varName}[key] = $properties[key])
           RETURN ${varName}
         `, { properties: properties })
@@ -106,7 +106,7 @@ class NORM {
     }
     async getNodeById (elementId:string,variableName: string|null) : Promise<QueryResult>{
         const varName = variableName||'x'
-        const cb = new ClauseBuilder()
+        const cb = new CypherBuilder()
         cb.matchByElementId(varName,elementId).return([varName])
         const result = await this.run(cb.query, cb.parameters)
         return result
@@ -115,31 +115,34 @@ class NORM {
 
     async getWithPagination(cypher:string, parameters:Parameters, variableName:string, page:number, pageSize: number, orderBy?:string, ascending?:boolean): Promise<QueryResult>{
         const varName = variableName || 'x'
-        const cb = new ClauseBuilder()
+        const cb = new CypherBuilder()
         cb.append(cypher, parameters).return([varName])
         if(orderBy){
             cb.orderBy(varName, orderBy)
-            if(ascending===true){
-                cb.ascending()
-            }else{
-                cb.descending()
+            if(ascending != null){
+                if(ascending==true){
+                    cb.ascending()
+                }else{
+                    cb.descending()
+                }
             }
+            
         }
         cb.skip((page-1)*pageSize)
         cb.limit(pageSize)
         const result = await this.run(cb.query,cb.parameters)
         return result
     }
-    async createNode(label: string, properties: object, variableName?:string): Promise<QueryResult> {
+    async createNode(labels: string, properties: object, variableName?:string): Promise<QueryResult> {
         const varName = variableName || 'x'
-        const cb = new ClauseBuilder()
-        cb.create().node(varName,label,properties).return([varName]).terminate()
+        const cb = new CypherBuilder()
+        cb.create().node(varName,[labels],properties).return([varName]).terminate()
         const result = await this.run(cb.query,cb.parameters);
         return result
       }
       async updateNode(elementId:string, updateProperties: object, variableName?:string): Promise<QueryResult> {
         const varName = variableName || 'x'
-        const cb = new ClauseBuilder()
+        const cb = new CypherBuilder()
         cb.matchByElementId(varName, elementId).append(`SET ${varName} += $updateProperties`,updateProperties).return([varName]).terminate()
         const result = await this.run(cb.query,cb.parameters);
         return result;
@@ -148,13 +151,19 @@ class NORM {
       async deleteNode(elementId: string, variableName?:string, detach?: boolean): Promise<QueryResult> {
         const log = logger.child({ 'function': 'deleteNode' });
         const varName = variableName || 'x'
-        const cb = new ClauseBuilder()
+        const cb = new CypherBuilder()
         cb.matchByElementId(varName, elementId)
         detach? cb.detach():''
         cb.delete([varName]).append(` RETURN count(${varName}) as deletedCount;`)
         const result = await this.run(cb.query,cb.parameters);
         return result
       }
+    async createRelationship(sourceElementId:string, relationshipLabel:string, relationshipProperties:object, targetElementId:string){
+        const cb = new CypherBuilder()
+        cb.matchByElementId('source',sourceElementId).matchByElementId('target',targetElementId).create().node('source').rightRelationship('relationship',relationshipLabel,relationshipProperties).node('target').return(['source','relationship','target'])
+        const result = await this.run(cb.query, cb.parameters)
+        return result
+    }
     
 
     //   async createRelationship(
@@ -175,12 +184,12 @@ class NORM {
         
             try{
                 //let t = await this.getNodeByProperty(['NODE'], {'NODE_UUID': '01910aca-02bf-7ccc-ac36-fafdee4f0901'}, 'source') 
-                const cb = new ClauseBuilder()
-                let p = await this.getWithPagination(cb.match().node('user','USER').query.toString(),{},'user',1,10, 'username', true)
+               
+                let p = await this.getWithPagination(new CypherBuilder().match().node('user',['USER']).query.toString(),{},'user',3,10, 'identity', false)
                 logger.info(p)
                 //let z = await this.deleteNode('yyy', 'x', true)
                 let rp = new ResultProcessor(p)
-                let ids = rp.records.map((record)=> record.get('user').properties.username)
+                let ids = rp.records.map((record)=> record.get('user').identity.low)
                 logger.info(ids)
 
               
