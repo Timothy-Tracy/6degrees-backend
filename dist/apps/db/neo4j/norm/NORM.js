@@ -9,6 +9,8 @@ const logger = applogger_1.default.child({ 'module': 'NORM' });
 const customErrors_1 = require("../../../../lib/error/customErrors");
 const neo4j_driver_1 = __importDefault(require("neo4j-driver"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const ResultProcessor_1 = require("./ResultProcessor");
+const ClauseBuilder_1 = require("./ClauseBuilder");
 dotenv_1.default.config();
 class NORM {
     constructor() {
@@ -70,8 +72,14 @@ class NORM {
         this.test = async () => {
             try {
                 try {
-                    let t = await this.getNode(['NODE'], { 'NODE_UUID': '01910aca-02bf-7ccc-ac36-fafdee4f0901' }, 'source');
-                    console.log(t);
+                    //let t = await this.getNodeByProperty(['NODE'], {'NODE_UUID': '01910aca-02bf-7ccc-ac36-fafdee4f0901'}, 'source') 
+                    const cb = new ClauseBuilder_1.ClauseBuilder();
+                    let p = await this.getWithPagination(cb.match().node('user', 'USER').query.toString(), {}, 'user', 1, 10, 'username', true);
+                    logger.info(p);
+                    //let z = await this.deleteNode('yyy', 'x', true)
+                    let rp = new ResultProcessor_1.ResultProcessor(p);
+                    let ids = rp.records.map((record) => record.get('user').properties.username);
+                    logger.info(ids);
                 }
                 catch (e) {
                     logger.error(e, 'caught e');
@@ -89,36 +97,10 @@ class NORM {
         const log = logger.child({ 'function': 'getNode' });
         let output = {};
         await this.initSession().run(query, parameters, transactionConfig)
-            .then(result => {
-            output = result;
-        }).catch(error => {
-            log.error(error);
-            throw error;
-        }).finally(() => {
-            this.session.close();
-        });
+            .then(result => { output = result; }).catch(error => { log.error(error); throw error; }).finally(() => { this.session.close(); });
         return output;
     }
-    // processResult(result:QueryResult){
-    //     return result
-    //     logger.debug(result)
-    //     logger.debug(result.records)
-    // }
-    // recordHasValue(record:Record, key:PropertyKey): boolean{
-    //     if(!(record && record.has(key))){
-    //         return false
-    //     } else{
-    //         return true
-    //     }
-    // }
-    // assertRecordHasValue(record:Record, key:PropertyKey): void{
-    //     const log = logger.child({ 'function': 'assertRecordHasValue' });
-    //     if(!this.recordHasValue(record,key)){
-    //         throw new AppError(`EntityNotFoundError: key \'${String(key)}\'`, 404)
-    //     }
-    //     log.debug('Record has value')
-    // }
-    async getNode(labels, properties, variableName) {
+    async getNodeByProperty(labels, properties, variableName) {
         const varName = variableName || 'x';
         const result = await this.run(`
           MATCH (${varName}:${labels[0]})
@@ -129,74 +111,52 @@ class NORM {
     }
     async getNodeById(elementId, variableName) {
         const varName = variableName || 'x';
-        const result = await this.run(`
-          ${this.createMatchClauseById(elementId, varName)}
-          RETURN ${varName}
-        `);
+        const cb = new ClauseBuilder_1.ClauseBuilder();
+        cb.matchByElementId(varName, elementId).return([varName]);
+        const result = await this.run(cb.query, cb.parameters);
         return result;
     }
-    async createNode(label, properties) {
-        const log = logger.child({ 'function': 'createNode' });
-        try {
-            const result = await this.run(`
-            CREATE (x:${label} $properties)
-            RETURN x
-          `, { properties });
-            if (result.records.length === 0) {
-                throw new customErrors_1.AppError('Node creation failed', 500);
+    async getWithPagination(cypher, parameters, variableName, page, pageSize, orderBy, ascending) {
+        const varName = variableName || 'x';
+        const cb = new ClauseBuilder_1.ClauseBuilder();
+        cb.append(cypher, parameters).return([varName]);
+        if (orderBy) {
+            cb.orderBy(varName, orderBy);
+            if (ascending === true) {
+                cb.ascending();
             }
-            log.info('Node created successfully');
-            return result;
+            else {
+                cb.descending();
+            }
         }
-        catch (error) {
-            log.error('Error creating node', error);
-            throw error;
-        }
+        cb.skip((page - 1) * pageSize);
+        cb.limit(pageSize);
+        const result = await this.run(cb.query, cb.parameters);
+        return result;
+    }
+    async createNode(label, properties, variableName) {
+        const varName = variableName || 'x';
+        const cb = new ClauseBuilder_1.ClauseBuilder();
+        cb.create().node(varName, label, properties).return([varName]).terminate();
+        const result = await this.run(cb.query, cb.parameters);
+        return result;
     }
     async updateNode(elementId, updateProperties, variableName) {
         const varName = variableName || 'x';
-        try {
-            const result = await this.run(`
-            ${this.createMatchClauseById(elementId, varName)}
-            SET ${varName} += $updateProperties
-            RETURN ${varName}
-          `, { updateProperties });
-            if (result.records.length === 0) {
-                throw new Error('Node not found or update failed');
-            }
-            return result;
-        }
-        catch (error) {
-            logger.error('Error updating node', error);
-            throw error;
-        }
+        const cb = new ClauseBuilder_1.ClauseBuilder();
+        cb.matchByElementId(varName, elementId).append(`SET ${varName} += $updateProperties`, updateProperties).return([varName]).terminate();
+        const result = await this.run(cb.query, cb.parameters);
+        return result;
     }
     async deleteNode(elementId, variableName, detach) {
         const log = logger.child({ 'function': 'deleteNode' });
         const varName = variableName || 'x';
-        try {
-            const result = await this.run(`
-            ${this.createMatchClauseById(elementId, varName)}
-            ${detach ? 'DETACH' : ''} DELETE ${varName}
-            RETURN count(${varName}) as deletedCount
-          `);
-            const deletedCount = result.records[0].get('deletedCount').toNumber();
-            if (deletedCount === 0) {
-                log.warn('No nodes were deleted');
-                throw new customErrors_1.AppError('No nodes were deleted', 500);
-            }
-            log.info(`${deletedCount} node(s) deleted successfully`);
-            return result;
-        }
-        catch (error) {
-            log.error('Error deleting node', error);
-            throw error;
-        }
-    }
-    createMatchClauseById(elementId, variableName) {
-        return `MATCH (${variableName})
-            WHERE elementId(${variableName}) = '${elementId}'
-            `;
+        const cb = new ClauseBuilder_1.ClauseBuilder();
+        cb.matchByElementId(varName, elementId);
+        detach ? cb.detach() : '';
+        cb.delete([varName]).append(` RETURN count(${varName}) as deletedCount;`);
+        const result = await this.run(cb.query, cb.parameters);
+        return result;
     }
 }
 exports.NORM = NORM;
