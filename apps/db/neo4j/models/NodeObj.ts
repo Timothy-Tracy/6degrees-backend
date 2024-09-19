@@ -3,31 +3,56 @@ const logger = applogger.child({ 'module': 'NORM' });
 import { AppError, DatabaseError } from '../../../../lib/error/customErrors'
 import { Node } from 'neo4j-driver';
 import { NORM } from '../norm/NORM';
-import { Integer, NumberOrInteger } from 'neo4j-driver-core';
+import { Integer } from 'neo4j-driver-core';
 interface Properties {
     [key: string]: any;
-}
-class NodeObj<T extends NumberOrInteger = Integer, P extends Properties = Properties, Label extends string = string> extends Node<T, P, Label> {
-    constructor(labels: Label[], properties?: P, identity?: T, elementId?: string) {
-        super(identity || '' as unknown as T, labels, properties || {} as P, elementId || '')
+}type NumberOrInteger = number | Integer | bigint;
+class NodeObj {
+    orm: NORM
+    node:Node
+    constructor(orm:NORM, node:Node) {
+      
+        this.node = node
+        this.orm = orm
     }
   
-    async save(orm: NORM){
-      if (!this.isNew()) {
-        throw new Error('This node has already been saved')
-      }
-      // Update the current instance with the saved data
-      await orm.createNode(this.labels[0], this.properties).then((result)=>{
-        const savedNode = new NodeObj(result.labels, result.properties, result.identity, result.elementId)
-        Object.assign(this, savedNode)
-      }
-      )
-    }
+    // async create(){
+    //   if (!this.isNew()) {
+    //     throw new AppError('This node has already been saved', 500)
+    //   }
+    //   this.assertORM()
+    //   // Update the current instance with the saved data
+    //   await this.orm.createNode(this.labels[0], this.properties).then((result)=>{
+    //     const savedNode = new NodeObj(this.orm, result.identity, result.labels, result.properties,  result.elementId)
+    //     Object.assign(this, savedNode)
+    //   }
+    //   )
+    // }
+    // async update(updateProperties: Properties){
+    //   this.assertORM()
+      
+    //   // Update the current instance with the saved data
+    //   await this.orm.updateNode(this.node.labels[0], this.node.properties, updateProperties).then((result)=>{
+    //     const savedNode = new NodeObj(this.orm, result.identity, result.labels, result.properties,  result.elementId)
+    //     Object.assign(this, savedNode)
+    //   }
+    //   )
+    // }
 
-    async remove(orm: Norm)
+
+    async remove(orm: NORM, detach?:boolean){
+      this.assertORM()
+      if(!detach){
+        detach = false
+      }
+      await this.orm.deleteNode(this.node.labels[0], this.node.properties, detach)
+
+    }
   
-    getId(): string {return this.elementId}
-    isNew(): boolean {return this.elementId === ''}
+    getId(): string {return this.node.elementId}
+    isNew(): boolean {return this.node.elementId === ''}
+    verifyORM(): boolean{if(this.orm){return true} else {return false}}
+    assertORM(): void{if (!this.verifyORM()) {throw new AppError('The ORM is not initialized', 500)}}
   }
   
   export { NodeObj }

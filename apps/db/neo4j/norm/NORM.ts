@@ -2,9 +2,13 @@
 import applogger from '../../../../lib/logger/applogger'
 const logger = applogger.child({ 'module': 'NORM' });
 import { AppError, DatabaseError } from '../../../../lib/error/customErrors'
-import neo4j, { Driver, Node, Result, Session } from 'neo4j-driver'
+import neo4j, { Driver, EagerResult, Node, Result, Session, QueryResult, RxResult, Record, integer } from 'neo4j-driver'
+import {TransactionConfig} from 'neo4j-driver-core/types/'
+import {Query} from 'neo4j-driver-core/types/types'
 
 import dotenv from 'dotenv';
+import { NodeObj } from '../models/NodeObj';
+import { Parameters } from 'neo4j-driver/types/query-runner';
 dotenv.config();
 class NORM {
     driver!: Driver
@@ -62,36 +66,71 @@ class NORM {
         }
         return this.session
     }
-
-    async getNode (label:string, properties:object) : Promise<Node | null>{
-        const log = logger.child({ 'function': 'get' });
+    
+    async run(query: Query, parameters?: Parameters, transactionConfig?: TransactionConfig): Promise<Result>{
+        const log = logger.child({ 'function': 'getNode' });
         let output:any = {}
-        await this.initSession().run(`
-          MATCH (x:${label})
-          WHERE ALL(key IN keys($properties) WHERE x[key] = $properties[key])
-          RETURN x
-        `, {label:label, properties: properties })
+        
+        await this.initSession().run(query, parameters,transactionConfig)
           .then(result => {
-            if(result.records.length === 0){
-                output = null
-            } else {
-                log.info(result)
-                output = result.records[0].get('x')
-            }
+            output = result
             
           }).catch(error => {
+            log.error(error)
             throw error
           }).finally(()=>{
             this.session.close()
           })
-          return new Node(output.identity, output.labels,output.properties,output.elementID)
+          return output
+
     }
-    async createNode(label: string, properties: object): Promise<Node> {
+
+    // processResult(result:QueryResult){
+    //     return result
+        
+    //     logger.debug(result)
+    //     logger.debug(result.records)
+
+    // }
+    
+    // recordHasValue(record:Record, key:PropertyKey): boolean{
+    //     if(!(record && record.has(key))){
+    //         return false
+    //     } else{
+    //         return true
+    //     }
+    // }
+    // assertRecordHasValue(record:Record, key:PropertyKey): void{
+    //     const log = logger.child({ 'function': 'assertRecordHasValue' });
+    //     if(!this.recordHasValue(record,key)){
+    //         throw new AppError(`EntityNotFoundError: key \'${String(key)}\'`, 404)
+    //     }
+    //     log.debug('Record has value')
+    // }
+    
+
+    async getNode (labels:any, properties:any,variableName?: string) : Promise<QueryResult>{
+        const varName = variableName||'x'
+        const result = await this.run(`
+          MATCH (${varName}:${labels[0]})
+          WHERE ALL(key IN keys($properties) WHERE ${varName}[key] = $properties[key])
+          RETURN ${varName}
+        `, { properties: properties })
+        return result
+    }
+    async getNodeById (elementId:string,variableName: string|null) : Promise<QueryResult>{
+        const varName = variableName||'x'
+        const result = await this.run(`
+          ${this.createMatchClauseById(elementId, varName)}
+          RETURN ${varName}
+        `)
+        return result
+
+    }
+    async createNode(label: string, properties: object): Promise<QueryResult> {
         const log = logger.child({ 'function': 'createNode' });
-        let output: any = {};
-      
         try {
-          const result = await this.initSession().run(`
+          const result = await this.run(`
             CREATE (x:${label} $properties)
             RETURN x
           `, { properties });
@@ -99,92 +138,82 @@ class NORM {
           if (result.records.length === 0) {
             throw new AppError('Node creation failed', 500);
           }
+          log.info('Node created successfully');
       
-          output = result.records[0].get('x');
-          log.info('Node created successfully', output);
-      
-          return new Node(output.identity, output.labels, output.properties, output.elementId);
+          return result
         } catch (error) {
           log.error('Error creating node', error);
           throw error;
-        } finally {
-          await this.session.close();
-        }
+        } 
       }
-      async updateNode(label: string, identifier: object, updateProperties: object): Promise<Node> {
-        const log = logger.child({ 'function': 'updateNode' });
-        let output: any = {};
-      
+      async updateNode(elementId:string, updateProperties: object, variableName?:string): Promise<QueryResult> {
+        const varName = variableName || 'x'
         try {
-          const result = await this.initSession().run(`
-            MATCH (x:${label})
-            WHERE ALL(key IN keys($identifier) WHERE x[key] = $identifier[key])
-            SET x += $updateProperties
-            RETURN x
-          `, { identifier, updateProperties });
-      
+          const result = await this.run(`
+            ${this.createMatchClauseById(elementId, varName)}
+            SET ${varName} += $updateProperties
+            RETURN ${varName}
+          `, {updateProperties });
           if (result.records.length === 0) {
             throw new Error('Node not found or update failed');
           }
-      
-          output = result.records[0].get('x');
-          log.info('Node updated successfully', output);
-      
-          return new Node(output.identity, output.labels, output.properties, output.elementId);
+          return result;
         } catch (error) {
-          log.error('Error updating node', error);
+          logger.error('Error updating node', error);
           throw error;
-        } finally {
-          await this.session.close();
         }
       }
       
-      async deleteNode(label: string, identifier: object, detach?: boolean): Promise<boolean> {
+      async deleteNode(elementId: string, variableName?:string, detach?: boolean): Promise<QueryResult> {
         const log = logger.child({ 'function': 'deleteNode' });
-        
-        
+        const varName = variableName || 'x'
         try {
-          const result = await this.initSession().run(`
-            MATCH (x:${label})
-            WHERE ALL(key IN keys($identifier) WHERE x[key] = $identifier[key])
-            ${detach? 'DETACH':''} DELETE x
-            RETURN count(x) as deletedCount
-          `, { identifier });
-          log.info(result)
-      
+          const result = await this.run(`
+            ${this.createMatchClauseById(elementId, varName)}
+            ${detach? 'DETACH':''} DELETE ${varName}
+            RETURN count(${varName}) as deletedCount
+          `);
           const deletedCount = result.records[0].get('deletedCount').toNumber();
-      
           if (deletedCount === 0) {
             log.warn('No nodes were deleted');
-            return false;
+            throw new AppError('No nodes were deleted', 500)
           }
       
           log.info(`${deletedCount} node(s) deleted successfully`);
-          return true;
+          return result
         } catch (error) {
           log.error('Error deleting node', error);
           throw error;
-        } finally {
-          await this.session.close();
         }
       }
+      createMatchClauseById(elementId: string, variableName: string) : String{
+        return `MATCH (${variableName})
+            WHERE elementId(${variableName}) = '${elementId}'
+            `
+      }
+    //   async createRelationship(
+    //     source_node: Node,
+    //     relationship_label: string,
+    //     relationship_properties: object,
+    //     target_node: Node|null,
+        
+    // ): Promise<Node> {
+    //     const log = logger.child({ 'function': 'createRelationship' });
+    //     let output: any = {};
+
+    //     }
+    //   }
 
     test = async() =>{
         try{
-            //const t = await this.getNode('NODE', {'NODE_UUID':'0190d1d6-ca93-7009-81f5-c94ce35b8c89'})
-            //const t = await this.getNode('TEST', {'test':'test'})
-            const x = await this.createNode('TEST', {'test':'test'})
-
-            const d = await this.deleteNode('TEST', {'test':'test'})
-
-            // if(t){
-            //     logger.info(t.elementId)
-
-            // }
-            // if(x){
-            //     logger.info(x.toString())
-
-            // }
+        
+            try{
+                let t = await this.getNode(['NODE'], {'NODE_UUID': '01910aca-02bf-7ccc-ac36-fafdee4f0901'}, 'source') 
+                console.log(t)
+            }catch(e){
+                logger.error(e, 'caught e')
+            }
+            
         } catch(error){
             logger.error(error)
         }
