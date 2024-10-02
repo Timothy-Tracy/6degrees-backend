@@ -2,7 +2,7 @@ CREATE (:USER);
 CREATE (:POST);
 CREATE (:SHARENODE);
 CREATE (:COMMENT);
-CREATE ()-[:EDGE]-();
+CREATE ()-[:EDGE]->();
 
 //USER
 
@@ -63,3 +63,11 @@ CREATE CONSTRAINT ON ()-[e:EDGE]-() ASSERT e.shares IS INTEGER;
 //TIMESTAMP
 CREATE CONSTRAINT ON ()-[e:EDGE]-() ASSERT e.createdAt IS TIMESTAMP DEFAULT datetime();
 CREATE CONSTRAINT ON ()-[e:EDGE]-() ASSERT e.updatedAt IS TIMESTAMP DEFAULT datetime();
+
+
+CREATE (u:USER {username:"timothytracy", email:"timothydtracy@gmail.com"})
+CREATE (sn:SHARENODE)
+CREATE (sn)-[pu:PARENT_USER]-(u)
+CREATE(p:POST {title:"source", body:"This is the source post"})
+CREATE (p)-[e:EDGE{degree:0}]-(sn)
+RETURN u,sn,p;
