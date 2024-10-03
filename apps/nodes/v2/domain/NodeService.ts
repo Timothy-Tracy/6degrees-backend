@@ -1,4 +1,4 @@
-import { DateTime, Integer } from 'neo4j-driver';
+import { DateTime, integer, Integer } from 'neo4j-driver';
 import {models} from '../../../db/neo4j/models/models'
 import { POSTInstance, SHARENODE, SHARENODEInstance, USERInstance } from '../../../db/neo4j/models/modelDefinitions';
 import { AppError } from '../../../../lib/error/customErrors';
@@ -53,68 +53,60 @@ interface PathData {
   }
   
 export class NodeService {
-    static async createEdge(post: POSTInstance, shareNode: SHARENODEInstance, degree: number){
-        const relationshipSearch = await post.findRelationships({
-            alias:'SHARENODE',
-            where: {
-                relationship:{},
-                target:{
-                    uuid:shareNode.uuid
-                }
-            }
-        })
-        const relationship = relationshipSearch[0].relationship
-        if (relationship){
-            throw new AppError('Edge already exists', 500);
-        } else {
-            post.relateTo(    {
-                alias:'SHARENODE',
-                 where: {
-                         uuid: shareNode.uuid,
-                 },
-                 properties: {
-                     uuid: uuidv7(),
-                     post_uuid: post.uuid,
-                     degree: degree
-                 },
-                 assertCreatedRelationships: 1,
-             })
+    static async getPreceedingEdge(post: POSTInstance, shareNode: SHARENODEInstance){
+        const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})
+        const result = await new QueryBuilder()
+        .match({identifier: 'node', where: {uuid: shareNode.uuid}})
+        .raw(`MATCH (n)-[edge:EDGE {post_uuid: "${post.uuid}"}]->(node)`)
+        .return('edge')
+        .run(queryRunner)
 
-             
+        return result.records[0].get('edge').properties
+        
+    }
+    static async createEdge(post: POSTInstance, shareNode: SHARENODEInstance, sourceShareNode?: SHARENODEInstance){
+        if(!sourceShareNode){
+            post.relateTo({
+                alias: "SHARENODE",
+                where: {
+                    uuid: shareNode.uuid,
+                },
+                properties: {
+                    uuid: uuidv7(),
+                    post_uuid: post.uuid,
+                    degree: Integer.fromNumber(0),
+                    createdAt: new Date().toISOString()
+                },
+                assertCreatedRelationships: 1,
+            })
+        } else {
+            const prevDegreeEdge = await this.getPreceedingEdge(post,shareNode)
+            const result = models.SHARENODE.relateTo({
+                alias: "SHARENODE",
+                where: {
+                    source: {uuid: sourceShareNode.uuid},
+                    target:{uuid:shareNode.uuid}
+                },
+                properties:{
+                    uuid: uuidv7(),
+                    post_uuid: post.uuid,
+                    degree:Integer.fromNumber(integer.toNumber(prevDegreeEdge.degree)+1),
+                    createdAt: new Date().toISOString()
+                },
+                assertCreatedRelationships: 1
+            })
         }
         
     }
-    static async nodeIsRelatedToPost(post: POSTInstance, shareNode: SHARENODEInstance){
-        const result = await this.backwardsDistributionPath(post, shareNode)
-        console.log(result)
-        return result ? true:false
+    static async isRelatedToPost(post: POSTInstance, shareNode: SHARENODEInstance){
+        const result = await shareNode.isRelatedToPost(post)
+        return result
     }
     static async getNodeByUser(user: USERInstance){
         const sn = await user.shareNode()
         return sn
     }
-    static async backwardsDistributionPath(post:POSTInstance, shareNode: SHARENODEInstance){
-        const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})
-        const result = await new QueryBuilder()
-        .match({identifier: 'sn', where: {uuid: shareNode.uuid}})
-        .raw(`OPTIONAL MATCH path = (:POST)-[:EDGE* {post_uuid: "${post.uuid}"}]->(sn) WITH collect(path) as path`)
-        .return('path')
-        .run(queryRunner)
-        console.log(result.records[0].get('path'))
-        return result.records[0].get('path');
-    }
-    static async forwardsDistributionPath(post:POSTInstance, shareNode: SHARENODEInstance){
-        if(!await this.nodeIsRelatedToPost(post, shareNode)){
-            throw new AppError('No Forwards Path, node not found in post', 500)
-        }
-        const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})
-        const result = await new QueryBuilder()
-        .match({identifier: 'sn', where: {uuid: shareNode.uuid}})
-        .raw(`MATCH path = (sn)-[:EDGE* {post_uuid: "${post.uuid}"}]->(:SHARENODE) WITH collect(path) as path`)
-        .return('path')
-        .run(queryRunner)
-        return result.records[0].get('path');
-    }
+    
     static async transformPathData(data: PathData): Promise<TransformedData> {
         console.log('Starting data transformation');
         //console.log('Input data:', JSON.stringify(data, null, 2));

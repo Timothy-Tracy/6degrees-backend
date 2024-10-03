@@ -6,7 +6,9 @@ import { AppError } from "../../../../lib/error/customErrors";
 export type USERProperties = {
     email: string,
     username: string,
-    uuid: string
+    uuid: string,
+    createdAt: string,
+    updatedAt: string
 };
 export interface USERRelatedNodes {
     SHARENODE: ModelRelatedNodesI<any, any>
@@ -15,7 +17,8 @@ interface USERMethods {
     shareNode: (this: USERInstance) => Promise<SHARENODEInstance>
 }
 interface USERStatics {
-    getShareNodeByUsername: any
+    getShareNodeByUsername: (username: string) => Promise<SHARENODEInstance>,
+    getUserByUsername: (username: string) =>Promise<USERInstance>
 }
 
 export type USERInstance = NeogmaInstance<USERProperties, USERRelatedNodes, USERMethods>;
@@ -25,7 +28,15 @@ export const USER = ModelFactory<USERProperties, USERRelatedNodes, USERStatics, 
     schema: {
         username: { type: 'string', minLength: 3, required: true },
         email: { type: 'string', minLength: 3, required: true },
-        uuid: { type: 'string', required: true }
+        uuid: { type: 'string', required: true },
+        createdAt:{
+            type:'string',
+            required: false
+        },
+        updatedAt:{
+            type:'string',
+            required: false
+        }
     },
     primaryKeyField: 'uuid',
     methods: {
@@ -36,26 +47,39 @@ export const USER = ModelFactory<USERProperties, USERRelatedNodes, USERStatics, 
         }
     },
     statics: {
-        async getShareNodeByUsername(username:string){
+        async getUserByUsername(username:string) : Promise<USERInstance>{
             const user = await USER.findOne({where:{username: username}});
-            if (!user){
-                throw new AppError('User not found in the database', 404)
-            }
+            if (!user){throw new AppError('User not found in the database', 404)}
+            return user;
+        },
+        async getShareNodeByUsername(username:string){
+            const user = await this.getUserByUsername(username)
             return user.shareNode();
-        }
+        },
+        
     },
    
 }, neogma);
 
 // SHARENODE model
-export type SHARENODEProperties = { uuid: string };
+export type SHARENODEProperties = { 
+    uuid: string,
+    createdAt: string,
+    updatedAt: string
+ };
 export interface SHARENODERelatedNodes {
     USER: ModelRelatedNodesI<any, any>
     SHARENODE: ModelRelatedNodesI<any, any>
 }
 interface SHARENODEMethods {
     getUser: (this: SHARENODEInstance) => Promise<USERInstance>
-}
+    user: (this: SHARENODEInstance) => Promise<USERInstance>
+    prev: (this: SHARENODEInstance, post: POSTInstance) => Promise<any>
+    safeIsRelatedToPost: (this: SHARENODEInstance, post:POSTInstance) => Promise<void>
+    isRelatedToPost: (this: SHARENODEInstance, post:POSTInstance) => Promise<boolean>
+    backwardPath: (this: SHARENODEInstance, post: POSTInstance) =>Promise<any>
+    forwardPath: (this:SHARENODEInstance, post: POSTInstance) => Promise<any>
+}   
 interface SHARENODEStatics {}
 
 export type SHARENODEInstance = NeogmaInstance<SHARENODEProperties, SHARENODERelatedNodes, SHARENODEMethods>;
@@ -63,7 +87,15 @@ export type SHARENODEInstance = NeogmaInstance<SHARENODEProperties, SHARENODERel
 export const SHARENODE = ModelFactory<SHARENODEProperties, SHARENODERelatedNodes, SHARENODEStatics, SHARENODEMethods>({
     label: "SHARENODE",
     schema: {
-        uuid: { type: 'string', required: true }
+        uuid: { type: 'string', required: true },
+        createdAt:{
+            type:'string',
+            required: false
+        },
+        updatedAt:{
+            type:'string',
+            required: false
+        }
     },
     primaryKeyField: 'uuid',
     methods: {
@@ -72,7 +104,9 @@ export const SHARENODE = ModelFactory<SHARENODEProperties, SHARENODERelatedNodes
             return u[0].target;
         }
     },
-    statics: {}
+    statics: {
+     
+    }
 }, neogma);
 
 
@@ -81,14 +115,16 @@ type POSTProperties = {
     query: string,
     title: string,
     body: string,
-    uuid: string
+    uuid: string,
+    createdAt: string,
+    updatedAt: string
 };
 interface POSTRelatedNodes {
     SHARENODE: ModelRelatedNodesI<typeof SHARENODE,SHARENODEInstance>
 }
 interface POSTMethods {}
 interface POSTStatics {
-    findByQuery:any
+    findByQuery:(query: string)=>Promise<POSTInstance|null>
 }
 export type POSTInstance = NeogmaInstance<POSTProperties, POSTRelatedNodes, POSTMethods >;
 
@@ -113,15 +149,18 @@ export const POST = ModelFactory<POSTProperties,POSTRelatedNodes,POSTStatics, PO
             type: 'string',
             minLength: 3,
             required: true
+        },
+        createdAt:{
+            type:'string',
+            required: false
+        },
+        updatedAt:{
+            type:'string',
+            required: false
         }
     },
-    relationships:{
-        
-            
-       
-    },
+    relationships:{},
     primaryKeyField: 'query',
-    
     statics: {
         findByQuery: async function(query:string): Promise<POSTInstance|null>{
             const x = await POST.findOne({where:{query: query}})
@@ -165,7 +204,7 @@ SHARENODE.addRelationships({
     SHARENODE: {
         model: "self",
         direction: 'out',
-        name: 'EDGE',
+        name: 'NEXT',
         properties:{
             uuid:{
                 property: 'uuid',
@@ -184,7 +223,7 @@ SHARENODE.addRelationships({
             degree:{
                 property: 'degree',
                 schema:{
-                    type:'integer',
+                    type:'any',
                     required: true
                 }
             },
@@ -192,9 +231,14 @@ SHARENODE.addRelationships({
                 property: 'createdAt',
                 schema:{
                     type:'string',
-                    
-                    default: () => new Date().toISOString(),
-                 
+                    required: false
+                }
+            },
+            updatedAt:{
+                property: 'updatedAt',
+                schema:{
+                    type:'string',
+                    required: false
                 }
             }
             
@@ -206,7 +250,7 @@ POST.addRelationships({
     SHARENODE: {
         model: SHARENODE,
         direction: 'out',
-        name: 'EDGE',
+        name: 'NEXT',
         properties:{
             uuid:{
                 property: 'uuid',
@@ -225,7 +269,8 @@ POST.addRelationships({
             degree:{
                 property: 'degree',
                 schema:{
-                    type:'integer',
+                    type:'any',
+                    
                     required: true
                 }
             },
@@ -233,9 +278,14 @@ POST.addRelationships({
                 property: 'createdAt',
                 schema:{
                     type:'string',
-                    
-                    default: () => new Date().toISOString(),
-                 
+                    required: false
+                }
+            },
+            updatedAt:{
+                property: 'updatedAt',
+                schema:{
+                    type:'string',
+                    required: false
                 }
             }
             

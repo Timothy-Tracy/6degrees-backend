@@ -1,12 +1,4 @@
-import { BindParam, ModelFactory, Neogma, QueryBuilder, QueryRunner, Where, Literal, getSession, Op, neo4jDriver } from 'neogma';
-// importing types
-import { 
-    /* --> used in Model definition */
-    ModelRelatedNodesI, 
-    NeogmaInstance, 
-    /* --> all possible neo4j types which can be used in Models */
-    Neo4jSupportedTypes 
-} from 'neogma';
+import {Neogma } from 'neogma';
 import dotenv from 'dotenv';
 import { AppError } from '../../../../lib/error/customErrors';
 dotenv.config();

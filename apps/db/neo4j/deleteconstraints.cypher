@@ -2,7 +2,7 @@
 // WARNING: This script will delete ALL data, constraints, and indexes in the database.
 // Make sure you have a backup before running this script.
 
-ats();
+
 
 // Step 2: Drop all constraints
 CALL apoc.schema.assert({}, {});

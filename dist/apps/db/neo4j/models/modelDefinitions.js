@@ -12,7 +12,15 @@ exports.USER = (0, neogma_1.ModelFactory)({
     schema: {
         username: { type: 'string', minLength: 3, required: true },
         email: { type: 'string', minLength: 3, required: true },
-        uuid: { type: 'string', required: true }
+        uuid: { type: 'string', required: true },
+        createdAt: {
+            type: 'string',
+            required: false
+        },
+        updatedAt: {
+            type: 'string',
+            required: false
+        }
     },
     primaryKeyField: 'uuid',
     methods: {
@@ -23,19 +31,31 @@ exports.USER = (0, neogma_1.ModelFactory)({
         }
     },
     statics: {
-        async getShareNodeByUsername(username) {
+        async getUserByUsername(username) {
             const user = await exports.USER.findOne({ where: { username: username } });
             if (!user) {
                 throw new customErrors_1.AppError('User not found in the database', 404);
             }
+            return user;
+        },
+        async getShareNodeByUsername(username) {
+            const user = await this.getUserByUsername(username);
             return user.shareNode();
-        }
+        },
     },
 }, neogma_2.default);
 exports.SHARENODE = (0, neogma_1.ModelFactory)({
     label: "SHARENODE",
     schema: {
-        uuid: { type: 'string', required: true }
+        uuid: { type: 'string', required: true },
+        createdAt: {
+            type: 'string',
+            required: false
+        },
+        updatedAt: {
+            type: 'string',
+            required: false
+        }
     },
     primaryKeyField: 'uuid',
     methods: {
@@ -67,6 +87,14 @@ exports.POST = (0, neogma_1.ModelFactory)({
             type: 'string',
             minLength: 3,
             required: true
+        },
+        createdAt: {
+            type: 'string',
+            required: false
+        },
+        updatedAt: {
+            type: 'string',
+            required: false
         }
     },
     relationships: {},
@@ -111,7 +139,7 @@ exports.SHARENODE.addRelationships({
     SHARENODE: {
         model: "self",
         direction: 'out',
-        name: 'EDGE',
+        name: 'NEXT',
         properties: {
             uuid: {
                 property: 'uuid',
@@ -130,7 +158,7 @@ exports.SHARENODE.addRelationships({
             degree: {
                 property: 'degree',
                 schema: {
-                    type: 'integer',
+                    type: 'any',
                     required: true
                 }
             },
@@ -138,7 +166,14 @@ exports.SHARENODE.addRelationships({
                 property: 'createdAt',
                 schema: {
                     type: 'string',
-                    default: () => new Date().toISOString(),
+                    required: false
+                }
+            },
+            updatedAt: {
+                property: 'updatedAt',
+                schema: {
+                    type: 'string',
+                    required: false
                 }
             }
         }
@@ -148,7 +183,7 @@ exports.POST.addRelationships({
     SHARENODE: {
         model: exports.SHARENODE,
         direction: 'out',
-        name: 'EDGE',
+        name: 'NEXT',
         properties: {
             uuid: {
                 property: 'uuid',
@@ -167,7 +202,7 @@ exports.POST.addRelationships({
             degree: {
                 property: 'degree',
                 schema: {
-                    type: 'integer',
+                    type: 'any',
                     required: true
                 }
             },
@@ -175,7 +210,14 @@ exports.POST.addRelationships({
                 property: 'createdAt',
                 schema: {
                     type: 'string',
-                    default: () => new Date().toISOString(),
+                    required: false
+                }
+            },
+            updatedAt: {
+                property: 'updatedAt',
+                schema: {
+                    type: 'string',
+                    required: false
                 }
             }
         }
