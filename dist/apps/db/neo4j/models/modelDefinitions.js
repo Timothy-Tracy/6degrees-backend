@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.POST = exports.SHARENODE = exports.USER = void 0;
+exports.USER_SHARENODE_REL = exports.POST = exports.SHARENODE = exports.USER = void 0;
 const neogma_1 = require("neogma");
 const neogma_2 = __importDefault(require("./../neogma/neogma"));
 exports.USER = (0, neogma_1.ModelFactory)({
@@ -60,10 +60,31 @@ exports.POST = (0, neogma_1.ModelFactory)({
             required: true
         }
     },
+    relationships: {},
     primaryKeyField: 'query',
-    statics: {},
+    statics: {
+        findByQuery: async function (query) {
+            const x = await exports.POST.findOne({ where: { query: query } });
+            return x;
+        }
+    },
     methods: {}
 }, neogma_2.default);
+exports.USER_SHARENODE_REL = ({
+    type: 'OWNS',
+    schema: {
+        createdAt: {
+            type: 'string',
+            format: 'date-time',
+            default: () => new Date().toISOString()
+        }
+    },
+    properties: {
+        source: exports.USER,
+        target: exports.SHARENODE,
+        direction: 'out'
+    }
+});
 // Add relationships
 exports.USER.addRelationships({
     SHARENODE: {
@@ -88,7 +109,30 @@ exports.POST.addRelationships({
     SHARENODE: {
         model: exports.SHARENODE,
         direction: 'out',
-        name: 'edge'
+        name: 'EDGE',
+        properties: {
+            uuid: {
+                property: 'uuid',
+                schema: {
+                    type: 'string',
+                    required: true
+                }
+            },
+            degree: {
+                property: 'degree',
+                schema: {
+                    type: 'integer',
+                    required: true
+                }
+            },
+            createdAt: {
+                property: 'createdAt',
+                schema: {
+                    type: 'string',
+                    default: () => new Date().toISOString(),
+                }
+            }
+        }
     }
 });
 //# sourceMappingURL=modelDefinitions.js.map

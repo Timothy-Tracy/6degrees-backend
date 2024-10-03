@@ -1,4 +1,4 @@
-import { ModelFactory, ModelRelatedNodesI, NeogmaInstance, NeogmaModel } from "neogma";
+import { ModelFactory, ModelRelatedNodesI, NeogmaInstance, NeogmaModel, Where } from "neogma";
 import neogma from './../neogma/neogma';
 
 // USER model
@@ -72,9 +72,13 @@ type POSTProperties = {
     body: string,
     uuid: string
 };
-interface POSTRelatedNodes {}
+interface POSTRelatedNodes {
+    SHARENODE: ModelRelatedNodesI<typeof SHARENODE,SHARENODEInstance>
+}
 interface POSTMethods {}
-interface POSTStatics {}
+interface POSTStatics {
+    findByQuery:any
+}
 export type POSTInstance = NeogmaInstance<POSTProperties, POSTRelatedNodes, POSTMethods >;
 
 export const POST = ModelFactory<POSTProperties,POSTRelatedNodes,POSTStatics, POSTMethods > ({
@@ -100,11 +104,37 @@ export const POST = ModelFactory<POSTProperties,POSTRelatedNodes,POSTStatics, PO
             required: true
         }
     },
-    
+    relationships:{
+        
+            
+       
+    },
     primaryKeyField: 'query',
-    statics: {},
+    
+    statics: {
+        findByQuery: async function(query:string): Promise<POSTInstance|null>{
+            const x = await POST.findOne({where:{query: query}})
+            return x
+        }
+    },
     methods: {}
 }, neogma); 
+
+export const USER_SHARENODE_REL = ({
+    type: 'OWNS',
+    schema: {
+        createdAt: {
+            type: 'string',
+            format: 'date-time',
+            default: () => new Date().toISOString()
+        }
+    },
+    properties: {
+        source: USER,
+        target: SHARENODE,
+        direction: 'out'
+    }
+});
 
 // Add relationships
 USER.addRelationships({
@@ -132,9 +162,38 @@ POST.addRelationships({
     SHARENODE: {
         model: SHARENODE,
         direction: 'out',
-        name: 'edge'
+        name: 'EDGE',
+        properties:{
+            uuid:{
+                property: 'uuid',
+                schema:{
+                    type:'string',
+                    required: true
+                }
+            },
+            degree:{
+                property: 'degree',
+                schema:{
+                    type:'integer',
+                    required: true
+                }
+            },
+            createdAt:{
+                property: 'createdAt',
+                schema:{
+                    type:'string',
+                    
+                    default: () => new Date().toISOString(),
+                 
+                }
+            }
+            
+        }
     }
 })
 
-export type USERModelType = NeogmaModel<USERProperties, USERRelatedNodes, USERStatics, USERMethods>;
-export type SHARENODEModelType = NeogmaModel<SHARENODEProperties, SHARENODERelatedNodes, SHARENODEStatics, SHARENODEMethods>;
+export interface ModelsInterface{
+    USER: NeogmaModel<USERProperties, USERRelatedNodes,  USERMethods, USERStatics>,
+    SHARENODE: NeogmaModel<SHARENODEProperties, SHARENODERelatedNodes, SHARENODEMethods, SHARENODEStatics>,
+    POST: NeogmaModel<POSTProperties, POSTRelatedNodes, POSTMethods, POSTStatics>
+}

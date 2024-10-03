@@ -1,7 +1,9 @@
 //models.ts
-import { USER, SHARENODE, POST, USERModelType, SHARENODEModelType } from './modelDefinitions';
+import { NeogmaModel } from 'neogma';
+import { USER, SHARENODE, POST, ModelsInterface } from './modelDefinitions';
 
-export const models = {
+
+export const models:ModelsInterface = {
     USER,
     SHARENODE,
     POST
