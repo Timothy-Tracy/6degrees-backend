@@ -15,6 +15,9 @@ CREATE CONSTRAINT edge_uuid_unique IF NOT EXISTS FOR ()-[x:EDGE]->() REQUIRE x.u
 CREATE CONSTRAINT edge_uuid_not_null IF NOT EXISTS FOR ()-[x:EDGE]->() REQUIRE x.uuid IS NOT NULL;
 CREATE INDEX edge_uuid_index IF NOT EXISTS FOR ()-[x:EDGE]->() ON (x.uuid);
 
+CREATE CONSTRAINT edge_post_uuid_not_null IF NOT EXISTS FOR ()-[x:EDGE]->() REQUIRE x.post_uuid IS NOT NULL;
+CREATE INDEX edge_post_uuid_index IF NOT EXISTS FOR ()-[x:EDGE]->() ON (x.post_uuid);
+
 CREATE CONSTRAINT parent_user_uuid_unique IF NOT EXISTS FOR ()-[x:PARENT_USER]->() REQUIRE x.uuid IS UNIQUE;
 CREATE CONSTRAINT parent_user_not_null IF NOT EXISTS FOR ()-[x:PARENT_USER]->() REQUIRE x.uuid IS NOT NULL;
 CREATE INDEX parent_user_uuid_index IF NOT EXISTS FOR ()-[x:PARENT_USER]->() ON (x.uuid);

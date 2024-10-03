@@ -19,12 +19,12 @@ CREATE (sn6)-[:PARENT_USER {uuid: "01924f4e-ecf1-799b-84aa-1500e3e11a00"}]->(u6)
 
 CREATE (p:POST {uuid: "01924f4a-d753-7558-8315-a2f42de87c41", title:"source", body:"This is the source post", query:"the-source-post"})
 
-CREATE (p)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-9803ecdfae39", degree: 0}]->(sn)
+CREATE (p)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-9803ecdfae39", post_uuid:"01924f4a-d753-7558-8315-a2f42de87c41", degree: 0}]->(sn)
 
-CREATE (sn)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-a0af77bcc72a", degree: 1}]->(sn2)
-CREATE (sn)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-a810f9e4c992", degree: 1}]->(sn3)
+CREATE (sn)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-a0af77bcc72a", post_uuid:"01924f4a-d753-7558-8315-a2f42de87c41", degree: 1}]->(sn2)
+CREATE (sn)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-a810f9e4c992", post_uuid:"01924f4a-d753-7558-8315-a2f42de87c41", degree: 1}]->(sn3)
 
-CREATE (sn2)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-b77f13edc440", degree: 2}]->(sn4)
-CREATE (sn2)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-bccd2d9e6d16", degree: 2}]->(sn5)
+CREATE (sn2)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-b77f13edc440", post_uuid:"01924f4a-d753-7558-8315-a2f42de87c41", degree: 2}]->(sn4)
+CREATE (sn2)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-bccd2d9e6d16", post_uuid:"01924f4a-d753-7558-8315-a2f42de87c41", degree: 2}]->(sn5)
 
-CREATE (sn3)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-c5f946154340", degree: 2}]->(sn6)
+CREATE (sn3)-[:EDGE {uuid: "01924f4f-ed61-7ff0-9655-c5f946154340", post_uuid:"01924f4a-d753-7558-8315-a2f42de87c41", degree: 2}]->(sn6)

@@ -7,6 +7,8 @@ exports.NodeService = void 0;
 const customErrors_1 = require("../../../../lib/error/customErrors");
 const neogma_1 = require("neogma");
 const neogma_2 = __importDefault(require("../../../db/neo4j/neogma/neogma"));
+const applogger_1 = __importDefault(require("../../../../lib/logger/applogger"));
+const logger = applogger_1.default.child({ 'module': 'NodeService' });
 const { v7: uuidv7 } = require('uuid');
 class NodeService {
     static async createEdge(post, shareNode, degree) {
@@ -31,6 +33,7 @@ class NodeService {
                 },
                 properties: {
                     uuid: uuidv7(),
+                    post_uuid: post.uuid,
                     degree: degree
                 },
                 assertCreatedRelationships: 1,
@@ -38,18 +41,88 @@ class NodeService {
         }
     }
     static async nodeIsRelatedToPost(post, shareNode) {
-        const queryRunner = new neogma_1.QueryRunner({ driver: neogma_2.default.driver, logger: console.log, sessionParams: { database: 'neo4j' } });
-        const result = await new neogma_1.QueryBuilder()
-            .match({ identifier: 'sn', where: { uuid: shareNode.uuid } })
-            .match({ identifier: 'p', where: { uuid: post.uuid } })
-            .raw('MATCH PATH = (sn)-[:EDGE*]-(p)')
-            .return('PATH')
-            .run(queryRunner);
-        return result.records.length > 0 ? true : false;
+        const result = await this.backwardsDistributionPath(post, shareNode);
+        console.log(result);
+        return result ? true : false;
     }
     static async getNodeByUser(user) {
         const sn = await user.shareNode();
         return sn;
+    }
+    static async backwardsDistributionPath(post, shareNode) {
+        const queryRunner = new neogma_1.QueryRunner({ driver: neogma_2.default.driver, logger: console.log, sessionParams: { database: 'neo4j' } });
+        const result = await new neogma_1.QueryBuilder()
+            .match({ identifier: 'sn', where: { uuid: shareNode.uuid } })
+            .raw(`OPTIONAL MATCH path = (:POST)-[:EDGE* {post_uuid: "${post.uuid}"}]->(sn) WITH collect(path) as path`)
+            .return('path')
+            .run(queryRunner);
+        console.log(result.records[0].get('path'));
+        return result.records[0].get('path');
+    }
+    static async forwardsDistributionPath(post, shareNode) {
+        if (!await this.nodeIsRelatedToPost(post, shareNode)) {
+            throw new customErrors_1.AppError('No Forwards Path, node not found in post', 500);
+        }
+        const queryRunner = new neogma_1.QueryRunner({ driver: neogma_2.default.driver, logger: console.log, sessionParams: { database: 'neo4j' } });
+        const result = await new neogma_1.QueryBuilder()
+            .match({ identifier: 'sn', where: { uuid: shareNode.uuid } })
+            .raw(`MATCH path = (sn)-[:EDGE* {post_uuid: "${post.uuid}"}]->(:SHARENODE) WITH collect(path) as path`)
+            .return('path')
+            .run(queryRunner);
+        return result.records[0].get('path');
+    }
+    static async transformPathData(data) {
+        console.log('Starting data transformation');
+        //console.log('Input data:', JSON.stringify(data, null, 2));
+        const combinedData = data;
+        console.log('Combined data length:', combinedData.length);
+        const mydata = {
+            nodes: [],
+            links: []
+        };
+        const nodeMap = new Map();
+        console.log('Initializing nodeMap');
+        const addNode = (node) => {
+            const nodeId = node.identity.toString();
+            if (!nodeMap.has(nodeId)) {
+                console.log(`Adding new node with id: ${nodeId}`);
+                const nodeObj = {
+                    id: nodeId,
+                    label: `NODE ${node.identity}`,
+                    ...node.properties
+                };
+                mydata.nodes.push(nodeObj);
+                nodeMap.set(nodeId, nodeObj);
+                console.log(`Node added:`, JSON.stringify(nodeObj, null, 2));
+            }
+            else {
+                console.log(`Node with id ${nodeId} already exists, skipping`);
+            }
+        };
+        console.log('Processing paths and segments');
+        combinedData.forEach((path, index) => {
+            console.log(`Processing path ${index + 1}`);
+            //console.log('Start node:', JSON.stringify(path.start, null, 2));
+            addNode(path.start);
+            //console.log('End node:', JSON.stringify(path.end, null, 2));
+            addNode(path.end);
+            console.log(`Processing ${path.segments.length} segments in path ${index + 1}`);
+            path.segments.forEach((segment, segIndex) => {
+                console.log(`Processing segment ${segIndex + 1} in path ${index + 1}`);
+                const link = {
+                    source: segment.start.identity.toString(),
+                    target: segment.end.identity.toString(),
+                    label: segment.relationship.type,
+                    ...segment.relationship.properties
+                };
+                mydata.links.push(link);
+                //console.log('Link added:', JSON.stringify(link, null, 2));
+            });
+        });
+        console.log('Transformation complete');
+        console.log('Total nodes:', mydata.nodes.length);
+        console.log('Total links:', mydata.links.length);
+        return mydata;
     }
 }
 exports.NodeService = NodeService;

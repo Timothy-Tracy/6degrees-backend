@@ -25,6 +25,8 @@ var authRouter = require('./apps/auth/entry-points/api/AuthController.js');
 var commentRouter = require('./apps/comments/entry-points/api/CommentController.js');
 var searchRouter = require('./apps/search/entry-points/api/SearchController.js');
 
+var nodesV2Router = require('./dist/apps/nodes/v2/entry-points/api/NodeController');
+
 var errorHandler = require('./lib/error/errorHandler.js');
 var app = express();
 app.use(express.json());
@@ -51,6 +53,7 @@ app.use(usersRouter.apiRoot, usersRouter.router);
 app.use(nodesRouter.apiRoot, nodesRouter.router);
 app.use(authRouter.apiRoot, authRouter.router);
 app.use(commentRouter.apiRoot, commentRouter.router);
+app.use(nodesV2Router.apiRoot, nodesV2Router.router);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

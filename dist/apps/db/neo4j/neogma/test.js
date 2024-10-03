@@ -15,9 +15,17 @@ async function test() {
             //await NodeService.createEdge(post, snf, 3)
             const getNodeByUser = await NodeService_1.NodeService.getNodeByUser(user);
             console.log(getNodeByUser);
-            const uhnip = await NodeService_1.NodeService.nodeIsRelatedToPost(post, getNodeByUser);
-            console.log(uhnip);
-            const uf = await models_1.models.SHARENODE.findRelationships({ alias: "USER", where: { source: { uuid: snf.uuid } } });
+            // const uhnip = await NodeService.nodeIsRelatedToPost(post, getNodeByUser)
+            // console.log(uhnip)
+            const bdp = await NodeService_1.NodeService.backwardsDistributionPath(post, getNodeByUser);
+            console.log(bdp);
+            // const fdp = await NodeService.fowardsDistributionPath(post,snf)
+            // console.log(fdp)
+            const tbpd = await NodeService_1.NodeService.transformPathData(bdp);
+            console.log(tbpd);
+            // const tfpd = await NodeService.transformPathData(fdp)
+            // console.log(tfpd)
+            //const uf = await models.SHARENODE.findRelationships({alias:"USER", where: {source:{uuid:snf.uuid}}})
             //console.log(uf[0].target)
         }
     }

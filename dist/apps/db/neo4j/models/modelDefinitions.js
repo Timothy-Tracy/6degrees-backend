@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.USER_SHARENODE_REL = exports.POST = exports.SHARENODE = exports.USER = void 0;
 const neogma_1 = require("neogma");
 const neogma_2 = __importDefault(require("./../neogma/neogma"));
+const customErrors_1 = require("../../../../lib/error/customErrors");
 exports.USER = (0, neogma_1.ModelFactory)({
     label: 'USER',
     schema: {
@@ -21,7 +22,15 @@ exports.USER = (0, neogma_1.ModelFactory)({
             return shareNode[0].target;
         }
     },
-    statics: {},
+    statics: {
+        async getShareNodeByUsername(username) {
+            const user = await exports.USER.findOne({ where: { username: username } });
+            if (!user) {
+                throw new customErrors_1.AppError('User not found in the database', 404);
+            }
+            return user.shareNode();
+        }
+    },
 }, neogma_2.default);
 exports.SHARENODE = (0, neogma_1.ModelFactory)({
     label: "SHARENODE",
@@ -102,7 +111,37 @@ exports.SHARENODE.addRelationships({
     SHARENODE: {
         model: "self",
         direction: 'out',
-        name: 'edge'
+        name: 'EDGE',
+        properties: {
+            uuid: {
+                property: 'uuid',
+                schema: {
+                    type: 'string',
+                    required: true
+                }
+            },
+            post_uuid: {
+                property: 'post_uuid',
+                schema: {
+                    type: 'string',
+                    required: true
+                }
+            },
+            degree: {
+                property: 'degree',
+                schema: {
+                    type: 'integer',
+                    required: true
+                }
+            },
+            createdAt: {
+                property: 'createdAt',
+                schema: {
+                    type: 'string',
+                    default: () => new Date().toISOString(),
+                }
+            }
+        }
     }
 });
 exports.POST.addRelationships({
@@ -113,6 +152,13 @@ exports.POST.addRelationships({
         properties: {
             uuid: {
                 property: 'uuid',
+                schema: {
+                    type: 'string',
+                    required: true
+                }
+            },
+            post_uuid: {
+                property: 'post_uuid',
                 schema: {
                     type: 'string',
                     required: true

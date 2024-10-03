@@ -1,5 +1,6 @@
 import { ModelFactory, ModelRelatedNodesI, NeogmaInstance, NeogmaModel, Where } from "neogma";
 import neogma from './../neogma/neogma';
+import { AppError } from "../../../../lib/error/customErrors";
 
 // USER model
 export type USERProperties = {
@@ -13,7 +14,9 @@ export interface USERRelatedNodes {
 interface USERMethods {
     shareNode: (this: USERInstance) => Promise<SHARENODEInstance>
 }
-interface USERStatics {}
+interface USERStatics {
+    getShareNodeByUsername: any
+}
 
 export type USERInstance = NeogmaInstance<USERProperties, USERRelatedNodes, USERMethods>;
 
@@ -32,7 +35,15 @@ export const USER = ModelFactory<USERProperties, USERRelatedNodes, USERStatics, 
             return shareNode[0].target;
         }
     },
-    statics: {},
+    statics: {
+        async getShareNodeByUsername(username:string){
+            const user = await USER.findOne({where:{username: username}});
+            if (!user){
+                throw new AppError('User not found in the database', 404)
+            }
+            return user.shareNode();
+        }
+    },
    
 }, neogma);
 
@@ -154,7 +165,40 @@ SHARENODE.addRelationships({
     SHARENODE: {
         model: "self",
         direction: 'out',
-        name: 'edge'
+        name: 'EDGE',
+        properties:{
+            uuid:{
+                property: 'uuid',
+                schema:{
+                    type:'string',
+                    required: true
+                }
+            },
+            post_uuid:{
+                property: 'post_uuid',
+                schema:{
+                    type:'string',
+                    required: true
+                }
+            },
+            degree:{
+                property: 'degree',
+                schema:{
+                    type:'integer',
+                    required: true
+                }
+            },
+            createdAt:{
+                property: 'createdAt',
+                schema:{
+                    type:'string',
+                    
+                    default: () => new Date().toISOString(),
+                 
+                }
+            }
+            
+        }
     }
 });
 
@@ -166,6 +210,13 @@ POST.addRelationships({
         properties:{
             uuid:{
                 property: 'uuid',
+                schema:{
+                    type:'string',
+                    required: true
+                }
+            },
+            post_uuid:{
+                property: 'post_uuid',
                 schema:{
                     type:'string',
                     required: true
