@@ -47,7 +47,7 @@ exports.USER = (0, neogma_1.ModelFactory)({
 exports.SHARENODE = (0, neogma_1.ModelFactory)({
     label: "SHARENODE",
     schema: {
-        uuid: { type: 'string', required: true },
+        uuid: { type: 'string', required: false },
         createdAt: {
             type: 'string',
             required: false
@@ -55,6 +55,10 @@ exports.SHARENODE = (0, neogma_1.ModelFactory)({
         updatedAt: {
             type: 'string',
             required: false
+        },
+        anon: {
+            type: 'boolean',
+            required: true
         }
     },
     primaryKeyField: 'uuid',
@@ -145,7 +149,7 @@ exports.SHARENODE.addRelationships({
                 property: 'uuid',
                 schema: {
                     type: 'string',
-                    required: true
+                    required: false
                 }
             },
             post_uuid: {
@@ -159,6 +163,13 @@ exports.SHARENODE.addRelationships({
                 property: 'degree',
                 schema: {
                     type: 'any',
+                    required: true
+                }
+            },
+            method: {
+                property: 'method',
+                schema: {
+                    type: 'string',
                     required: true
                 }
             },

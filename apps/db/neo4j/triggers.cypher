@@ -41,8 +41,10 @@ CALL apoc.trigger.install(
 CALL apoc.trigger.install(
   'neo4j',
   'add_uuid_to_nodes',
-  'UNWIND $createdNodes AS n
-   SET n.uuid = apoc.create.uuid()',
+  'unwind $createdNodes as ns
+    set ns.uuid = CASE WHEN ns.uuid IS NULL THEN randomUUID() ELSE ns.uuid END
+
+  ',
   {}
 );
 
@@ -50,7 +52,8 @@ CALL apoc.trigger.install(
 CALL apoc.trigger.install(
   'neo4j',
   'add_uuid_to_relationships',
-  'UNWIND $createdRelationships AS r
-   SET r.uuid = apoc.create.uuid()',
+  'unwind $createdRelationships as ns
+    set ns.uuid = CASE WHEN ns.uuid IS NULL THEN randomUUID() ELSE ns.uuid END
+',
   {}
 );

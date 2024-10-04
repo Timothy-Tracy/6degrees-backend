@@ -17,8 +17,8 @@ exports.router.get('/:query/:username/backwardpath', (0, customErrors_1.catchAsy
 exports.router.get('/:query/:username/forwardpath', (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getPostByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getShareNodeByUsername), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.forwardPath), async function (req, res, next) {
     res.status(200).json(res.result);
 });
-//Get forwards path from a SHARENODE to other SHARENODES
-exports.router.get('/:query/:username/interact/:me', (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getPostByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getShareNodeByUsername), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.interact), async function (req, res, next) {
+//Interact with SHARENODE no auth
+exports.router.get('/:query/:username/interactUnauthorized/', (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getPostByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getShareNodeByUsername), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.interactUnauthorized), async function (req, res, next) {
     res.status(200).json(res.result);
 });
 //# sourceMappingURL=NodeController.js.map

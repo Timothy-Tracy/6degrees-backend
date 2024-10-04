@@ -59,9 +59,10 @@ exports.models.SHARENODE.prototype.prev = async function (post) {
     const queryRunner = new neogma_1.QueryRunner({ driver: neogma_2.default.driver, logger: console.log, sessionParams: { database: 'neo4j' } });
     const result = await new neogma_1.QueryBuilder()
         .match({ identifier: 'node', where: { uuid: this.uuid } })
-        .raw(`MATCH (n)-[next:NEXT {post_uuid: "${post.uuid}"}]->(node)`)
-        .return('edge')
+        .raw(`MATCH ()-[next:NEXT {post_uuid: "${post.uuid}"}]->(node)`)
+        .return('next')
         .run(queryRunner);
+    console.log(result);
     return result.records[0].get('next').properties;
 };
 //# sourceMappingURL=models.js.map

@@ -27,11 +27,11 @@ router.get('/:query/:username/forwardpath',
     }
 )
 
-//Get forwards path from a SHARENODE to other SHARENODES
-router.get('/:query/:username/interact/:me',
+//Interact with SHARENODE no auth
+router.get('/:query/:username/interactUnauthorized/',
     catchAsync(NodeMiddleware.getPostByQuery),
     catchAsync(NodeMiddleware.getShareNodeByUsername),
-    catchAsync(NodeMiddleware.interact),
+    catchAsync(NodeMiddleware.interactUnauthorized),
     async function(req:any, res:any, next: NextFunction){
         res.status(200).json(res.result);
     }

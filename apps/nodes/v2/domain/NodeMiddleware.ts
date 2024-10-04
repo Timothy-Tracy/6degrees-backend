@@ -11,6 +11,8 @@ export class NodeMiddleware{
             throw new AppError("something went wrong getting post by query", 500)
         }
         next();
+        console.log('got post')
+
     }
     static async  getShareNodeByUsername(req: any, res: any, next:NextFunction){
         res.locals.sharenode = await models.USER.getShareNodeByUsername(req.params.username)
@@ -56,4 +58,17 @@ export class NodeMiddleware{
         res.result = meHasNodeInPost
         next()
     }
-}
+
+    static async interactUnauthorized(req: any, res: any, next:NextFunction){
+        const result = await NodeService.createEdgeUnauthorized(res.locals.post, res.locals.sharenode)
+        console.log(result)
+    
+        res.result = {
+            message: `Anon SHARENODE interacted with post=${res.locals.post.query} through user=${req.params.username} and is related to SHARENODE=${res.locals.sharenode.uuid}}`
+            data: result.dataValues
+        }
+        
+      
+        next()
+    }
+    }

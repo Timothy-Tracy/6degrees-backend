@@ -5,6 +5,7 @@ import { AppError } from '../../../../lib/error/customErrors';
 import { QueryBuilder, QueryRunner, Where } from 'neogma';
 import neogma from '../../../db/neo4j/neogma/neogma';
 import applogger from '../../../../lib/logger/applogger';
+import { table } from 'console';
 const logger = applogger.child({'module':'NodeService'});
 const { v7: uuidv7 } = require('uuid');
 interface PathData {
@@ -57,12 +58,10 @@ export class NodeService {
         const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})
         const result = await new QueryBuilder()
         .match({identifier: 'node', where: {uuid: shareNode.uuid}})
-        .raw(`MATCH (n)-[edge:EDGE {post_uuid: "${post.uuid}"}]->(node)`)
+        .raw(`MATCH (n)-[next:NEXT {post_uuid: "${post.uuid}"}]->(node)`)
         .return('edge')
         .run(queryRunner)
-
-        return result.records[0].get('edge').properties
-        
+        return result.records[0].get('next').properties
     }
     static async createEdge(post: POSTInstance, shareNode: SHARENODEInstance, sourceShareNode?: SHARENODEInstance){
         if(!sourceShareNode){
@@ -80,7 +79,7 @@ export class NodeService {
                 assertCreatedRelationships: 1,
             })
         } else {
-            const prevDegreeEdge = await this.getPreceedingEdge(post,shareNode)
+            const prev = await shareNode.prev(post)
             const result = models.SHARENODE.relateTo({
                 alias: "SHARENODE",
                 where: {
@@ -90,21 +89,33 @@ export class NodeService {
                 properties:{
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
-                    degree:Integer.fromNumber(integer.toNumber(prevDegreeEdge.degree)+1),
+                    degree:Integer.fromNumber(integer.toNumber(prev.degree)+1),
                     createdAt: new Date().toISOString()
                 },
                 assertCreatedRelationships: 1
             })
         }
-        
     }
-    static async isRelatedToPost(post: POSTInstance, shareNode: SHARENODEInstance){
-        const result = await shareNode.isRelatedToPost(post)
-        return result
-    }
-    static async getNodeByUser(user: USERInstance){
-        const sn = await user.shareNode()
-        return sn
+    static async createEdgeUnauthorized(post: POSTInstance, sourceShareNode: SHARENODEInstance){
+        const prevEdge = await sourceShareNode.prev(post)
+        const anonNode = await models.SHARENODE.createOne({
+            uuid: uuidv7(),
+            anon:true
+        })
+        await models.SHARENODE.relateTo({
+            alias: 'SHARENODE',
+            where:{
+                source: {uuid: sourceShareNode.uuid},
+                target:{uuid:anonNode.uuid}
+            }
+            properties: {
+                method: 'default',
+                post_uuid: post.uuid,
+                degree: Integer.fromNumber(integer.toNumber(prevEdge.degree)+1),
+            }
+        }).then(() => console.log('created relationship'))
+
+        return anonNode
     }
     
     static async transformPathData(data: PathData): Promise<TransformedData> {

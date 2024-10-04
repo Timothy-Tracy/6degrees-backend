@@ -16,10 +16,10 @@ class NodeService {
         const queryRunner = new neogma_1.QueryRunner({ driver: neogma_2.default.driver, logger: console.log, sessionParams: { database: 'neo4j' } });
         const result = await new neogma_1.QueryBuilder()
             .match({ identifier: 'node', where: { uuid: shareNode.uuid } })
-            .raw(`MATCH (n)-[edge:EDGE {post_uuid: "${post.uuid}"}]->(node)`)
+            .raw(`MATCH (n)-[next:NEXT {post_uuid: "${post.uuid}"}]->(node)`)
             .return('edge')
             .run(queryRunner);
-        return result.records[0].get('edge').properties;
+        return result.records[0].get('next').properties;
     }
     static async createEdge(post, shareNode, sourceShareNode) {
         if (!sourceShareNode) {
@@ -38,7 +38,7 @@ class NodeService {
             });
         }
         else {
-            const prevDegreeEdge = await this.getPreceedingEdge(post, shareNode);
+            const prev = await shareNode.prev(post);
             const result = models_1.models.SHARENODE.relateTo({
                 alias: "SHARENODE",
                 where: {
@@ -48,20 +48,32 @@ class NodeService {
                 properties: {
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
-                    degree: neo4j_driver_1.Integer.fromNumber(neo4j_driver_1.integer.toNumber(prevDegreeEdge.degree) + 1),
+                    degree: neo4j_driver_1.Integer.fromNumber(neo4j_driver_1.integer.toNumber(prev.degree) + 1),
                     createdAt: new Date().toISOString()
                 },
                 assertCreatedRelationships: 1
             });
         }
     }
-    static async isRelatedToPost(post, shareNode) {
-        const result = await shareNode.isRelatedToPost(post);
-        return result;
-    }
-    static async getNodeByUser(user) {
-        const sn = await user.shareNode();
-        return sn;
+    static async createEdgeUnauthorized(post, sourceShareNode) {
+        const prevEdge = await sourceShareNode.prev(post);
+        const anonNode = await models_1.models.SHARENODE.createOne({
+            uuid: uuidv7(),
+            anon: true
+        });
+        await models_1.models.SHARENODE.relateTo({
+            alias: 'SHARENODE',
+            where: {
+                source: { uuid: sourceShareNode.uuid },
+                target: { uuid: anonNode.uuid }
+            },
+            properties: {
+                method: 'default',
+                post_uuid: post.uuid,
+                degree: neo4j_driver_1.Integer.fromNumber(neo4j_driver_1.integer.toNumber(prevEdge.degree) + 1),
+            }
+        }).then(() => console.log('created relationship'));
+        return anonNode;
     }
     static async transformPathData(data) {
         console.log('Starting data transformation');

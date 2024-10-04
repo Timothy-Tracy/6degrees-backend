@@ -53,8 +53,9 @@ models.SHARENODE.prototype.prev = async function(this:SHARENODEInstance, post:PO
   const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})
         const result = await new QueryBuilder()
         .match({identifier: 'node', where: {uuid: this.uuid}})
-        .raw(`MATCH (n)-[next:NEXT {post_uuid: "${post.uuid}"}]->(node)`)
-        .return('edge')
+        .raw(`MATCH ()-[next:NEXT {post_uuid: "${post.uuid}"}]->(node)`)
+        .return('next')
         .run(queryRunner)
+        console.log(result)
         return result.records[0].get('next').properties
 }

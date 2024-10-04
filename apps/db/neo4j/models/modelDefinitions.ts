@@ -63,9 +63,10 @@ export const USER = ModelFactory<USERProperties, USERRelatedNodes, USERStatics, 
 
 // SHARENODE model
 export type SHARENODEProperties = { 
-    uuid: string,
-    createdAt: string,
-    updatedAt: string
+    uuid?: string,
+    createdAt?: string,
+    updatedAt?: string,
+    anon: boolean
  };
 export interface SHARENODERelatedNodes {
     USER: ModelRelatedNodesI<any, any>
@@ -87,7 +88,7 @@ export type SHARENODEInstance = NeogmaInstance<SHARENODEProperties, SHARENODERel
 export const SHARENODE = ModelFactory<SHARENODEProperties, SHARENODERelatedNodes, SHARENODEStatics, SHARENODEMethods>({
     label: "SHARENODE",
     schema: {
-        uuid: { type: 'string', required: true },
+        uuid: { type: 'string', required: false },
         createdAt:{
             type:'string',
             required: false
@@ -95,6 +96,10 @@ export const SHARENODE = ModelFactory<SHARENODEProperties, SHARENODERelatedNodes
         updatedAt:{
             type:'string',
             required: false
+        },
+        anon:{
+            type: 'boolean',
+            required: true
         }
     },
     primaryKeyField: 'uuid',
@@ -210,7 +215,7 @@ SHARENODE.addRelationships({
                 property: 'uuid',
                 schema:{
                     type:'string',
-                    required: true
+                    required: false
                 }
             },
             post_uuid:{
@@ -224,6 +229,13 @@ SHARENODE.addRelationships({
                 property: 'degree',
                 schema:{
                     type:'any',
+                    required: true
+                }
+            },
+            method:{
+                property: 'method',
+                schema:{
+                    type:'string',
                     required: true
                 }
             },
