@@ -5,7 +5,6 @@ import { AppError } from '../../../../lib/error/customErrors';
 import { QueryBuilder, QueryRunner, Where } from 'neogma';
 import neogma from '../../../db/neo4j/neogma/neogma';
 import applogger from '../../../../lib/logger/applogger';
-import { table } from 'console';
 const logger = applogger.child({'module':'NodeService'});
 const { v7: uuidv7 } = require('uuid');
 interface PathData {
@@ -98,16 +97,13 @@ export class NodeService {
     }
     static async createEdgeUnauthorized(post: POSTInstance, sourceShareNode: SHARENODEInstance){
         const prevEdge = await sourceShareNode.prev(post)
-        const anonNode = await models.SHARENODE.createOne({
-            uuid: uuidv7(),
-            anon:true
-        })
+        const anonNode = await models.SHARENODE.createOne({uuid: uuidv7(),anon:true})
         await models.SHARENODE.relateTo({
             alias: 'SHARENODE',
             where:{
                 source: {uuid: sourceShareNode.uuid},
                 target:{uuid:anonNode.uuid}
-            }
+            },
             properties: {
                 method: 'default',
                 post_uuid: post.uuid,

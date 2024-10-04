@@ -57,10 +57,7 @@ class NodeService {
     }
     static async createEdgeUnauthorized(post, sourceShareNode) {
         const prevEdge = await sourceShareNode.prev(post);
-        const anonNode = await models_1.models.SHARENODE.createOne({
-            uuid: uuidv7(),
-            anon: true
-        });
+        const anonNode = await models_1.models.SHARENODE.createOne({ uuid: uuidv7(), anon: true });
         await models_1.models.SHARENODE.relateTo({
             alias: 'SHARENODE',
             where: {
