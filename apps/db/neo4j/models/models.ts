@@ -1,9 +1,10 @@
 //models.ts
 import { NeogmaModel, QueryBuilder, QueryRunner } from 'neogma';
-import { USER, SHARENODE, POST, ModelsInterface, POSTInstance, SHARENODEInstance } from './modelDefinitions';
+import { USER, SHARENODE, POST, ModelsInterface, POSTInstance, SHARENODEInstance, USERInstance } from './modelDefinitions';
 import neogma from '../neogma/neogma';
 import { AppError } from '../../../../lib/error/customErrors';
 import applogger from '../../../../lib/logger/applogger';
+const { v7: uuidv7 } = require('uuid');
 
 const logger = applogger.child({'module':'models'});
 
@@ -73,4 +74,22 @@ models.SHARENODE.prototype.prev = async function(this:SHARENODEInstance, post:PO
         .return('next')
         .run(queryRunner)
   return result.records[0].get('next').properties
+}
+
+models.USER.prototype.createSharenode = async function(this: USERInstance){
+  const alreadyHasSharenode = await this.shareNode()
+  if(alreadyHasSharenode != null){
+      throw new AppError('User already has sharenode', 500)
+  } else {
+      const result = await models.SHARENODE.createOne({
+        uuid:uuidv7(),
+        anon:false
+      })
+      await result.relateTo({alias:'USER',
+        where:{
+          uuid:this.uuid
+        }
+      })
+      
+  }
 }

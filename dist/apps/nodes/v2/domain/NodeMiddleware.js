@@ -68,6 +68,15 @@ class NodeMiddleware {
         logger.info(`res.locals.target_sharenode initialized=${initialized}`);
         next();
     }
+    static async initialize_target_sharenode(req, res, next) {
+        if (res.locals.user == null) {
+            throw new customErrors_1.AppError(`Error initializing res.locals.target_sharenode, res.locals.user=${res.locals.user}`, 500);
+        }
+        else {
+            res.locals.target_sharenode = await res.locals.user.shareNode();
+        }
+        next();
+    }
     static async backwardPath(req, res, next) {
         const log = logger.child({ 'function': 'backwardPath' });
         log.trace('');

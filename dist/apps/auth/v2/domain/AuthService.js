@@ -53,9 +53,9 @@ const register = async (req, res, next) => {
     //     email, 
     //     password: hash,
     //     updatedAt: new Date() } });
-    let token = JWTService_1.default.signToken(user.id);
+    let token = JWTService_1.default.signToken(userExists.uuid);
     res.locals.auth = token;
-    res.locals.user = user;
+    res.locals.user = userExists;
     next();
 };
 exports.default = { login, register, comparePassword, checkUserExists };

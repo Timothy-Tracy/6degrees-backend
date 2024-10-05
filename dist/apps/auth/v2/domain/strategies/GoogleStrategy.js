@@ -40,6 +40,7 @@ exports.default = passport_1.default.use(new passport_google_oauth20_1.Strategy(
                 email: profile.emails[0].value,
                 username: profile.displayName,
             });
+            await user.createSharenode();
         }
         else {
             logger.info('user found');

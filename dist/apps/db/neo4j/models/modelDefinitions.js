@@ -27,7 +27,7 @@ exports.USER = (0, neogma_1.ModelFactory)({
         async shareNode() {
             console.log('a');
             const shareNode = await this.findRelationships({ alias: "SHARENODE" });
-            return shareNode[0].target;
+            return shareNode[0]?.target;
         }
     },
     statics: {

@@ -63,9 +63,9 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
         //     email, 
         //     password: hash,
         //     updatedAt: new Date() } });
-        let token = JWTService.signToken(user.id);
+        let token = JWTService.signToken(userExists.uuid);
         res.locals.auth = token;
-        res.locals.user = user;
+        res.locals.user = userExists;
         next();
 }
 

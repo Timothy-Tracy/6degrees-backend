@@ -10,6 +10,7 @@ const modelDefinitions_1 = require("./modelDefinitions");
 const neogma_2 = __importDefault(require("../neogma/neogma"));
 const customErrors_1 = require("../../../../lib/error/customErrors");
 const applogger_1 = __importDefault(require("../../../../lib/logger/applogger"));
+const { v7: uuidv7 } = require('uuid');
 const logger = applogger_1.default.child({ 'module': 'models' });
 exports.models = {
     USER: modelDefinitions_1.USER,
@@ -77,5 +78,22 @@ exports.models.SHARENODE.prototype.prev = async function (post) {
         .return('next')
         .run(queryRunner);
     return result.records[0].get('next').properties;
+};
+exports.models.USER.prototype.createSharenode = async function () {
+    const alreadyHasSharenode = await this.shareNode();
+    if (alreadyHasSharenode != null) {
+        throw new customErrors_1.AppError('User already has sharenode', 500);
+    }
+    else {
+        const result = await exports.models.SHARENODE.createOne({
+            uuid: uuidv7(),
+            anon: false
+        });
+        await result.relateTo({ alias: 'USER',
+            where: {
+                uuid: this.uuid
+            }
+        });
+    }
 };
 //# sourceMappingURL=models.js.map

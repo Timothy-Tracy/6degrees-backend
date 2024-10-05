@@ -39,6 +39,8 @@ export default passport.use(new GoogleStrategy({
                 username: profile.displayName,
              
             })
+
+            await user.createSharenode()
         } else{
             logger.info('user found')
 

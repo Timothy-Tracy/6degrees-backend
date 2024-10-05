@@ -6,15 +6,16 @@ import { AppError } from "../../../../lib/error/customErrors";
 export type USERProperties = {
     email: string,
     username: string,
-    uuid: string,
-    createdAt: string,
-    updatedAt: string
+    uuid?: string,
+    createdAt?: string,
+    updatedAt?: string
 };
 export interface USERRelatedNodes {
     SHARENODE: ModelRelatedNodesI<any, any>
 }
 interface USERMethods {
-    shareNode: (this: USERInstance) => Promise<SHARENODEInstance>
+    shareNode: (this: USERInstance) => Promise<SHARENODEInstance>,
+    createSharenode:(this: USERInstance) => Promise<void>
 }
 interface USERStatics {
     getShareNodeByUsername: (username: string) => Promise<SHARENODEInstance>,
@@ -45,6 +46,7 @@ export const USER = ModelFactory<USERProperties, USERRelatedNodes, USERStatics, 
             const shareNode = await this.findRelationships({ alias: "SHARENODE" });
             return shareNode[0].target;
         }
+        
     },
     statics: {
         async getUserByUsername(username:string) : Promise<USERInstance>{
