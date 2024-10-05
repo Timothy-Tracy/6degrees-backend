@@ -75,3 +75,5 @@ router.get('/profile', (req: Request, res: Response) => {
         res.status(401).json({ message: 'Not authenticated' });
     }
 });
+
+export default {router, apiRoot}

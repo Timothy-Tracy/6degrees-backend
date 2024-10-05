@@ -54,4 +54,5 @@ exports.router.get('/profile', (req, res) => {
         res.status(401).json({ message: 'Not authenticated' });
     }
 });
+exports.default = { router: exports.router, apiRoot: exports.apiRoot };
 //# sourceMappingURL=AuthController.js.map

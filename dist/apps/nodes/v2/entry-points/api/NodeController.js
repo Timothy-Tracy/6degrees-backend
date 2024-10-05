@@ -39,4 +39,5 @@ exports.router.get('/interact', (0, customErrors_1.catchAsync)(NodeMiddleware_1.
 //         res.status(200).json(res.result);
 //     }
 // )
+exports.default = { router: exports.router, apiRoot: exports.apiRoot };
 //# sourceMappingURL=NodeController.js.map

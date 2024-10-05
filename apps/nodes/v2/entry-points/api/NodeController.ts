@@ -63,3 +63,4 @@ router.get('/interact',
 //         res.status(200).json(res.result);
 //     }
 // )
+export default {router,apiRoot}
