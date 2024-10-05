@@ -2,6 +2,7 @@ import express, { NextFunction } from 'express'
 import {AppError, catchAsync} from '../../../../../lib/error/customErrors'
 import applogger from '../../../../../lib/logger/applogger'
 import { NodeMiddleware } from '../../domain/NodeMiddleware';
+import { AuthMiddleware } from '../../../../auth/v2/domain/AuthMiddleware';
 
 const logger = applogger.child({'module':'NodeController'});
 
@@ -42,6 +43,24 @@ router.get('/interact',
     catchAsync(NodeMiddleware.requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
     catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
     catchAsync(NodeMiddleware.getTargetSharenodeByQuery),
+    catchAsync(NodeMiddleware.interact),
+    async function(req:any, res:any, next: NextFunction){
+    //     res.header('Access-Control-Allow-Credentials', true);
+    //     res.cookie('target_sharenode_uuid', res.locals.target_sharenode.uuid, { 
+    //     httpOnly: true,
+    //     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    //     maxAge: 3600000 // 1 hour in milliseconds
+    //   });
+        res.status(200).json(res.result);
+    }
+)
+router.get('/interact/auth',
+    catchAsync(AuthMiddleware.requireAuthSession),
+    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid','post_query'])),
+    catchAsync(NodeMiddleware.getPostByQuery),
+    catchAsync(NodeMiddleware.requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
+    catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
+    catchAsync(NodeMiddleware.initialize_target_sharenode),
     catchAsync(NodeMiddleware.interact),
     async function(req:any, res:any, next: NextFunction){
     //     res.header('Access-Control-Allow-Credentials', true);

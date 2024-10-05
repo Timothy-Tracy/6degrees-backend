@@ -10,6 +10,7 @@ const passport_1 = __importDefault(require("passport"));
 const express_1 = require("express");
 const AuthService_1 = __importDefault(require("../../domain/AuthService"));
 const customErrors_1 = require("../../../../../lib/error/customErrors");
+const RedisService_1 = __importDefault(require("../../../../db/redis/RedisService"));
 exports.router = (0, express_1.Router)();
 exports.apiRoot = '/api/v2/auth';
 exports.router.post('/passport', passport_1.default.authenticate("local"), (req, res) => {
@@ -53,6 +54,15 @@ exports.router.get('/profile', (req, res) => {
     else {
         res.status(401).json({ message: 'Not authenticated' });
     }
+});
+exports.router.get('/debug-session/', async (req, res) => {
+    const x = await RedisService_1.default.store.client.get(`sess:${req.sessionID.user}`);
+    console.log(x);
+    res.json({
+        test: x,
+        sessionID: req.sessionID,
+        sessionData: req.session
+    });
 });
 exports.default = { router: exports.router, apiRoot: exports.apiRoot };
 //# sourceMappingURL=AuthController.js.map

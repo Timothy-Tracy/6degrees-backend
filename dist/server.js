@@ -41,7 +41,7 @@ app.use((0, express_session_1.default)({
     cookie: {
         secure: false,
         httpOnly: false,
-        maxAge: 60000
+        maxAge: 24 * 60 * 60000
     }
 }));
 app.use(passport_1.default.initialize());

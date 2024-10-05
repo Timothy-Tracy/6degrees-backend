@@ -8,6 +8,7 @@ const express_1 = __importDefault(require("express"));
 const customErrors_1 = require("../../../../../lib/error/customErrors");
 const applogger_1 = __importDefault(require("../../../../../lib/logger/applogger"));
 const NodeMiddleware_1 = require("../../domain/NodeMiddleware");
+const AuthMiddleware_1 = require("../../../../auth/v2/domain/AuthMiddleware");
 const logger = applogger_1.default.child({ 'module': 'NodeController' });
 exports.router = express_1.default.Router();
 exports.apiRoot = '/api/v2/nodes';
@@ -21,6 +22,15 @@ exports.router.get('/forwardpath', (0, customErrors_1.catchAsync)(NodeMiddleware
 });
 //Interact with anon SHARENODE with auth
 exports.router.get('/interact', (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['post_uuid', 'post_query'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getPostByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['source_sharenode_username', 'source_sharenode_uuid'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getSourceSharenodeByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getTargetSharenodeByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.interact), async function (req, res, next) {
+    //     res.header('Access-Control-Allow-Credentials', true);
+    //     res.cookie('target_sharenode_uuid', res.locals.target_sharenode.uuid, { 
+    //     httpOnly: true,
+    //     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    //     maxAge: 3600000 // 1 hour in milliseconds
+    //   });
+    res.status(200).json(res.result);
+});
+exports.router.get('/interact/auth', (0, customErrors_1.catchAsync)(AuthMiddleware_1.AuthMiddleware.requireAuthSession), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['post_uuid', 'post_query'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getPostByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['source_sharenode_username', 'source_sharenode_uuid'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getSourceSharenodeByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.initialize_target_sharenode), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.interact), async function (req, res, next) {
     //     res.header('Access-Control-Allow-Credentials', true);
     //     res.cookie('target_sharenode_uuid', res.locals.target_sharenode.uuid, { 
     //     httpOnly: true,

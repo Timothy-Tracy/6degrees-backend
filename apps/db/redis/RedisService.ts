@@ -10,7 +10,7 @@ const logger = applogger.child({'module':'RedisService'})
 class RedisService {
     client:any
     url:string
-    store:any
+    store:connectRedis
     
     constructor(){
         logger.info('RedisService: Initializing RedisService')
@@ -21,6 +21,9 @@ class RedisService {
             this.url = process.env.REDIS_URL
             logger.info(`RedisService: ${process.env.REDIS_URL} : Connection URL initialized `)
         }
+        this.initClient()
+        this.connectClient()
+        this.initStore()
     }
     initClient =()=>{
         try{
@@ -51,13 +54,10 @@ class RedisService {
         }
         logger.info("RedisService - RedisStore: connection established")
     }
-
+    
 }
 
 const redisService = new RedisService()
-redisService.initClient()
-redisService.connectClient()
-redisService.initStore()
 
 export default redisService
 

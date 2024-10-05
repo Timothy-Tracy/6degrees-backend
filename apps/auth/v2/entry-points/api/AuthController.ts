@@ -6,6 +6,7 @@ import { Router } from 'express';
 
 import AuthService from '../../domain/AuthService';
 import { catchAsync } from '../../../../../lib/error/customErrors';
+import redisService from '../../../../db/redis/RedisService';
 export const router = Router();
 export const apiRoot = '/api/v2/auth'
 
@@ -75,5 +76,14 @@ router.get('/profile', (req: Request, res: Response) => {
         res.status(401).json({ message: 'Not authenticated' });
     }
 });
+router.get('/debug-session/', async (req, res) => {
+    const x = await redisService.store.client.get(`sess:${req.sessionID.user}`);
+    console.log(x )
+    res.json({
+        test: x,
+      sessionID: req.sessionID,
+      sessionData: req.session
+    });
+  });
 
 export default {router, apiRoot}

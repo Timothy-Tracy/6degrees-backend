@@ -10,8 +10,11 @@ const logger = applogger_1.default.child({ 'module': 'AuthMiddleware' });
 const models_1 = require("../../../db/neo4j/models/models");
 class AuthMiddleware {
     static async requireAuthSession(req, res, next) {
-        if (!req.isAuthenticated) {
+        if (!req.isAuthenticated()) {
             throw new customErrors_1.AppError('Authentication is required', 401);
+        }
+        if (!req.user.uuid) {
+            throw new customErrors_1.AppError('No user data via authentication', 401);
         }
         res.locals.user = await models_1.models.USER.findOne({ where: { uuid: req.user.uuid } });
         if (res.locals.user == null) {

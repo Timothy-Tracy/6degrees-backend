@@ -47,11 +47,11 @@ class RedisService {
             this.url = process.env.REDIS_URL;
             logger.info(`RedisService: ${process.env.REDIS_URL} : Connection URL initialized `);
         }
+        this.initClient();
+        this.connectClient();
+        this.initStore();
     }
 }
 const redisService = new RedisService();
-redisService.initClient();
-redisService.connectClient();
-redisService.initStore();
 exports.default = redisService;
 //# sourceMappingURL=RedisService.js.map
