@@ -30,9 +30,10 @@ exports.models.SHARENODE.prototype.isRelatedToPost = async function (post) {
     log.trace('');
     const queryRunner = new neogma_1.QueryRunner({ driver: neogma_2.default.driver, logger: console.log, sessionParams: { database: 'neo4j' } });
     const result = await new neogma_1.QueryBuilder()
-        .raw(`MATCH path = ()-[:NEXT* {post_uuid: "${post.uuid}"}]->(sn:SHARENODE {uuid: "${this.uuid}"}) WITH collect(path) as path`)
-        .return('path')
+        .raw(`MATCH ()-[n:NEXT* {post_uuid: "${post.uuid}"}]->(sn:SHARENODE {uuid: "${this.uuid}"}) `)
+        .return('n')
         .run(queryRunner);
+    log.error(result.records[0] ? true : false);
     return result.records[0] ? true : false;
 };
 exports.models.SHARENODE.prototype.safeIsRelatedToPost = async function (post) {
@@ -72,11 +73,9 @@ exports.models.SHARENODE.prototype.prev = async function (post) {
     log.trace('');
     const queryRunner = new neogma_1.QueryRunner({ driver: neogma_2.default.driver, logger: console.log, sessionParams: { database: 'neo4j' } });
     const result = await new neogma_1.QueryBuilder()
-        .match({ identifier: 'node', where: { uuid: this.uuid } })
-        .raw(`MATCH ()-[next:NEXT {post_uuid: "${post.uuid}"}]->(node)`)
+        .raw(`MATCH ()-[next:NEXT {post_uuid: "${post.uuid}"}]->(node:SHARENODE {uuid: "${this.uuid}"})`)
         .return('next')
         .run(queryRunner);
-    console.log(result);
     return result.records[0].get('next').properties;
 };
 //# sourceMappingURL=models.js.map

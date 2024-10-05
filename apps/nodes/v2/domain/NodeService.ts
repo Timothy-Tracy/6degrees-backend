@@ -73,12 +73,13 @@ export class NodeService {
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
                     degree: Integer.fromNumber(0),
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    method: 'default'
                 },
                 assertCreatedRelationships: 1,
             })
         } else {
-            const prev = await shareNode.prev(post)
+            const prev = await sourceShareNode.prev(post)
             const result = models.SHARENODE.relateTo({
                 alias: "SHARENODE",
                 where: {
@@ -89,11 +90,18 @@ export class NodeService {
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
                     degree:Integer.fromNumber(integer.toNumber(prev.degree)+1),
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    method: 'default'
                 },
                 assertCreatedRelationships: 1
             })
         }
+    }
+    static async createAnonSharenode(){
+        const log = logger.child({'function': 'createAnonSharenode'})
+        log.trace('');
+        const anonNode = await models.SHARENODE.createOne({uuid: uuidv7(),anon:true})
+        return anonNode
     }
     static async createEdgeUnauthorized(post: POSTInstance, sourceShareNode: SHARENODEInstance){
         const prevEdge = await sourceShareNode.prev(post)

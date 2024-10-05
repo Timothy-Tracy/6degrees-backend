@@ -32,13 +32,14 @@ class NodeService {
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
                     degree: neo4j_driver_1.Integer.fromNumber(0),
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    method: 'default'
                 },
                 assertCreatedRelationships: 1,
             });
         }
         else {
-            const prev = await shareNode.prev(post);
+            const prev = await sourceShareNode.prev(post);
             const result = models_1.models.SHARENODE.relateTo({
                 alias: "SHARENODE",
                 where: {
@@ -49,11 +50,18 @@ class NodeService {
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
                     degree: neo4j_driver_1.Integer.fromNumber(neo4j_driver_1.integer.toNumber(prev.degree) + 1),
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    method: 'default'
                 },
                 assertCreatedRelationships: 1
             });
         }
+    }
+    static async createAnonSharenode() {
+        const log = logger.child({ 'function': 'createAnonSharenode' });
+        log.trace('');
+        const anonNode = await models_1.models.SHARENODE.createOne({ uuid: uuidv7(), anon: true });
+        return anonNode;
     }
     static async createEdgeUnauthorized(post, sourceShareNode) {
         const prevEdge = await sourceShareNode.prev(post);

@@ -299,6 +299,13 @@ POST.addRelationships({
                     type:'string',
                     required: false
                 }
+            }, 
+            method: {
+                property: 'method',
+                schema: {
+                    type: 'string',
+                    required: true
+                }
             }
             
         }

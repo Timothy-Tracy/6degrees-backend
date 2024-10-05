@@ -13,7 +13,11 @@ export const apiRoot = '/api/v2/nodes'
 
 //Get backwards path from a anon SHARENODE to its source POST
 router.get('/backwardpath',
+    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid','post_query'])),
+
     catchAsync(NodeMiddleware.getPostByQuery),
+    catchAsync(NodeMiddleware.requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
+
     catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
     catchAsync(NodeMiddleware.backwardPath),
     async function(req:any, res:any, next: NextFunction){
@@ -23,7 +27,11 @@ router.get('/backwardpath',
 
 //Get forwards path from a anon SHARENODE to other SHARENODES
 router.get('/forwardpath',
+    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid','post_query'])),
+
     catchAsync(NodeMiddleware.getPostByQuery),
+    catchAsync(NodeMiddleware.requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
+
     catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
     catchAsync(NodeMiddleware.forwardPath),
     async function(req:any, res:any, next: NextFunction){
@@ -33,7 +41,9 @@ router.get('/forwardpath',
 
 //Interact with anon SHARENODE with auth
 router.get('/interact',
+    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid','post_query'])),
     catchAsync(NodeMiddleware.getPostByQuery),
+    catchAsync(NodeMiddleware.requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
     catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
     catchAsync(NodeMiddleware.getTargetSharenodeByQuery),
     catchAsync(NodeMiddleware.interact),
