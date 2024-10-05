@@ -44,12 +44,12 @@ router.get('/interact',
     catchAsync(NodeMiddleware.getTargetSharenodeByQuery),
     catchAsync(NodeMiddleware.interact),
     async function(req:any, res:any, next: NextFunction){
-        res.header('Access-Control-Allow-Credentials', true);
-        res.cookie('target_sharenode_uuid', res.locals.target_sharenode.uuid, { 
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-        maxAge: 3600000 // 1 hour in milliseconds
-      });
+    //     res.header('Access-Control-Allow-Credentials', true);
+    //     res.cookie('target_sharenode_uuid', res.locals.target_sharenode.uuid, { 
+    //     httpOnly: true,
+    //     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    //     maxAge: 3600000 // 1 hour in milliseconds
+    //   });
         res.status(200).json(res.result);
     }
 )

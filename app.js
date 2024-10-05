@@ -22,14 +22,45 @@ var AdminUsersRouter = require('./apps/users/entry-points/api/AdminUserControlle
 var usersRouter = require('./apps/users/entry-points/api/UserController.js');
 var nodesRouter = require('./apps/nodes/entry-points/api/NodeController.js');
 var authRouter = require('./apps/auth/entry-points/api/AuthController.js');
+var authRouterv2 = require('./dist/apps/auth/v2/entry-points/api/AuthController');
+
 var commentRouter = require('./apps/comments/entry-points/api/CommentController.js');
 var searchRouter = require('./apps/search/entry-points/api/SearchController.js');
 
 var nodesV2Router = require('./dist/apps/nodes/v2/entry-points/api/NodeController');
 
 var errorHandler = require('./lib/error/errorHandler.js');
+
+const passport = require("passport");
+const session = require('express-session');
+const redisService =require('./dist/apps/db/redis/RedisService');
 var app = express();
+
+app.use(cors({
+  origin:'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+
+
+app.use(session({
+  store: redisService.store,
+  secret: process.env.SESSION_SECRET || 'secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+      secure: false,
+      httpOnly: false,
+      maxAge: 60000
+  }
+})); 
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 //app.use(pino);
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -38,12 +69,8 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cors({
-  origin:'http://localhost:3000',
-  credentials: true
-}));
+
 app.use(searchRouter.apiRoot, searchRouter.router);
 
 app.use(AdminPostsRouter.apiRoot, AdminPostsRouter.router);
@@ -52,8 +79,16 @@ app.use(postsRouter.apiRoot, postsRouter.router);
 app.use(usersRouter.apiRoot, usersRouter.router);
 app.use(nodesRouter.apiRoot, nodesRouter.router);
 app.use(authRouter.apiRoot, authRouter.router);
+app.use(authRouterv2.apiRoot, authRouterv2.router);
+
 app.use(commentRouter.apiRoot, commentRouter.router);
 app.use(nodesV2Router.apiRoot, nodesV2Router.router);
+
+
+
+
+
+  
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

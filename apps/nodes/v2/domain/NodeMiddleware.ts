@@ -114,11 +114,11 @@ export class NodeMiddleware{
         const post = NodeMiddleware.safe(res.locals.post, 'res.locals.post')
         const source_sharenode = NodeMiddleware.safe(res.locals.source_sharenode, 'res.locals.source_sharenode')
         logger.error(res.locals)
-        if(res.locals.target_sharenode==null){
-            if(req.cookies.target_sharenode_uuid){
+        if (res.locals.target_sharenode==null){
+            if (false){
                 res.locals.target_sharenode = await models.SHARENODE.findOne({where:{uuid: req.cookies.target_sharenode_uuid}})
                 logger.info('got target sharenode from cookie')
-            }else {
+            } else {
                 logger.info('creating anon')
                 res.locals.target_sharenode = await NodeService.createAnonSharenode()
                 logger.info(`Created anon SHARENODE uuid=${res.locals.target_sharenode.uuid}`)
