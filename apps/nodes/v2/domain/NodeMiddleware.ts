@@ -85,16 +85,7 @@ export class NodeMiddleware{
         
         next();
     }
-    static async  getShareNodeByUUID(req: any, res: any, next:NextFunction){
-        const log = logger.child({'function': 'getShareNodeByUUID'});
-        log.trace('')
-        res.locals.sharenode = await models.SHARENODE.findOne({where:{uuid:req.params.uuid}})
-        if(!res.locals.sharenode){
-            throw new AppError("something went wrong getting SHARENODE by uuid", 500)
-        }
-        next();
-    }
-
+    
     static async backwardPath(req: any, res: any, next:NextFunction){
         const log = logger.child({'function': 'backwardPath'});
         log.trace('')
@@ -124,10 +115,16 @@ export class NodeMiddleware{
         const source_sharenode = NodeMiddleware.safe(res.locals.source_sharenode, 'res.locals.source_sharenode')
         logger.error(res.locals)
         if(res.locals.target_sharenode==null){
-            logger.info('creating anon')
-            res.locals.target_sharenode = await NodeService.createAnonSharenode()
-            logger.info(`Created anon SHARENODE uuid=${res.locals.target_sharenode.uuid}`)
-            message = message + `Created anon SHARENODE uuid=${res.locals.target_sharenode.uuid}, `
+            if(req.cookies.target_sharenode_uuid){
+                res.locals.target_sharenode = await models.SHARENODE.findOne({where:{uuid: req.cookies.target_sharenode_uuid}})
+                logger.info('got target sharenode from cookie')
+            }else {
+                logger.info('creating anon')
+                res.locals.target_sharenode = await NodeService.createAnonSharenode()
+                logger.info(`Created anon SHARENODE uuid=${res.locals.target_sharenode.uuid}`)
+                message = message + `Created anon SHARENODE uuid=${res.locals.target_sharenode.uuid}, `
+            }
+            
         }
         const target_sharenode = NodeMiddleware.safe(res.locals.target_sharenode, 'res.locals.target_sharenode')
         logger.error(req.query)
@@ -155,18 +152,18 @@ export class NodeMiddleware{
         next()
     }
 
-    static async interactUnauthorized(req: any, res: any, next:NextFunction){
-        const log = logger.child({'function': 'interactUnauthorized'});
-        log.trace('')
-        const result = await NodeService.createEdgeUnauthorized(res.locals.post, res.locals.source_sharenode)
-        console.log(result)
+    // static async interactUnauthorized(req: any, res: any, next:NextFunction){
+    //     const log = logger.child({'function': 'interactUnauthorized'});
+    //     log.trace('')
+    //     const result = await NodeService.createEdgeUnauthorized(res.locals.post, res.locals.source_sharenode)
+    //     console.log(result)
     
-        res.result = {
-            message: `Anon SHARENODE interacted with post=${res.locals.post.query} through user=${req.params.username} and is related to SHARENODE=${res.locals.source_sharenode.uuid}}`
-            data: result.dataValues
-        }
+    //     res.result = {
+    //         message: `Anon SHARENODE interacted with post=${res.locals.post.query} through user=${req.params.username} and is related to SHARENODE=${res.locals.source_sharenode.uuid}}`
+    //         data: result.dataValues
+    //     }
         
       
-        next()
-    }
+    //     next()
+    // }
     }
