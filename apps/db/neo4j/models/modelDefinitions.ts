@@ -44,7 +44,12 @@ export const USER = ModelFactory<USERProperties, USERRelatedNodes, USERStatics, 
         async shareNode(this: USERInstance) {
             console.log('a');
             const shareNode = await this.findRelationships({ alias: "SHARENODE" });
-            return shareNode[0].target;
+            if(shareNode[0]){
+                return shareNode[0].target;
+            } else {
+                return null
+            }
+            
         }
         
     },

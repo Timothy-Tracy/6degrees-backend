@@ -21,16 +21,24 @@ exports.router.get('/forwardpath', (0, customErrors_1.catchAsync)(NodeMiddleware
     res.status(200).json(res.result);
 });
 //Interact with anon SHARENODE with auth
-exports.router.get('/interact', (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['post_uuid', 'post_query'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getPostByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['source_sharenode_username', 'source_sharenode_uuid'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getSourceSharenodeByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getTargetSharenodeByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.interact), async function (req, res, next) {
-    //     res.header('Access-Control-Allow-Credentials', true);
-    //     res.cookie('target_sharenode_uuid', res.locals.target_sharenode.uuid, { 
-    //     httpOnly: true,
-    //     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-    //     maxAge: 3600000 // 1 hour in milliseconds
-    //   });
-    res.status(200).json(res.result);
-});
-exports.router.get('/interact/auth', (0, customErrors_1.catchAsync)(AuthMiddleware_1.AuthMiddleware.requireAuthSession), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['post_uuid', 'post_query'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getPostByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['source_sharenode_username', 'source_sharenode_uuid'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getSourceSharenodeByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.initialize_target_sharenode), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.interact), async function (req, res, next) {
+// router.get('/interact',
+//     catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid','post_query'])),
+//     catchAsync(NodeMiddleware.getPostByQuery),
+//     catchAsync(NodeMiddleware.requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
+//     catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
+//     catchAsync(NodeMiddleware.getTargetSharenodeByQuery),
+//     catchAsync(NodeMiddleware.interact),
+//     async function(req:any, res:any, next: NextFunction){
+//     //     res.header('Access-Control-Allow-Credentials', true);
+//     //     res.cookie('target_sharenode_uuid', res.locals.target_sharenode.uuid, { 
+//     //     httpOnly: true,
+//     //     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+//     //     maxAge: 3600000 // 1 hour in milliseconds
+//     //   });
+//         res.status(200).json(res.result);
+//     }
+// )
+exports.router.get('/interact', (0, customErrors_1.catchAsync)(AuthMiddleware_1.AuthMiddleware.requireAuthSession), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['post_uuid', 'post_query'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getPostByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.requireQueryParameter(['source_sharenode_username', 'source_sharenode_uuid'])), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.getSourceSharenodeByQuery), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.initialize_target_sharenode), (0, customErrors_1.catchAsync)(NodeMiddleware_1.NodeMiddleware.interact), async function (req, res, next) {
     //     res.header('Access-Control-Allow-Credentials', true);
     //     res.cookie('target_sharenode_uuid', res.locals.target_sharenode.uuid, { 
     //     httpOnly: true,

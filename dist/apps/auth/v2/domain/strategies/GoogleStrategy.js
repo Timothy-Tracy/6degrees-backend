@@ -38,7 +38,7 @@ exports.default = passport_1.default.use(new passport_google_oauth20_1.Strategy(
             user = await models_1.models.USER.createOne({
                 uuid: uuidv7(),
                 email: profile.emails[0].value,
-                username: profile.displayName,
+                username: profile.displayName.toLowerCase().replace(' ', '').concat(`${parseInt(((Math.random() * 10) + 1).toString())}${parseInt(((Math.random() * 10) + 1).toString())}${parseInt(((Math.random() * 10) + 1).toString())}${parseInt(((Math.random() * 10) + 1).toString())}`),
             });
             await user.createSharenode();
         }

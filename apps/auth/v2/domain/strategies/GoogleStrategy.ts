@@ -36,7 +36,7 @@ export default passport.use(new GoogleStrategy({
             user = await models.USER.createOne({
                 uuid: uuidv7(),
                 email: profile.emails[0].value,
-                username: profile.displayName,
+                username: profile.displayName.toLowerCase().replace(' ', '').concat(`${parseInt(((Math.random()*10)+1).toString())}${parseInt(((Math.random()*10)+1).toString())}${parseInt(((Math.random()*10)+1).toString())}${parseInt(((Math.random()*10)+1).toString())}`),
              
             })
 
