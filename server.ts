@@ -6,7 +6,6 @@ import logger from 'morgan';
 import pinoHttp from 'pino-http';
 import cors from 'cors';
 import neogma from './apps/db/neo4j/neogma/neogma';
-import test from './apps/db/neo4j/neogma/test';
 
 // My Routers
 // import indexRouter from './routes/index';
@@ -22,7 +21,7 @@ import { globalErrorHandler } from './lib/error/errorHandler';
 
 import passport from 'passport';
 import session from 'express-session';
-import redisService from './apps/db/redis/RedisService';
+import redis from './apps/db/redis/RedisService';
 
 
 import authRouterv2 from './apps/auth/v2/entry-points/api/AuthController';
@@ -39,7 +38,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(session({
-  store: redisService.store,
+  store: redis.store,
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
   saveUninitialized: false,

@@ -57,9 +57,9 @@ class RedisService {
     
 }
 
-const redisService = new RedisService()
+const redis = new RedisService()
 
-export default redisService
+export default redis
 
 
 
