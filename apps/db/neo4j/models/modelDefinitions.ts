@@ -11,7 +11,9 @@ export type USERProperties = {
     updatedAt?: string
 };
 export interface USERRelatedNodes {
-    SHARENODE: ModelRelatedNodesI<any, any>
+    SHARENODE: ModelRelatedNodesI<any, any>,
+    POST: ModelRelatedNodesI<any, any>
+
 }
 interface USERMethods {
     shareNode: (this: USERInstance) => Promise<SHARENODEInstance>,
@@ -128,11 +130,13 @@ type POSTProperties = {
     title: string,
     body: string,
     uuid: string,
-    createdAt: string,
-    updatedAt: string
+    createdAt?: string,
+    updatedAt?: string
 };
 interface POSTRelatedNodes {
     SHARENODE: ModelRelatedNodesI<typeof SHARENODE,SHARENODEInstance>
+    USER: ModelRelatedNodesI<typeof USER,SHARENODEInstance>
+
 }
 interface POSTMethods {}
 interface POSTStatics {
@@ -163,11 +167,11 @@ export const POST = ModelFactory<POSTProperties,POSTRelatedNodes,POSTStatics, PO
             required: true
         },
         createdAt:{
-            type:'string',
+            type:'any',
             required: false
         },
         updatedAt:{
-            type:'string',
+            type:'any',
             required: false
         }
     },
@@ -202,6 +206,11 @@ export const USER_SHARENODE_REL = ({
 USER.addRelationships({
     SHARENODE: {
         model: SHARENODE,
+        direction: 'in',
+        name: 'PARENT_USER'
+    },
+    POST: {
+        model: USER,
         direction: 'in',
         name: 'PARENT_USER'
     }
@@ -316,6 +325,11 @@ POST.addRelationships({
             }
             
         }
+    },
+    USER: {
+        model: USER,
+        direction: 'out',
+        name: 'PARENT_USER'
     }
 })
 

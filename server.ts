@@ -26,6 +26,7 @@ import redis from './apps/db/redis/RedisService';
 
 import authRouterv2 from './apps/auth/v2/entry-points/api/AuthController';
 import nodesV2Router from './apps/nodes/v2/entry-points/api/NodeController';
+import postsV2Router from './apps/posts/v2/entry-points/api/PostController';
 
 const app = express();
 
@@ -73,6 +74,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(authRouterv2.apiRoot, authRouterv2.router);
 app.use(nodesV2Router.apiRoot, nodesV2Router.router);
+app.use(postsV2Router.apiRoot, postsV2Router.router);
+
 
 // catch 404 and forward to error handler
 app.use((req: Request, res: Response, next: NextFunction) => {
