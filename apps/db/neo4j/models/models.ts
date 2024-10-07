@@ -2,7 +2,7 @@
 import { NeogmaModel, QueryBuilder, QueryRunner } from 'neogma';
 import { USER, SHARENODE, POST, ModelsInterface, POSTInstance, SHARENODEInstance, USERInstance } from './modelDefinitions';
 import neogma from '../neogma/neogma';
-import { AppError } from '../../../../lib/error/customErrors';
+import { AppError, PostError } from '../../../../lib/error/customErrors';
 import applogger from '../../../../lib/logger/applogger';
 const { v7: uuidv7 } = require('uuid');
 
@@ -21,6 +21,13 @@ export const models:ModelsInterface = {
       if(!result[0].target){throw new AppError('ShareNodeError: Cannot find user', 500)}   
     return result[0].target;
   }
+  models.POST.prototype.user = async function(this:POSTInstance){
+    const log = logger.child({'function': 'models.POST.prototype.user'});
+    log.trace('');
+    const result = await this.findRelationships({alias:'USER'}) 
+    if(!result[0].target){throw new PostError('Cannot find user', 500)}   
+  return result[0].target;
+}
   models.SHARENODE.prototype.isRelatedToPost = async function(this:SHARENODEInstance, post:POSTInstance){
     const log = logger.child({'function': 'models.SHARENODE.prototype.isRelatedToPost'});
       log.trace('');

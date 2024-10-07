@@ -37,32 +37,17 @@ export class PostMiddleware{
         next()
     }
 
-    static async validatePostInput(req: any, res:any, next:NextFunction){
-        const post = PostSchema.safeParse(req.body.data)
-        if (!post.success) {
-            logger.error('Invalid post input', { errors: post.error.errors });
-            return next(new PostError('Invalid post input', 400));
-        }
-        logger.info(post)
-        const { title, body } = post.data;
-
-        const newTitle = encode(post.data.title, { mode: 'specialChars' });
-        const newBody = encode(post.data.body, { mode: 'specialChars' });
-        const sanitizedTitle = DOMPurify.sanitize(newTitle, { ALLOWED_TAGS: [] });
-        const sanitizedBody = DOMPurify.sanitize(newBody, {
-            ALLOWED_TAGS: []
-        });
-
-        res.locals.postData = { title: sanitizedTitle, body: sanitizedBody };
-        next()
-    }
-
+    
     static async createPost(req: any, res:any, next:NextFunction){
-        let username = req.query.username
-        const user = await models.USER.findOne({where:{username:username}})
-        if (!user){
-            throw new PostError("error finding user from username", 500)
+        if(!res.locals.user){
+            let username = req.query.username
+            const user = await models.USER.findOne({where:{username:username}})
+            if (!user){
+                throw new UserError("error finding user from username", 500)
+            }
+            res.locals.user = user;
         }
+
         logger.warn(res.locals)
         let post  = await models.POST.createOne({
             
@@ -93,24 +78,33 @@ export class PostMiddleware{
         next()
     }
     static async updatePost(req: any, res:any, next:NextFunction){
-        let username = req.query.username
-        const user = await models.USER.findOne({where:{username:username}})
-        if (!user){
-            throw new UserError("error finding user from username", 404)
+        if(!res.locals.user){
+            let username = req.query.username
+            const user = await models.USER.findOne({where:{username:username}})
+            if (!user){
+                throw new UserError("error finding user from username", 500)
+            }
+            res.locals.user = user;
         }
-        logger.warn(res.locals)
+        
         let post = await PostService.safeFindPostByUUID(req.query.post_uuid)
+        await PostService.verifyParentUser(post, res.locals.user)
         await PostService.updatePost(post, res.locals.postData)
         next()
     }
     static async deletePost(req: any, res:any, next:NextFunction){
-        let username = req.query.username
-        const user = await models.USER.findOne({where:{username:username}})
-        if (!user){
-            throw new UserError("error finding user from username", 500)
+        if(!res.locals.user){
+            let username = req.query.username
+            const user = await models.USER.findOne({where:{username:username}})
+            if (!user){
+                throw new UserError("error finding user from username", 500)
+            }
+            res.locals.user = user;
         }
+        
         logger.warn(res.locals)
         let post = await PostService.safeFindPostByUUID(req.query.post_uuid)
+        await PostService.verifyParentUser(post, res.locals.user)
         await PostService.deletePost(post)
         res.result = {data:post.dataValues,message: `Post uuid=${post.uuid} successfully deleted`}
         next()

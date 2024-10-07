@@ -33,11 +33,11 @@ export const USER = ModelFactory<USERProperties, USERRelatedNodes, USERStatics, 
         email: { type: 'string', minLength: 3, required: true },
         uuid: { type: 'string', required: true },
         createdAt:{
-            type:'string',
+            type:'any',
             required: false
         },
         updatedAt:{
-            type:'string',
+            type:'any',
             required: false
         }
     },
@@ -99,11 +99,11 @@ export const SHARENODE = ModelFactory<SHARENODEProperties, SHARENODERelatedNodes
     schema: {
         uuid: { type: 'string', required: false },
         createdAt:{
-            type:'string',
+            type:'any',
             required: false
         },
         updatedAt:{
-            type:'string',
+            type:'any',
             required: false
         },
         anon:{
@@ -135,12 +135,16 @@ type POSTProperties = {
 };
 interface POSTRelatedNodes {
     SHARENODE: ModelRelatedNodesI<typeof SHARENODE,SHARENODEInstance>
-    USER: ModelRelatedNodesI<typeof USER,SHARENODEInstance>
+    USER: ModelRelatedNodesI<typeof USER,USERInstance>
 
 }
-interface POSTMethods {}
+interface POSTMethods {
+    user:(this: POSTInstance)=>Promise<USERInstance>
+
+}
 interface POSTStatics {
-    findByQuery:(query: string)=>Promise<POSTInstance|null>
+    findByQuery:(query: string)=>Promise<POSTInstance|null>,
+
 }
 export type POSTInstance = NeogmaInstance<POSTProperties, POSTRelatedNodes, POSTMethods >;
 

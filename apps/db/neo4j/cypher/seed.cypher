@@ -18,6 +18,7 @@ CREATE (sn6:SHARENODE {anon : false} )
 CREATE (sn6)-[:PARENT_USER ]->(u6)
 
 CREATE (p:POST { title:"source", body:"This is the source post", query:"the-source-post"})
+CREATE (p)-[:PARENT_USER ]->(u)
 
 WITH sn, sn2, sn3, sn4, sn5, sn6, u, u2, u3, u4, u5, u6
 MATCH(p:POST)

@@ -1,9 +1,10 @@
 import { PostError } from "../../../../lib/error/customErrors"
 import { models } from "../../../db/neo4j/models/models"
 import applogger from '../../../../lib/logger/applogger';
-import { POSTInstance } from "../../../db/neo4j/models/modelDefinitions";
+import { POSTInstance, USERInstance } from "../../../db/neo4j/models/modelDefinitions";
 import { QueryBuilder, QueryRunner } from "neogma";
 import neogma from "../../../db/neo4j/neogma/neogma";
+import { UpdatePost } from "../../../validation/PostSchema";
 const logger = applogger.child({'module':'PostService'});
 
 
@@ -19,7 +20,7 @@ export class PostService{
         return post
     }
 
-    static async updatePost(post: POSTInstance, updatedData: object){
+    static async updatePost(post: POSTInstance, updatedData: UpdatePost){
         const log = logger.child({'function': 'updatePost'})
         log.trace(post.uuid)
         
@@ -37,5 +38,12 @@ export class PostService{
         .match({identifier: 'post', where: {uuid: post.uuid}})
         .raw(`OPTIONAL MATCH ()-[nexts:NEXT* {post_uuid: "${post.uuid}"}]->() WITH  nexts, post FOREACH (rel IN nexts | DELETE rel)DETACH DELETE post`)
         .run(queryRunner)
+    }
+
+    static async verifyParentUser(post:POSTInstance, user:USERInstance){
+        const postOwner = await post.user()
+        if(postOwner.uuid != user.uuid){
+            throw new PostError(`USER uuid=${user.uuid} is not the owner of POST uuid=${post.uuid}`, 401)
+        }
     }
 }
