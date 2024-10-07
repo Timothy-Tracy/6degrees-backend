@@ -28,6 +28,30 @@ class AppError extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 }
+class PostError extends AppError{
+  constructor(message:string, statusCode: number, error?: any) {
+    super(message, statusCode, error)
+
+    this.name = 'PostError'
+  }
+  
+}
+class UserError extends AppError{
+  constructor(message:string, statusCode: number, error?: any) {
+    super(message, statusCode, error)
+
+    this.name = 'UserError'
+  }
+  
+}
+class SharenodeError extends AppError{
+  constructor(message:string, statusCode: number, error?: any) {
+    super(message, statusCode, error)
+
+    this.name = 'SharenodeError'
+  }
+  
+}
 
 // You can create more specific error classes if needed
 class AuthorizationError extends AppError {
@@ -76,4 +100,4 @@ const catchAsync = (fn: (req: Request, res: Response, next: NextFunction) => voi
       };
     }
 
-export { AppError, ValidationError, DatabaseError, Neo4jError, AuthorizationError, catchAsync};
+export { AppError, PostError, ValidationError, DatabaseError, Neo4jError, AuthorizationError, UserError, SharenodeError catchAsync};

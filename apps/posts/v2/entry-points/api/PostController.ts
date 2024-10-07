@@ -3,50 +3,37 @@ import {AppError, catchAsync} from '../../../../../lib/error/customErrors'
 import applogger from '../../../../../lib/logger/applogger'
 import {  PostMiddleware } from '../../domain/PostMiddleware';
 import { AuthMiddleware } from '../../../../auth/v2/domain/AuthMiddleware';
-
+import { NodeMiddleware } from '../../../../nodes/v2/domain/NodeMiddleware';
+import { NewPostSchema, UpdatePostSchema } from '../../../../validation/PostSchema';
 const logger = applogger.child({'module':'NodeController'});
-
-
-
 export const router = express.Router();
 export const apiRoot = '/api/v2/posts'
 
 //Create
 router.post('/', 
-    catchAsync(PostMiddleware.validatePostInput),
+    catchAsync(PostMiddleware.validateInput(NewPostSchema)),
     catchAsync(PostMiddleware.createPost),
-
-    //catchAsync(AuthMiddleware.requireAuthSession),
-    // catchAsync(PostValidation.validateNewPostInput), 
-    // catchAsync(PostService.create), 
     function (req:any, res:any) {
     res.status(200).json(res.result)
 });
 
-
-//Create
+//Update
 router.put('/', 
-    catchAsync(PostMiddleware.validatePostInput),
-
+    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid'])),
+    catchAsync(NodeMiddleware.requireQueryParameter(['username'])),
+    catchAsync(PostMiddleware.validateInput(UpdatePostSchema)),
     catchAsync(PostMiddleware.updatePost),
-
-    //catchAsync(AuthMiddleware.requireAuthSession),
-    // catchAsync(PostValidation.validateNewPostInput), 
-    // catchAsync(PostService.create), 
     function (req:any, res:any) {
     res.status(200).json(res.result)
 });
-//Create
+
+//Delete
 router.delete('/', 
+    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid'])),
+    catchAsync(NodeMiddleware.requireQueryParameter(['username'])),
     catchAsync(PostMiddleware.deletePost),
-
-    //catchAsync(AuthMiddleware.requireAuthSession),
-    // catchAsync(PostValidation.validateNewPostInput), 
-    // catchAsync(PostService.create), 
     function (req:any, res:any) {
     res.status(200).json(res.result)
 });
 
-
-//PostService.findOneByQueryStandalone('silly-gray-microphone')
 export default {router,apiRoot}

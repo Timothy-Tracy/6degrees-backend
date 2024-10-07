@@ -1,8 +1,8 @@
 import { NextFunction } from "express";
 import { models } from "../../../db/neo4j/models/models";
-import { AppError } from "../../../../lib/error/customErrors";
+import { PostError, UserError } from "../../../../lib/error/customErrors";
 import applogger from '../../../../lib/logger/applogger';
-import z from "zod";
+import z, { ZodSchema } from "zod";
 import { PostSchema } from "../../../validation/PostSchema";
 import { encode, decode } from 'html-entities';
 import DOMPurify from "isomorphic-dompurify";
@@ -10,17 +10,38 @@ import { generateSlug } from "random-word-slugs";
 import { NodeService } from "../../../nodes/v2/domain/NodeService";
 import { QueryBuilder, QueryRunner } from "neogma";
 import neogma from "../../../db/neo4j/neogma/neogma";
+import { PostService } from "./PostService";
 const { v7: uuidv7 } = require('uuid');
 
 const logger = applogger.child({'module':'PostMiddleware'});
 
 
 export class PostMiddleware{
+    static validateInput = (schema: ZodSchema) => (req: any, res: any, next:NextFunction)=>{
+        const log = logger.child({'function': 'validateInput'})
+        log.trace('')
+        const post = schema.safeParse(req.body.data)
+        if (!post.success) {
+            logger.error('Invalid post input', { errors: post.error.errors });
+            return next(new PostError('Invalid post input', 403));
+        }
+
+        Object.entries(post.data).forEach(([key, index]) => {
+            post.data[key] = encode(post.data[key], { mode: 'specialChars' });
+            post.data[key] = DOMPurify.sanitize(post.data[key], { ALLOWED_TAGS: [] });
+
+        })
+        
+        const {data} = post
+        res.locals.postData = data;
+        next()
+    }
+
     static async validatePostInput(req: any, res:any, next:NextFunction){
         const post = PostSchema.safeParse(req.body.data)
         if (!post.success) {
             logger.error('Invalid post input', { errors: post.error.errors });
-            return next(new AppError('Invalid post input', 400));
+            return next(new PostError('Invalid post input', 400));
         }
         logger.info(post)
         const { title, body } = post.data;
@@ -40,7 +61,7 @@ export class PostMiddleware{
         let username = req.query.username
         const user = await models.USER.findOne({where:{username:username}})
         if (!user){
-            throw new AppError("error finding user from username", 500)
+            throw new PostError("error finding user from username", 500)
         }
         logger.warn(res.locals)
         let post  = await models.POST.createOne({
@@ -52,7 +73,7 @@ export class PostMiddleware{
         })
         logger.warn(post)
         if (!post){
-            throw new AppError("error creating post", 500)
+            throw new PostError("error creating post", 500)
         }
 
         await post.relateTo({alias:"USER", where:{
@@ -62,7 +83,7 @@ export class PostMiddleware{
 
         let userSN = await user?.shareNode()
         if (!userSN){
-            throw new AppError("error finding user sharenode", 500)
+            throw new PostError("error finding user sharenode", 500)
         }
         await NodeService.createEdge(post, userSN)
         
@@ -75,54 +96,23 @@ export class PostMiddleware{
         let username = req.query.username
         const user = await models.USER.findOne({where:{username:username}})
         if (!user){
-            throw new AppError("error finding user from username", 500)
+            throw new UserError("error finding user from username", 404)
         }
         logger.warn(res.locals)
-        let post  = await models.POST.findOne({where:{uuid:req.query.post_uuid} })
-        logger.warn(post)
-        if (!post){
-            throw new AppError("error finding post", 500)
-        }
-
-        Object.entries(res.locals.postData).forEach(([key, index]) => {
-            post[key] = res.locals.postData[key]
-        })
-
-        await post.save()
-        
-        
+        let post = await PostService.safeFindPostByUUID(req.query.post_uuid)
+        await PostService.updatePost(post, res.locals.postData)
         next()
     }
     static async deletePost(req: any, res:any, next:NextFunction){
         let username = req.query.username
         const user = await models.USER.findOne({where:{username:username}})
         if (!user){
-            throw new AppError("error finding user from username", 500)
+            throw new UserError("error finding user from username", 500)
         }
         logger.warn(res.locals)
-        let post  = await models.POST.findOne({where:{
-            uuid:req.query.post_uuid
-        }
-            
-               
-        })
-        logger.warn(post)
-        if (!post){
-            throw new AppError("error finding post", 500)
-        }
-        const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})
-        const result = await new QueryBuilder()
-        .match({identifier: 'post', where: {uuid: post.uuid}})
-        .raw(`OPTIONAL MATCH ()-[nexts:NEXT* {post_uuid: "${post.uuid}"}]->() WITH  nexts, post FOREACH (rel IN nexts | DELETE rel)DETACH DELETE post`)
-        .run(queryRunner)
-
-        res.result = {
-            data:
-                post.dataValues
-            ,
-            message: `Post uuid=${post.uuid} successfully deleted`
-        }
-
+        let post = await PostService.safeFindPostByUUID(req.query.post_uuid)
+        await PostService.deletePost(post)
+        res.result = {data:post.dataValues,message: `Post uuid=${post.uuid} successfully deleted`}
         next()
     }
 }
