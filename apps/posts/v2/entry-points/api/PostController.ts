@@ -9,6 +9,14 @@ const logger = applogger.child({'module':'NodeController'});
 export const router = express.Router();
 export const apiRoot = '/api/v2/posts'
 
+
+//Create 
+router.get('/', 
+    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid', 'post_query'])),
+    catchAsync(PostMiddleware.fetchPost),
+    function (req:any, res:any) {
+    res.status(200).json(res.result)
+});
 //Create 
 router.post('/', 
     catchAsync(AuthMiddleware.requireAuthSession),

@@ -11,6 +11,7 @@ import { NodeService } from "../../../nodes/v2/domain/NodeService";
 import { QueryBuilder, QueryRunner } from "neogma";
 import neogma from "../../../db/neo4j/neogma/neogma";
 import { PostService } from "./PostService";
+import { filterData } from "../../../../lib/util/filterData";
 const { v7: uuidv7 } = require('uuid');
 
 const logger = applogger.child({'module':'PostMiddleware'});
@@ -37,7 +38,6 @@ export class PostMiddleware{
         next()
     }
 
-    
     static async createPost(req: any, res:any, next:NextFunction){
         if(!res.locals.user){
             let username = req.query.username
@@ -107,6 +107,22 @@ export class PostMiddleware{
         await PostService.verifyParentUser(post, res.locals.user)
         await PostService.deletePost(post)
         res.result = {data:post.dataValues,message: `Post uuid=${post.uuid} successfully deleted`}
+        next()
+    }
+    static async fetchPost(req: any, res:any, next:NextFunction){
+        let post;
+        if(req.query.post_uuid){
+            z.string().uuid().safeParse(req.query.post_uuid)
+
+            post = await PostService.safeFindPostByUUID(req.query.post_uuid)
+        } else if (req.query.post_query){
+            post = await PostService.safeFindPostByQuery(req.query.post_query)
+        } else {
+            throw new PostError('Query parameters insufficient', 403)
+        }
+       
+        let data = PostService.processDataValues(post)
+        res.result = {data:data,message: `Post uuid=${post.uuid} found`}
         next()
     }
 }
