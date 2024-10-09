@@ -1,6 +1,7 @@
 import { ModelFactory, ModelRelatedNodesI, NeogmaInstance, NeogmaModel, Where } from "neogma";
 import neogma from './../neogma/neogma';
 import { AppError } from "../../../../lib/error/customErrors";
+import { POSTModel, POSTProperties } from "./types/POST";
 
 // USER model
 export type USERProperties = {
@@ -125,14 +126,7 @@ export const SHARENODE = ModelFactory<SHARENODEProperties, SHARENODERelatedNodes
 
 
 //POST Model
-type POSTProperties = {
-    query: string,
-    title: string,
-    body: string,
-    uuid: string,
-    createdAt?: string,
-    updatedAt?: string
-};
+
 interface POSTRelatedNodes {
     SHARENODE: ModelRelatedNodesI<typeof SHARENODE,SHARENODEInstance>
     USER: ModelRelatedNodesI<typeof USER,USERInstance>
