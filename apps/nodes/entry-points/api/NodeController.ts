@@ -3,20 +3,26 @@ import {AppError, catchAsync} from '../../../../lib/error/customErrors'
 import applogger from '../../../../lib/logger/applogger'
 import { NodeMiddleware } from '../../domain/NodeMiddleware';
 import { AuthMiddleware } from '../../../auth/domain/AuthMiddleware';
+import { requireQueryParameter } from '../../../../lib/util/middleware/requireQueryParameters';
 
 const logger = applogger.child({'module':'NodeController'});
-
-
 
 export const router = express.Router();
 export const apiRoot = '/api/v2/nodes'
 
-
+router.get('/graph',
+    catchAsync(requireQueryParameter(['post_uuid','post_query'])),
+    catchAsync(NodeMiddleware.getPostByQuery),
+    catchAsync(NodeMiddleware.graph),
+    async function(req:any, res:any, next: NextFunction){
+        res.status(200).json(res.result);
+    }
+)
 //Get backwards path from a anon SHARENODE to its source POST
 router.get('/backwardpath',
-    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid','post_query'])),
+    catchAsync(requireQueryParameter(['post_uuid','post_query'])),
     catchAsync(NodeMiddleware.getPostByQuery),
-    catchAsync(NodeMiddleware.requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
+    catchAsync(requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
     catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
     catchAsync(NodeMiddleware.backwardPath),
     async function(req:any, res:any, next: NextFunction){
@@ -26,9 +32,9 @@ router.get('/backwardpath',
 
 //Get forwards path from a anon SHARENODE to other SHARENODES
 router.get('/forwardpath',
-    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid','post_query'])),
+    catchAsync(requireQueryParameter(['post_uuid','post_query'])),
     catchAsync(NodeMiddleware.getPostByQuery),
-    catchAsync(NodeMiddleware.requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
+    catchAsync(requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
     catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
     catchAsync(NodeMiddleware.forwardPath),
     async function(req:any, res:any, next: NextFunction){
@@ -56,9 +62,9 @@ router.get('/forwardpath',
 // )
 router.get('/interact',
     catchAsync(AuthMiddleware.requireAuthSession),
-    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid','post_query'])),
+    catchAsync(requireQueryParameter(['post_uuid','post_query'])),
     catchAsync(NodeMiddleware.getPostByQuery),
-    catchAsync(NodeMiddleware.requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
+    catchAsync(requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
     catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
     catchAsync(NodeMiddleware.initialize_target_sharenode),
     catchAsync(NodeMiddleware.interact),

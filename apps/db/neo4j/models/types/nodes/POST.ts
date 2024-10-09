@@ -25,6 +25,7 @@ export interface POSTRelatedNodes {
 }
 export interface POSTMethods {
     user:(this: POSTInstance)=>Promise<USERInstance>
+    sourceSharenode:((this: POSTInstance)=>Promise<SHARENODEInstance>)
 
 }
 export interface POSTStatics {

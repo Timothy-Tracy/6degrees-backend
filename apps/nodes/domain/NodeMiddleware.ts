@@ -4,6 +4,8 @@ import { AppError } from "../../../lib/error/customErrors";
 import { NodeService } from "./NodeService";
 import { integer } from "neo4j-driver";
 import applogger from '../../../lib/logger/applogger';
+import { POSTInstance } from "../../db/neo4j/models/types/nodes/POST";
+import GraphProcessor from "./GraphProcessor";
 const logger = applogger.child({'module':'NodeMiddleware'});
 
 export class NodeMiddleware{
@@ -14,19 +16,7 @@ export class NodeMiddleware{
         }
         return anyVariable
     }
-    static requireQueryParameter = (arr: Array<string>) => (req: any, res: any, next:NextFunction)=>{
-        const message = `Error. This request requires the query parameters ${arr.join(' or ')}`
-        let bool = false
-        arr.forEach((key)=> {
-            if (req.query[key]){
-                bool = true
-            }
-        })
-        if(!bool){
-            throw new AppError(message, 403)
-        }
-        next()
-    }
+
     static async  getPostByQuery(req: any, res: any, next:NextFunction){
         const log = logger.child({'function': 'getPostByQuery'});
         log.trace('')
@@ -159,6 +149,15 @@ export class NodeMiddleware{
                 message: message
             }
         }
+        next()
+    }
+
+    static async graph(req: any, res: any, next:NextFunction){
+        const post:POSTInstance = res.locals.post
+        const source = await post.sourceSharenode()
+        const gp = new GraphProcessor(source)
+        const x = await gp.getForwardPaths(post)
+        res.result=x
         next()
     }
 

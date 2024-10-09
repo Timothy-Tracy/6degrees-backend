@@ -23,7 +23,14 @@ class RedisService {
         }
         this.initClient()
         this.connectClient()
-        this.initStore()
+        try{
+            this.store = new connectRedis({client:this.client});
+
+        } catch(error){
+            logger.error("RedisService - RedisStore: connection failed")
+            throw error
+        }
+        logger.info("RedisService - RedisStore: connection established")
     }
     initClient =()=>{
         try{

@@ -118,7 +118,7 @@ export class NodeService {
             properties: {
                 method: 'default',
                 post_uuid: post.uuid,
-                degree: new Integer(prevEdge.degree).toBigInt()+new Integer(1).toBigInt(),
+                degree: Number(new Integer(prevEdge.degree).toBigInt()+new Integer(1).toBigInt()),
             }
         }).then(() => console.log('created relationship'))
 

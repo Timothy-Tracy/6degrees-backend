@@ -19,5 +19,6 @@ export function translateDateTime(time:any):DateTime|undefined{
     if (time){
         result = toNeo4jDateTime(time)
     }
+    console.log('hi', result)
     return result
 }

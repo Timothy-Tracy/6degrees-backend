@@ -1,8 +1,8 @@
 import { Neo4jDateTimeSchema, translateDateTime, uuidSchema } from "../../../../types/Globals";
 import { models } from "./models";
 import { SHARENODEInstance, SHARENODEModel } from "./types/nodes/SHARENODE";
-import { USERModel } from "./types/nodes/USER";
-import { degreeSchema, methodSchema } from "./types/relationships/NEXT";
+import { USERInstance, USERModel } from "./types/nodes/USER";
+import { degreeSchema, methodSchema, NEXTProperties } from "./types/relationships/NEXT";
 import applogger from '../../../../lib/logger/applogger';
 import { AppError, PostError } from '../../../../lib/error/customErrors';
 import { QueryBuilder, QueryRunner } from "neogma";
@@ -109,7 +109,7 @@ export class SHARENODEInitializer {
 
     }
     static initMethods(){
-        models.SHARENODE.prototype.user = async function(this:SHARENODEInstance){
+        models.SHARENODE.prototype.user = async function(this:SHARENODEInstance): Promise<USERInstance>{
             const log = logger.child({'function': 'models.SHARENODE.prototype.user'});
             log.trace('');
             const result = await this.findRelationships({alias:'USER'}) 
@@ -117,7 +117,7 @@ export class SHARENODEInitializer {
           return result[0].target;
         }
 
-        models.SHARENODE.prototype.isRelatedToPost = async function(this:SHARENODEInstance, post:POSTInstance){
+        models.SHARENODE.prototype.isRelatedToPost = async function(this:SHARENODEInstance, post:POSTInstance):Promise<boolean>{
             const log = logger.child({'function': 'models.SHARENODE.prototype.isRelatedToPost'});
               log.trace('');
             const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})
@@ -161,7 +161,7 @@ export class SHARENODEInitializer {
           return result.records[0].get('path');
         }
         
-        models.SHARENODE.prototype.prev = async function(this:SHARENODEInstance, post:POSTInstance){
+        models.SHARENODE.prototype.prev = async function(this:SHARENODEInstance, post:POSTInstance): Promise<NEXTProperties>{
           const log = logger.child({'function': 'models.SHARENODE.prototype.prev'});
           log.trace('');
           const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})

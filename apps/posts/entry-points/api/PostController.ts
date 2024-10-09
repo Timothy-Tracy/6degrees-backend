@@ -3,8 +3,8 @@ import {AppError, catchAsync} from '../../../../lib/error/customErrors'
 import applogger from '../../../../lib/logger/applogger'
 import {  PostMiddleware } from '../../domain/PostMiddleware';
 import { AuthMiddleware } from '../../../auth/domain/AuthMiddleware';
-import { NodeMiddleware } from '../../../nodes/domain/NodeMiddleware';
 import { NewPostSchema, UpdatePostSchema } from '../../../validation/PostSchema';
+import { requireQueryParameter } from '../../../../lib/util/middleware/requireQueryParameters';
 const logger = applogger.child({'module':'NodeController'});
 export const router = express.Router();
 export const apiRoot = '/api/v2/posts'
@@ -12,7 +12,7 @@ export const apiRoot = '/api/v2/posts'
 
 //Create 
 router.get('/', 
-    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid', 'post_query'])),
+    catchAsync(requireQueryParameter(['post_uuid', 'post_query'])),
     catchAsync(PostMiddleware.fetchPost),
     function (req:any, res:any) {
     res.status(200).json(res.result)
@@ -29,7 +29,7 @@ router.post('/',
 //Update 
 router.put('/', 
     catchAsync(AuthMiddleware.requireAuthSession),
-    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid'])),
+    catchAsync(requireQueryParameter(['post_uuid'])),
     catchAsync(PostMiddleware.validateInput(UpdatePostSchema)),
     catchAsync(PostMiddleware.updatePost),
     function (req:any, res:any) {
@@ -39,7 +39,7 @@ router.put('/',
 //Delete
 router.delete('/', 
     catchAsync(AuthMiddleware.requireAuthSession),
-    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid'])),
+    catchAsync(requireQueryParameter(['post_uuid'])),
     catchAsync(PostMiddleware.deletePost),
     function (req:any, res:any) {
     res.status(200).json(res.result)
@@ -47,7 +47,7 @@ router.delete('/',
 
 //Create noauth
 router.post('/noauth', 
-    catchAsync(NodeMiddleware.requireQueryParameter(['username'])),
+    catchAsync(requireQueryParameter(['username'])),
     catchAsync(PostMiddleware.validateInput(NewPostSchema)),
     catchAsync(PostMiddleware.createPost),
     function (req:any, res:any) {
@@ -56,8 +56,8 @@ router.post('/noauth',
 
 //Update noauth
 router.put('/noauth', 
-    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid'])),
-    catchAsync(NodeMiddleware.requireQueryParameter(['username'])),
+    catchAsync(requireQueryParameter(['post_uuid'])),
+    catchAsync(requireQueryParameter(['username'])),
     catchAsync(PostMiddleware.validateInput(UpdatePostSchema)),
     catchAsync(PostMiddleware.updatePost),
     function (req:any, res:any) {
@@ -66,8 +66,8 @@ router.put('/noauth',
 
 //Delete noauth
 router.delete('/noauth', 
-    catchAsync(NodeMiddleware.requireQueryParameter(['post_uuid'])),
-    catchAsync(NodeMiddleware.requireQueryParameter(['username'])),
+    catchAsync(requireQueryParameter(['post_uuid'])),
+    catchAsync(requireQueryParameter(['username'])),
     catchAsync(PostMiddleware.deletePost),
     function (req:any, res:any) {
     res.status(200).json(res.result)
