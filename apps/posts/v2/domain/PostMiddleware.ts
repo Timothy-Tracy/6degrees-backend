@@ -40,14 +40,16 @@ export class PostMiddleware{
 
     static async createPost(req: any, res:any, next:NextFunction){
         if(!res.locals.user){
+            logger.warn('no user yet')
+
             let username = req.query.username
-            const user = await models.USER.findOne({where:{username:username}})
-            if (!user){
+            res.locals.user = await models.USER.findOne({where:{username:username}})
+            if (!res.locals.user){
                 throw new UserError("error finding user from username", 500)
             }
-            res.locals.user = user;
+          
         }
-
+        const user = res.locals.user
         logger.warn(res.locals)
         let post  = await models.POST.createOne({
             
@@ -79,6 +81,7 @@ export class PostMiddleware{
     }
     static async updatePost(req: any, res:any, next:NextFunction){
         if(!res.locals.user){
+            logger.warn('no user yet')
             let username = req.query.username
             const user = await models.USER.findOne({where:{username:username}})
             if (!user){
@@ -122,6 +125,9 @@ export class PostMiddleware{
         }
        
         let data = PostService.processDataValues(post)
+        let user = await post.user()
+        data = {...data, username:user.username}
+        logger.info(data)
         res.result = {data:data,message: `Post uuid=${post.uuid} found`}
         next()
     }
