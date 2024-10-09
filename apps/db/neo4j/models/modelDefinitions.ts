@@ -6,7 +6,7 @@ import { AppError } from "../../../../lib/error/customErrors";
 export type USERProperties = {
     email: string,
     username: string,
-    uuid?: string,
+    uuid: string,
     createdAt?: string,
     updatedAt?: string
 };

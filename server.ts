@@ -24,9 +24,9 @@ import session from 'express-session';
 import redis from './apps/db/redis/RedisService';
 
 
-import authRouterv2 from './apps/auth/v2/entry-points/api/AuthController';
-import nodesV2Router from './apps/nodes/v2/entry-points/api/NodeController';
-import postsV2Router from './apps/posts/v2/entry-points/api/PostController';
+import authRouterv2 from './apps/auth/entry-points/api/AuthController';
+import nodesV2Router from './apps/nodes/entry-points/api/NodeController';
+import postsV2Router from './apps/posts/entry-points/api/PostController';
 
 const app = express();
 

@@ -100,4 +100,4 @@ const catchAsync = (fn: (req: Request, res: Response, next: NextFunction) => voi
       };
     }
 
-export { AppError, PostError, ValidationError, DatabaseError, Neo4jError, AuthorizationError, UserError, SharenodeError catchAsync};
+export { AppError, PostError, ValidationError, DatabaseError, Neo4jError, AuthorizationError, UserError, SharenodeError, catchAsync};

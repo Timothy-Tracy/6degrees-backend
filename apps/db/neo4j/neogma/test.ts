@@ -1,7 +1,7 @@
 //test.ts
 import neogma from "./neogma";
 import { models } from "../models/models";
-import { NodeService } from "../../../nodes/v2/domain/NodeService";
+import { NodeService } from "../../../nodes/domain/NodeService";
 
 const { v7: uuidv7 } = require('uuid');
 
