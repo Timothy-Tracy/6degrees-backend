@@ -3,12 +3,10 @@ import { models } from "../../db/neo4j/models/models";
 import { PostError, UserError } from "../../../lib/error/customErrors";
 import applogger from '../../../lib/logger/applogger';
 import z, { ZodSchema } from "zod";
-import { encode, decode } from 'html-entities';
+import { encode } from 'html-entities';
 import DOMPurify from "isomorphic-dompurify";
 import { generateSlug } from "random-word-slugs";
 import { NodeService } from "../../nodes/domain/NodeService";
-import { QueryBuilder, QueryRunner } from "neogma";
-import neogma from "../../db/neo4j/neogma/neogma";
 import { PostService } from "./PostService";
 import { filterData } from "../../../lib/util/filterData";
 const { v7: uuidv7 } = require('uuid');
@@ -122,8 +120,8 @@ export class PostMiddleware{
         } else {
             throw new PostError('Query parameters insufficient', 403)
         }
-       
-        let data = PostService.processDataValues(post)
+       let data=post
+        //let data = PostService.processDataValues(post)
         let user = await post.user()
         data = {...data, username:user.username}
         logger.info(data)

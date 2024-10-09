@@ -1,10 +1,11 @@
 import { DateTime, integer, Integer } from 'neo4j-driver';
 import {models} from '../../db/neo4j/models/models'
-import { POSTInstance, SHARENODE, SHARENODEInstance, USERInstance } from '../../db/neo4j/models/modelDefinitions';
 import { AppError } from '../../../lib/error/customErrors';
 import { QueryBuilder, QueryRunner, Where } from 'neogma';
 import neogma from '../../db/neo4j/neogma/neogma';
 import applogger from '../../../lib/logger/applogger';
+import { POSTInstance } from '../../db/neo4j/models/types/nodes/POST';
+import { SHARENODEInstance } from '../../db/neo4j/models/types/nodes/SHARENODE';
 const logger = applogger.child({'module':'NodeService'});
 const { v7: uuidv7 } = require('uuid');
 interface PathData {
@@ -63,8 +64,9 @@ export class NodeService {
         return result.records[0].get('next').properties
     }
     static async createEdge(post: POSTInstance, shareNode: SHARENODEInstance, sourceShareNode?: SHARENODEInstance){
+      logger.error(integer.toNumber(Math.trunc(Number(new Integer(0).toBigInt()))))
         if(!sourceShareNode){
-            post.relateTo({
+            const postToNext= await post.relateTo({
                 alias: "SHARENODE",
                 where: {
                     uuid: shareNode.uuid,
@@ -72,12 +74,13 @@ export class NodeService {
                 properties: {
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
-                    degree: Integer.fromNumber(0),
-                    createdAt: new Date().toISOString(),
+                    degree: Number(new Integer(0).toBigInt()),
                     method: 'default'
                 },
                 assertCreatedRelationships: 1,
             })
+            logger.info(postToNext)
+
         } else {
             const prev = await sourceShareNode.prev(post)
             const result = models.SHARENODE.relateTo({
@@ -89,8 +92,8 @@ export class NodeService {
                 properties:{
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
-                    degree:Integer.fromNumber(integer.toNumber(prev.degree)+1),
-                    createdAt: new Date().toISOString(),
+                    degree:Number(new Integer(prev.degree).toBigInt()+new Integer(1).toBigInt()),
+                   
                     method: 'default'
                 },
                 assertCreatedRelationships: 1
@@ -115,7 +118,7 @@ export class NodeService {
             properties: {
                 method: 'default',
                 post_uuid: post.uuid,
-                degree: Integer.fromNumber(integer.toNumber(prevEdge.degree)+1),
+                degree: new Integer(prevEdge.degree).toBigInt()+new Integer(1).toBigInt(),
             }
         }).then(() => console.log('created relationship'))
 

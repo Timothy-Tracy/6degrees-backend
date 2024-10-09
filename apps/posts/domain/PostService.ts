@@ -1,11 +1,12 @@
 import { PostError } from "../../../lib/error/customErrors"
 import { models } from "../../db/neo4j/models/models"
 import applogger from '../../../lib/logger/applogger';
-import { POSTInstance, USERInstance } from "../../db/neo4j/models/modelDefinitions";
 import { QueryBuilder, QueryRunner } from "neogma";
 import neogma from "../../db/neo4j/neogma/neogma";
 import { UpdatePost } from "../../validation/PostSchema";
 import { ProcessNeo4jTimestamp } from "../../../lib/util/ProcessNeo4jTimestamp";
+import { POSTInstance } from "../../db/neo4j/models/types/nodes/POST";
+import { USERInstance } from "../../db/neo4j/models/types/nodes/USER";
 const logger = applogger.child({'module':'PostService'});
 
 
@@ -35,7 +36,10 @@ export class PostService{
         log.trace(post.uuid)
         
         Object.entries(updatedData).forEach(([key, index]) => {
-            post[key] = updatedData[key]
+            if(key in Object.keys){
+                (post as any)[key] = (updatedData as any)[key]
+            }
+            
         })
 
         await post.save()
@@ -58,10 +62,14 @@ export class PostService{
     }
 
     static processDataValues(post:POSTInstance){
-        let data = post.dataValues
-        data.createdAt = ProcessNeo4jTimestamp(data.createdAt)
-        data.updatedAt = ProcessNeo4jTimestamp(data.updatedAt)
-        return data
+        let obj:any = post.dataValues
+        let {createdAt, updatedAt} = obj
+        let x:any = createdAt
+        let y:any = updatedAt
+        x= x ? x?.toString():undefined
+        y= y ? y?.toString():undefined
+       
+        return {...obj, createdAt:x, updatedAt:y}
 
     }
 }
