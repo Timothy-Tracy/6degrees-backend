@@ -42,9 +42,10 @@ class GraphProcessor {
     const queryRunner = new QueryRunner({ driver: neogma.driver, logger: console.log, sessionParams: { database: 'neo4j' } });
     const result = await new QueryBuilder()
       .match({ identifier: 'source', where: { uuid: this.sourceShareNode.uuid } })
-      .raw(`MATCH path = (source)-[:NEXT* {post_uuid: "${post.uuid}"}]->(:SHARENODE)`)
+      .raw(`MATCH path = (source:SHARENODE)-[:NEXT* {post_uuid: "${post.uuid}"}]->(:SHARENODE)`)
       .return('path')
       .run(queryRunner);
+      console.log(result)
 
     return this.transformPathsToData(result.records.map(record => record.get('path')));
   }

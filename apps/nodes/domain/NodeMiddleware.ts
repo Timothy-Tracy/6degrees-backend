@@ -157,7 +157,8 @@ export class NodeMiddleware{
         const source = await post.sourceSharenode()
         const gp = new GraphProcessor(source)
         const x = await gp.getForwardPaths(post)
-        res.result=x
+        const y = gp.getNeighbors('2c5d4c94-3337-4924-a723-b766b41a21cf', post)
+        res.result={data:x}
         next()
     }
 
