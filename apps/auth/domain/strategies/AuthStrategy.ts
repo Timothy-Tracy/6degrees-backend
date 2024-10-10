@@ -10,11 +10,10 @@ import { models } from "../../../db/neo4j/models/models";
 
 passport.serializeUser((user: any, done) => {
     const log = logger.child({'function': 'serializeUser'})
-    log.trace('')
+    log.debug('')
 
     try {
-    let log = logger.child({ module: "AuthStrategy", function: "serializeUser" });
-    log.trace("serializeUser");
+    log.debug("serializeUser");
     console.log("serializeUser", user);
     done(null, user.uuid);
     } catch (error) { 

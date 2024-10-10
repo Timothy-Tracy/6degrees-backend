@@ -7,22 +7,37 @@ import { Router } from 'express';
 import AuthService from '../../domain/AuthService';
 import { catchAsync } from '../../../../lib/error/customErrors';
 import redisService from '../../../db/redis/RedisService';
+import applogger from '../../../../lib/logger/applogger';
 export const router = Router();
 export const apiRoot = '/api/v2/auth'
+import dotenv from 'dotenv';
+dotenv.config();
+
+
+
+router.get('/google', 
+    (req,res,next)=>{
+        req.session.returnTo= {returnTo: req.query.returnTo||undefined};
+        if(req.isAuthenticated()){
+            res.redirect(req.session.returnTo.returnTo || process.env.FRONTEND_URL)
+        }
+        next()
+    }, 
+    passport.authenticate("google", { scope: ["profile", "email"]})
+);
+
+router.get('/google/callback', 
+    passport.authenticate("google"), 
+    (req: Request, res: Response) => {
+        res.redirect(req.authInfo.returnTo.returnTo || process.env.FRONTEND_URL);
+    }
+);
 
 
 router.post('/passport', passport.authenticate("local"), (req: Request, res: Response) => {
     res.status(200).json({ token: req.user });
 }
 );
-router.get('/google', passport.authenticate("google", { scope: ["profile", "email"] }));
-router.get('/google/callback', passport.authenticate("google"), (req: Request, res: Response) => {
-    res.status(200).json({ token: req.user });
-}
-);
-
-
-
 
 router.post('/login', 
    

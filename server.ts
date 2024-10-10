@@ -40,6 +40,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(session({
+  name: 'session_id',
   store: redis.store,
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
