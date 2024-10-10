@@ -18,6 +18,18 @@ router.get('/graph',
         res.status(200).json(res.result);
     }
 )
+router.get('/path-to-target',
+    catchAsync(requireQueryParameter(['post_uuid','post_query'])),
+    catchAsync(requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
+    catchAsync(requireQueryParameter(['target_sharenode_username','target_sharenode_uuid'])),
+    catchAsync(NodeMiddleware.getPostByQuery),
+    catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
+    catchAsync(NodeMiddleware.getTargetSharenodeByQuery),
+    catchAsync(NodeMiddleware.pathToShareNode),
+    async function(req:any, res:any, next: NextFunction){
+        res.status(200).json(res.result);
+    }
+)
 //Get backwards path from a anon SHARENODE to its source POST
 router.get('/backwardpath',
     catchAsync(requireQueryParameter(['post_uuid','post_query'])),

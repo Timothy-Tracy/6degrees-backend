@@ -6,6 +6,8 @@ import { integer } from "neo4j-driver";
 import applogger from '../../../lib/logger/applogger';
 import { POSTInstance } from "../../db/neo4j/models/types/nodes/POST";
 import GraphProcessor from "./GraphProcessor";
+import GraphDataTransformer from "./GraphDataTransformer";
+import { SHARENODEInstance } from "../../db/neo4j/models/types/nodes/SHARENODE";
 const logger = applogger.child({'module':'NodeMiddleware'});
 
 export class NodeMiddleware{
@@ -155,10 +157,22 @@ export class NodeMiddleware{
     static async graph(req: any, res: any, next:NextFunction){
         const post:POSTInstance = res.locals.post
         const source = await post.sourceSharenode()
-        const gp = new GraphProcessor(source)
-        const x = await gp.getForwardPaths(post)
-        const y = gp.getNeighbors('2c5d4c94-3337-4924-a723-b766b41a21cf', post)
-        res.result={data:x}
+        const gp = new GraphProcessor()
+        const gdt = new GraphDataTransformer()
+        const x = await gp.getForwardPaths(source.uuid, post.uuid)
+        const y = gp.get('2c5d4c94-3337-4924-a723-b766b41a21cf', post)
+        res.result={data:gdt.transformPathsToData(x.records.map((record)=> record.get('path')))}
+        next()
+    }
+    static async pathToShareNode(req: any, res: any, next:NextFunction){
+        const post:POSTInstance = res.locals.post
+        const source_sharenode:SHARENODEInstance = res.locals.source_sharenode
+        const target_sharenode:SHARENODEInstance= res.locals.target_sharenode
+
+        const gp = new GraphProcessor()
+        const gdt = new GraphDataTransformer()
+        const x = await gp.getPathToSharenodeInPost(source_sharenode.uuid,target_sharenode.uuid, post.uuid)
+        res.result={data:gdt.transformPathsToData(x.records.map((record)=> record.get('path')))}
         next()
     }
 

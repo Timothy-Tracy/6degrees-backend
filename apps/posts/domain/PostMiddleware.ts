@@ -120,8 +120,8 @@ export class PostMiddleware{
         } else {
             throw new PostError('Query parameters insufficient', 403)
         }
-       let data:any=post
-        //let data = PostService.processDataValues(post)
+    //    let data:any=post
+        let data = PostService.processDataValues(post)
         let user = await post.user()
         data = {...data, username:user.username}
         logger.info(data)
