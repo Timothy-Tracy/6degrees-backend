@@ -82,7 +82,7 @@ export class NodeService {
             logger.info(postToNext)
 
         } else {
-            const prev = await sourceShareNode.prev(post)
+            const prev = await sourceShareNode.prevEdge(post)
             const result = models.SHARENODE.relateTo({
                 alias: "SHARENODE",
                 where: {
@@ -107,7 +107,7 @@ export class NodeService {
         return anonNode
     }
     static async createEdgeUnauthorized(post: POSTInstance, sourceShareNode: SHARENODEInstance){
-        const prevEdge = await sourceShareNode.prev(post)
+        const prevEdge = await sourceShareNode.prevEdge(post)
         const anonNode = await models.SHARENODE.createOne({uuid: uuidv7(),anon:true})
         await models.SHARENODE.relateTo({
             alias: 'SHARENODE',

@@ -59,7 +59,7 @@ router.post('/login',
 router.get('/status', (req: any, res: any) => {
     console.log(req.session);
     console.log(req.user)
-    req.isAuthenticated() ? res.status(200).json({ message: "Authenticated" }) : res.status(401).json({ message: "Not Authenticated" });
+    req.isAuthenticated() ? res.status(200).json({ message: "Authenticated",data:{status:true} }) : res.status(401).json({ message: "Not Authenticated",data:{status:false} });
 }
 );
 
@@ -67,9 +67,11 @@ router.get('/status', (req: any, res: any) => {
 router.get('/logout', (req: any, res: any) => {
     req.logout((err:any) => {
         if (err) res.status(500).json({ message: "Logout failed" });
-        res.status(200).json({ message: "Logged out" });
+        
     }
     );
+    res.status(200).clearCookie('session_id').send();
+
 });
 
 

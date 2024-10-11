@@ -1,4 +1,4 @@
-import { Neo4jDateTimeSchema, translateDateTime, uuidSchema } from "../../../../types/Globals";
+import { Neo4jDateTimeSchema, translateDateTime, uuid, uuidSchema } from "../../../../types/Globals";
 import { models } from "./models";
 import { SHARENODEInstance, SHARENODEModel } from "./types/nodes/SHARENODE";
 import { USERInstance, USERModel } from "./types/nodes/USER";
@@ -161,7 +161,7 @@ export class SHARENODEInitializer {
           return result.records[0].get('path');
         }
         
-        models.SHARENODE.prototype.prev = async function(this:SHARENODEInstance, post:POSTInstance): Promise<NEXTProperties>{
+        models.SHARENODE.prototype.prevEdge = async function(this:SHARENODEInstance, post:POSTInstance): Promise<NEXTProperties>{
           const log = logger.child({'function': 'models.SHARENODE.prototype.prev'});
           log.trace('');
           const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})
@@ -171,6 +171,16 @@ export class SHARENODEInitializer {
                 .run(queryRunner)
           return result.records[0].get('next').properties
         }
+        models.SHARENODE.prototype.prev = async function(this:SHARENODEInstance, post_uuid:uuid): Promise<SHARENODEInstance|null>{
+            const log = logger.child({'function': 'models.SHARENODE.prototype.prev'});
+            log.trace('');
+            const queryRunner = new QueryRunner({driver:neogma.driver, logger:console.log, sessionParams: {database: 'neo4j'}})
+                  const result = await new QueryBuilder()
+                  .raw(`MATCH (node:SHARENODE {uuid: "${this.uuid}"})<-[next:NEXT {post_uuid: "${post_uuid}"}]-(prev:SHARENODE)`)
+                  .return('prev')
+                  .run(queryRunner)
+            return await models.SHARENODE.findOne({where:{uuid:result.records[0].get('prev').properties.uuid}})
+          }
         
     }
         
