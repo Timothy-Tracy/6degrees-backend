@@ -49,8 +49,8 @@ export class POSTInitializer {
                     createdAt:{
                         property: 'createdAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
         
                         }
@@ -58,8 +58,8 @@ export class POSTInitializer {
                     updatedAt:{
                         property: 'updatedAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
                         }
                     }, 
@@ -80,15 +80,15 @@ export class POSTInitializer {
                 properties:{
                     uuid:{
                         property: "uuid",
-                        schema:{type:'any',required: false,
+                        schema:{type:'any',required: true,
                         conform:(value) => uuidSchema.optional().safeParse(value).success
                         }
                     },
                     createdAt:{
                         property: 'createdAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
         
                         }
@@ -96,8 +96,8 @@ export class POSTInitializer {
                     updatedAt:{
                         property: 'updatedAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
                         }
                     }

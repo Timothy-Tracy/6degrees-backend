@@ -3,6 +3,7 @@ import passport from 'passport';
 import { AppError } from '../../../../lib/error/customErrors';
 import { models } from '../../../db/neo4j/models/models';
 import applogger from '../../../../lib/logger/applogger'
+import { generateDateTime } from '../../../../lib/util/generateDateTime';
 const logger = applogger.child({'module': 'GoogleStrategy'})
 const { v7: uuidv7 } = require('uuid');
 
@@ -23,7 +24,7 @@ export default passport.use(new GoogleStrategy({
     callbackURL: process.env.GOOGLE_CALLBACK_URL || "",
     passReqToCallback:true   
     }, 
-    async (request, accessToken:any, refreshToken:any, profile:any, done:any) => {
+    async (request:any, accessToken:any, refreshToken:any, profile:any, done:any) => {
         console.log(request)
         const log = logger.child({'function': 'passport.useGoogleStrategy'})
         log.trace('')
@@ -36,6 +37,8 @@ export default passport.use(new GoogleStrategy({
                     uuid: uuidv7(),
                     email: profile.emails[0].value,
                     username: profile.displayName.toLowerCase().replace(' ', '').concat(`${parseInt(((Math.random()*10)+1).toString())}${parseInt(((Math.random()*10)+1).toString())}${parseInt(((Math.random()*10)+1).toString())}${parseInt(((Math.random()*10)+1).toString())}`),
+                    createdAt: generateDateTime(),
+                    updatedAt: generateDateTime()
                 })
                 await user.createSharenode()
             }

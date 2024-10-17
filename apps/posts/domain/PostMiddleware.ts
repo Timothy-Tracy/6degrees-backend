@@ -9,6 +9,8 @@ import { generateSlug } from "random-word-slugs";
 import { NodeService } from "../../nodes/domain/NodeService";
 import { PostService } from "./PostService";
 import { filterData } from "../../../lib/util/filterData";
+import { toNeo4jDateTime } from "../../../types/Globals";
+import { generateDateTime } from "../../../lib/util/generateDateTime";
 const { v7: uuidv7 } = require('uuid');
 
 const logger = applogger.child({'module':'PostMiddleware'});
@@ -53,7 +55,9 @@ export class PostMiddleware{
                 uuid:uuidv7(),
                 query: generateSlug(),
                 title: res.locals.postData.title,
-                body: res.locals.postData.body
+                body: res.locals.postData.body,
+                createdAt: toNeo4jDateTime(generateDateTime()),
+                updatedAt: toNeo4jDateTime(generateDateTime())
         })
         logger.warn(post)
         if (!post){
@@ -61,7 +65,9 @@ export class PostMiddleware{
         }
 
         await post.relateTo({alias:"USER", where:{
-                uuid: user.uuid
+                uuid: user.uuid,
+                createdAt: generateDateTime(),
+                updatedAt: generateDateTime()
             }
         });
 

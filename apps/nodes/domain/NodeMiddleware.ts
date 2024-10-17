@@ -160,7 +160,6 @@ export class NodeMiddleware{
         const gp = new GraphProcessor()
         const gdt = new GraphDataTransformer()
         const x = await gp.getForwardPaths(source.uuid, post.uuid)
-        const y = gp.get('2c5d4c94-3337-4924-a723-b766b41a21cf', post)
         res.result={data:gdt.transformPathsToData(x.records.map((record)=> record.get('path')))}
         next()
     }

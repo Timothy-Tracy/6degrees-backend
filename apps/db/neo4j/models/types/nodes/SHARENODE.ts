@@ -24,7 +24,6 @@ export interface SHARENODERelatedNodes {
 export interface SHARENODEMethods {
     user: (this: SHARENODEInstance) => Promise<USERInstance>
     prev: (this: SHARENODEInstance, post_uuid: uuid) => Promise<SHARENODEInstance|null>
-
     prevEdge: (this: SHARENODEInstance, post: POSTInstance) => Promise<any>
     safeIsRelatedToPost: (this: SHARENODEInstance, post:POSTInstance) => Promise<void>
     isRelatedToPost: (this: SHARENODEInstance, post:POSTInstance) => Promise<boolean>

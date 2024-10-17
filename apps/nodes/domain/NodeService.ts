@@ -6,6 +6,8 @@ import neogma from '../../db/neo4j/neogma/neogma';
 import applogger from '../../../lib/logger/applogger';
 import { POSTInstance } from '../../db/neo4j/models/types/nodes/POST';
 import { SHARENODEInstance } from '../../db/neo4j/models/types/nodes/SHARENODE';
+import { generateDateTime } from '../../../lib/util/generateDateTime';
+import { toNeo4jDateTime } from '../../../types/Globals';
 const logger = applogger.child({'module':'NodeService'});
 const { v7: uuidv7 } = require('uuid');
 interface PathData {
@@ -75,7 +77,9 @@ export class NodeService {
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
                     degree: Number(new Integer(0).toBigInt()),
-                    method: 'default'
+                    method: 'default',
+                    createdAt: generateDateTime(),
+                    updatedAt: generateDateTime()
                 },
                 assertCreatedRelationships: 1,
             })
@@ -94,7 +98,9 @@ export class NodeService {
                     post_uuid: post.uuid,
                     degree:Number(new Integer(prev.degree).toBigInt()+new Integer(1).toBigInt()),
                    
-                    method: 'default'
+                    method: 'default',
+                    createdAt: generateDateTime(),
+                    updatedAt: generateDateTime()
                 },
                 assertCreatedRelationships: 1
             })

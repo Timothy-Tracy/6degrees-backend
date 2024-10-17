@@ -1,8 +1,9 @@
 import { AppError } from "../../../../lib/error/customErrors";
+import { generateDateTime } from "../../../../lib/util/generateDateTime";
+import uuid from "../../../../lib/util/generateUUID";
 import { Neo4jDateTimeSchema, translateDateTime, uuidSchema } from "../../../../types/Globals";
 import { models } from "./models";
-import { USERInstance, USERModel } from "./types/nodes/USER";
-const { v7: uuidv7 } = require('uuid');
+import { USERInstance } from "./types/nodes/USER";
 
 export class USERInitializer {
     static init(){
@@ -19,15 +20,15 @@ export class USERInitializer {
                 properties:{
                     uuid:{
                         property: "uuid",
-                        schema:{type:'any',required: false,
+                        schema:{type:'any',required: true,
                         conform:(value) => uuidSchema.optional().safeParse(value).success
                         }
                     },
                     createdAt:{
                         property: 'createdAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
         
                         }
@@ -35,8 +36,8 @@ export class USERInitializer {
                     updatedAt:{
                         property: 'updatedAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
                         }
                     }
@@ -49,15 +50,15 @@ export class USERInitializer {
                 properties:{
                     uuid:{
                         property: "uuid",
-                        schema:{type:'any',required: false,
+                        schema:{type:'any',required: true,
                         conform:(value) => uuidSchema.optional().safeParse(value).success
                         }
                     },
                     createdAt:{
                         property: 'createdAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
         
                         }
@@ -65,8 +66,8 @@ export class USERInitializer {
                     updatedAt:{
                         property: 'updatedAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
                         }
                     }
@@ -91,12 +92,16 @@ export class USERInitializer {
                 throw new AppError('User already has sharenode', 500)
             } else {
                 const result = await models.SHARENODE.createOne({
-                  uuid:uuidv7(),
-                  anon:false
+                  uuid:uuid(),
+                  anon:false,
+                  createdAt: generateDateTime(),
+                  updatedAt: generateDateTime()
                 })
                 await result.relateTo({alias:'USER',
                   where:{
-                    uuid:this.uuid
+                    uuid:this.uuid,
+                    createdAt: generateDateTime(),
+                    updatedAt: generateDateTime()
                   }
                 })
                 

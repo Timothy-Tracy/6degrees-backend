@@ -33,8 +33,8 @@ export class SHARENODEInitializer {
                     createdAt:{
                         property: 'createdAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
         
                         }
@@ -42,8 +42,8 @@ export class SHARENODEInitializer {
                     updatedAt:{
                         property: 'updatedAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
                         }
                     }
@@ -80,8 +80,8 @@ export class SHARENODEInitializer {
                     createdAt:{
                         property: 'createdAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
         
                         }
@@ -89,8 +89,8 @@ export class SHARENODEInitializer {
                     updatedAt:{
                         property: 'updatedAt',
                         schema:{
-                            type:'string',
-                            required: false,
+                            type:'any',
+                            required: true,
                             conform:(value) => Neo4jDateTimeSchema.safeParse(translateDateTime(value)).success
                         }
                     }, 
