@@ -15,7 +15,17 @@ import assertEnvironmentVariable from './lib/util/assertEnvironmentVariable';
 import dotenv from 'dotenv'
 import z from 'zod';
 dotenv.config()
-assertEnvironmentVariable(process.env.NODE_ENV,"NODE_ENV", ()=>{z.enum(['production', 'development']).parse(process.env.NODE_ENV)})
+assertEnvironmentVariable(process.env.NODE_ENV,"NODE_ENV", ()=>{
+  z.enum(['production', 'development']).parse(process.env.NODE_ENV)
+})
+assertEnvironmentVariable(process.env.GOOGLE_CLIENT_ID,"GOOGLE_CLIENT_ID")
+assertEnvironmentVariable(process.env.GOOGLE_CLIENT_SECRET,"GOOGLE_CLIENT_SECRET")
+assertEnvironmentVariable(process.env.GOOGLE_CALLBACK_URL,"GOOGLE_CALLBACK_URL")
+assertEnvironmentVariable(process.env.DB_URL,"DB_URL")
+assertEnvironmentVariable(process.env.DB_USERNAME,"DB_USERNAME")
+assertEnvironmentVariable(process.env.DB_PASSWORD,"DB_PASSWORD")
+assertEnvironmentVariable(process.env.DB_DATABASE,"DB_DATABASE")
+
 const app = express();
 app.use(cors({
   origin: 'http://localhost:3000',

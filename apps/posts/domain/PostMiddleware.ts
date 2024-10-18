@@ -11,6 +11,7 @@ import { PostService } from "./PostService";
 import { filterData } from "../../../lib/util/filterData";
 import { toNeo4jDateTime } from "../../../types/Globals";
 import { generateDateTime } from "../../../lib/util/generateDateTime";
+import uuid from "../../../lib/util/generateUUID";
 const { v7: uuidv7 } = require('uuid');
 
 const logger = applogger.child({'module':'PostMiddleware'});
@@ -64,12 +65,17 @@ export class PostMiddleware{
             throw new PostError("error creating post", 500)
         }
 
-        await post.relateTo({alias:"USER", where:{
-                uuid: user.uuid,
+        const parent_user_relation = await post.relateTo({alias:"USER", where:{
+                uuid: user.uuid
+            }, 
+            properties: {
+                uuid: uuid(),
                 createdAt: generateDateTime(),
                 updatedAt: generateDateTime()
+
             }
         });
+        logger.warn(parent_user_relation)
 
         let userSN = await user?.shareNode()
         if (!userSN){

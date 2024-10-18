@@ -9,15 +9,7 @@ const { v7: uuidv7 } = require('uuid');
 
 
 
-if(!process.env.GOOGLE_CLIENT_ID){
-    throw new AppError('GOOGLE_CLIENT_ID does not exist in environment variables', 500)
-}
-if(!process.env.GOOGLE_CLIENT_SECRET){
-    throw new AppError('GOOGLE_CLIENT_SECRET does not exist in environment variables', 500)
-}
-if(!process.env.GOOGLE_CALLBACK_URL){
-    throw new AppError('GOOGLE_CALLBACK_URL does not exist in environment variables', 500)
-}
+
 export default passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID || "",
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
