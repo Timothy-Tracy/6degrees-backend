@@ -3,6 +3,7 @@ import { createClient, RedisClientType } from 'redis';
 import { AppError } from '../../../lib/error/customErrors';
 import connectRedis from 'connect-redis';
 import applogger from '../../../lib/logger/applogger';
+import assertEnvironmentVariable from '../../../lib/util/assertEnvironmentVariable';
 
 dotenv.config();
 const logger = applogger.child({ 'module': 'RedisService' });
@@ -49,9 +50,14 @@ class RedisService {
                     },
                 },
             };
+            assertEnvironmentVariable(process.env.NODE_ENV, "NODE_ENV")
 
             if (process.env.NODE_ENV === 'production' ) {
                 logger.info('Environment = production')
+                assertEnvironmentVariable(process.env.PROD_REDIS_PASSWORD, "PROD_REDIS_PASSWORD")
+                assertEnvironmentVariable(process.env.PROD_REDIS_HOST, "PROD_REDIS_HOST")
+                assertEnvironmentVariable(process.env.PROD_REDIS_PORT, "PROD_REDIS_PORT")
+
 
                 Object.assign(options, {
                     password: process.env.PROD_REDIS_PASSWORD,
@@ -63,6 +69,8 @@ class RedisService {
                 });
             } else {
                 logger.info('Environment = development')
+                assertEnvironmentVariable(process.env.REDIS_URL, "REDIS_URL")
+
                 Object.assign(options, {
                     // password: process.env.REDIS_PASSWORD,
                     url: process.env.REDIS_URL
