@@ -11,7 +11,11 @@ import authRouterv2 from './apps/auth/entry-points/api/AuthController';
 import nodesV2Router from './apps/nodes/entry-points/api/NodeController';
 import postsV2Router from './apps/posts/entry-points/api/PostController';
 import limiter from './lib/util/limiter';
-
+import assertEnvironmentVariable from './lib/util/assertEnvironmentVariable';
+import dotenv from 'dotenv'
+import z from 'zod';
+dotenv.config()
+assertEnvironmentVariable(process.env.NODE_ENV,"NODE_ENV", ()=>{z.enum(['production', 'development']).parse(process.env.NODE_ENV)})
 const app = express();
 app.use(cors({
   origin: 'http://localhost:3000',
