@@ -128,7 +128,7 @@ export class POSTInitializer {
             const log = logger.child({'function': 'models.POST.prototype.user'});
             log.trace('');
             const result = await this.findRelationships({alias:'USER'}) 
-            if(!result[0].target){throw new PostError('Cannot find user', 500)}   
+            if(!result[0] || !result[0].target){throw new PostError('Cannot find user', 500)}   
           return result[0].target;
         }
     }

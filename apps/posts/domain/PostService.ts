@@ -72,4 +72,16 @@ export class PostService{
         return {...obj, createdAt:x, updatedAt:y}
 
     }
+
+    static async extractData(post:POSTInstance){
+        let data:any = post.dataValues
+        const user = await post.user() || undefined
+        const username = user? user.username : "undefined"
+        data.username = username
+        data.createdAt = data.createdAt.toString()
+        data.updatedAt = data.updatedAt.toString()
+        data.source_sharenode_username = username 
+
+        return data
+    }
 }
