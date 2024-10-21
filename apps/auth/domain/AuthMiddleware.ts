@@ -14,8 +14,11 @@ import redisService from "../../db/redis/RedisService";
 export class AuthMiddleware{
 
     static async requireAuthSession(req: any, res: any, next:NextFunction) {
-        
+        logger.debug(req.session);
+        logger.debug(req.user);
+        logger.debug(req.isAuthenticated());
         if(!req.isAuthenticated()){
+            logger.error(req)
             throw new AppError('Authentication is required', 401)
         }
         if(!req.user.uuid){

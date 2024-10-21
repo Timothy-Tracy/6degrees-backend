@@ -10,12 +10,13 @@ import redis from './apps/db/redis/RedisService';
 import authRouterv2 from './apps/auth/entry-points/api/AuthController';
 import nodesV2Router from './apps/nodes/entry-points/api/NodeController';
 import postsV2Router from './apps/posts/entry-points/api/PostController';
-import exploreRouter from './apps/explore/entry-points/api/ExploreController';
+import searchRouter from './apps/search/entry-points/api/SearchController';
 
 import limiter from './lib/util/limiter';
 import assertEnvironmentVariable from './lib/util/assertEnvironmentVariable';
 import dotenv from 'dotenv'
 import z from 'zod';
+import applogger from './lib/logger/applogger';
 
 dotenv.config()
 assertEnvironmentVariable(process.env.NODE_ENV,"NODE_ENV", ()=>{
@@ -28,7 +29,9 @@ assertEnvironmentVariable(process.env.DB_URL,"DB_URL")
 assertEnvironmentVariable(process.env.DB_USERNAME,"DB_USERNAME")
 assertEnvironmentVariable(process.env.DB_PASSWORD,"DB_PASSWORD")
 assertEnvironmentVariable(process.env.DB_DATABASE,"DB_DATABASE")
+applogger.info(redis.checkConnection())
 
+applogger.info(redis.isStoreInitialized())
 const app = express();
 app.use(cors({
   origin: 'http://localhost:3000',
@@ -37,10 +40,10 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(limiter);
+//app.use(limiter);
 
 app.use(session({
-  name: 'session_id',
+  name: '6degrees_session_id',
   store: redis.store,
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
@@ -48,7 +51,7 @@ app.use(session({
   cookie: { 
     secure: false,
     httpOnly: false,
-    maxAge: 24*60*60000
+    maxAge: 24*60*60*1000
   }
 }));
 
@@ -58,7 +61,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(authRouterv2.apiRoot, authRouterv2.router);
 app.use(nodesV2Router.apiRoot, nodesV2Router.router);
 app.use(postsV2Router.apiRoot, postsV2Router.router);
-app.use(exploreRouter.apiRoot, exploreRouter.router);
+app.use(searchRouter.apiRoot, searchRouter.router);
 
 
 // catch 404 and forward to error handler

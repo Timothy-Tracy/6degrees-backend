@@ -75,7 +75,13 @@ export class PostService{
 
     static async extractData(post:POSTInstance){
         let data:any = post.dataValues
-        const user = await post.user() || undefined
+        let user;
+        try{
+            user = await post.user() || undefined
+        } catch{
+            
+        }
+     
         const username = user? user.username : "undefined"
         data.username = username
         data.createdAt = data.createdAt.toString()

@@ -66,7 +66,6 @@ export class NodeService {
         return result.records[0].get('next').properties
     }
     static async createEdge(post: POSTInstance, shareNode: SHARENODEInstance, sourceShareNode?: SHARENODEInstance){
-      logger.error(integer.toNumber(Math.trunc(Number(new Integer(0).toBigInt()))))
         if(!sourceShareNode){
             const postToNext= await post.relateTo({
                 alias: "SHARENODE",
@@ -76,7 +75,7 @@ export class NodeService {
                 properties: {
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
-                    degree: Number(new Integer(0).toBigInt()),
+                    degree: 0,
                     method: 'default',
                     createdAt: generateDateTime(),
                     updatedAt: generateDateTime()
@@ -96,7 +95,7 @@ export class NodeService {
                 properties:{
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
-                    degree:Number(new Integer(prev.degree).toBigInt()+new Integer(1).toBigInt()),
+                    degree:Number(prev.degree) + 1,
                    
                     method: 'default',
                     createdAt: generateDateTime(),
@@ -124,7 +123,7 @@ export class NodeService {
             properties: {
                 method: 'default',
                 post_uuid: post.uuid,
-                degree: Number(new Integer(prevEdge.degree).toBigInt()+new Integer(1).toBigInt()),
+                degree: Number(new Integer(prevEdge.degree).add(new Integer(1))),
             }
         }).then(() => console.log('created relationship'))
 

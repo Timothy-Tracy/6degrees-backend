@@ -6,16 +6,16 @@ import { Router } from 'express';
 import { catchAsync } from '../../../../lib/error/customErrors';
 
 import applogger from '../../../../lib/logger/applogger';
-import { ExploreMiddleware } from '../../domain/ExploreMiddleware';
+import { SearchMiddleware } from '../../domain/SearchMiddleware';
 export const router = Router();
-export const apiRoot = '/api/v2/explore'
+export const apiRoot = '/api/v2/search'
 
 
 
 
 router.get('/posts/all', 
     
-    catchAsync(ExploreMiddleware.getPostFeed),
+    catchAsync(SearchMiddleware.getPostFeed),
     (req:Request, res:Response, next:NextFunction) => {
         res.status(200).json(res.result)
     }
@@ -23,7 +23,7 @@ router.get('/posts/all',
 
 router.get('/activity/all', 
     
-    catchAsync(ExploreMiddleware.getAllActivity),
+    catchAsync(SearchMiddleware.getAllActivity),
     (req:Request, res:Response, next:NextFunction) => {
         res.status(200).json(res.result)
     }

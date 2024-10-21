@@ -56,12 +56,27 @@ router.post('/login',
 // );
 
 
-router.get('/status', (req: any, res: any) => {
-    console.log(req.session);
-    console.log(req.user)
-    req.isAuthenticated() ? res.status(200).json({ message: "Authenticated",data:{status:true} }) : res.status(401).json({ message: "Not Authenticated",data:{status:false} });
-}
-);
+router.get('/status', (req, res) => {
+
+    const logger = applogger.child({'endpoint':'auth/status'})
+    logger.debug(req)
+    logger.debug({
+        session: req.session,
+        sessionId: req.session.id,
+        isAuthenticated: req.isAuthenticated()
+    
+    });
+       
+    
+    res.status(req.isAuthenticated() ? 200 : 401).json({
+      message: req.isAuthenticated() ? "Authenticated" : "Not Authenticated",
+      data: {
+        status: req.isAuthenticated(),
+        sessionExists: !!req.session,
+        userExists: !!req.user
+      }
+    });
+  });
 
 
 router.get('/logout', (req: any, res: any) => {

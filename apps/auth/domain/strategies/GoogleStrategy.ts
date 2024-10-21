@@ -17,11 +17,12 @@ export default passport.use(new GoogleStrategy({
     passReqToCallback:true   
     }, 
     async (request:any, accessToken:any, refreshToken:any, profile:any, done:any) => {
-        console.log(request)
+        //console.log(request)
         const log = logger.child({'function': 'passport.useGoogleStrategy'})
-        log.trace('')
+        log.trace('passport.useGoogleStrategy')
         try {
             if (!profile.emails) {throw new Error("No email found");}
+            logger.debug('finding user')
             let user = await models.USER.findOne({where:{email: profile.emails[0]?.value}})
             if (!user) {
                 logger.info('creating user')
@@ -33,8 +34,10 @@ export default passport.use(new GoogleStrategy({
                     updatedAt: generateDateTime()
                 })
                 await user.createSharenode()
+            } else {
+                logger.debug(`user username=${user.username} found`)
             }
-            return done(null, user, {returnTo: request.session.returnTo});
+            return done(null, {uuid:user.uuid}, {returnTo: request.session.returnTo});
         } catch (error) {
             return done(error);
         }

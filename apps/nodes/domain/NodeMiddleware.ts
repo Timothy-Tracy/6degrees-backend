@@ -151,7 +151,7 @@ export class NodeMiddleware{
                 message: message
             }
         }
-        next()
+        res.status(201).json(res.result)
     }
 
     static async graph(req: any, res: any, next:NextFunction){

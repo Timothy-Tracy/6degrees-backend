@@ -7,7 +7,7 @@ import { QueryBuilder, QueryRunner } from "neogma";
 import neogma from "../../db/neo4j/neogma/neogma";
 import { Integer } from "neo4j-driver";
 
-export class ExploreMiddleware{
+export class SearchMiddleware{
     static getPostFeed = async function(req:Request, res:Response, next:NextFunction){
         let result:any = {}
         /*Get pagination data from query parameters*/

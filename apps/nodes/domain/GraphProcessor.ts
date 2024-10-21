@@ -23,7 +23,7 @@ class GraphProcessor {
       .raw(`MATCH path = (source:SHARENODE {uuid: "${source_sharenode_uuid}"})-[:NEXT* {post_uuid: "${post_uuid}"}]->(:SHARENODE)`)
       .return('path')
       .run(this.queryRunner);
-      console.log(result)
+      //console.log(result)
     return result;
   }
 
