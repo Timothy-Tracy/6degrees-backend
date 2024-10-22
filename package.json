@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node ./dist/server.js",
     "dev": "tsc -w & nodemon ./dist/server.js",
-    "build": "tsc --noEmitOnError false"
+    "build": "tsc --noEmitOnError false",
+    "vercel-build": " echo \"Hello World\""
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
