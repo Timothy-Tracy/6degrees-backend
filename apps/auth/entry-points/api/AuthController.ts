@@ -6,29 +6,62 @@ import { Router } from 'express';
 import applogger from '../../../../lib/logger/applogger';
 export const router = Router();
 export const apiRoot = '/api/v2/auth'
+import { ParsedQs } from 'qs';
 import dotenv from 'dotenv';
 dotenv.config();
+// Define the return URL structure
+interface ReturnToData {
+    returnTo: string | undefined;
+}
 
+declare module 'express-session' {
+    interface Session {
+        returnTo?: ReturnToData;
+    }
+}
+
+declare module 'passport' {
+    interface AuthInfo {
+        returnTo?: ReturnToData;
+    }
+}
+interface ExtendedAuthInfo extends passport.AuthInfo {
+    returnTo?: ReturnToData;
+}
+// Updated helper function with proper type handling
+function getReturnToString(value: string | string[] | ParsedQs | ParsedQs[] | undefined): string | undefined {
+    if (!value) return undefined;
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) {
+        const firstValue = value[0];
+        return typeof firstValue === 'string' ? firstValue : undefined;
+    }
+    return undefined;
+}
 
 
 router.get('/google', 
-    (req,res,next)=>{
-        req.session.returnTo= {returnTo: req.query.returnTo||undefined};
-        if(req.isAuthenticated()){
-            res.redirect(req.session.returnTo.returnTo || process.env.FRONTEND_URL)
+    (req, res, next) => {
+        req.session.returnTo = {
+            returnTo: getReturnToString(req.query.returnTo)
+        };
+        
+        if(req.isAuthenticated()) {
+            const redirectUrl = req.session.returnTo?.returnTo || process.env.FRONTEND_URL || '';
+            res.redirect(redirectUrl);
         }
-        next()
+        next();
     }, 
     passport.authenticate("google", { scope: ["profile", "email"]})
 );
 
 router.get('/google/callback', 
     passport.authenticate("google"), 
-    (req: Request, res: Response) => {
-        res.redirect(req.authInfo.returnTo.returnTo || process.env.FRONTEND_URL);
+    (req: Request & { authInfo: ExtendedAuthInfo }, res: Response) => {
+        const redirectUrl = req.authInfo?.returnTo?.returnTo || process.env.FRONTEND_URL || '';
+        res.redirect(redirectUrl);
     }
 );
-
 
 router.post('/passport', passport.authenticate("local"), (req: Request, res: Response) => {
     res.status(200).json({ token: req.user });

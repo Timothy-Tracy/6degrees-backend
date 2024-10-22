@@ -6,14 +6,46 @@ import applogger from '../../../../lib/logger/applogger'
 import { generateDateTime } from '../../../../lib/util/generateDateTime';
 const logger = applogger.child({'module': 'GoogleStrategy'})
 const { v7: uuidv7 } = require('uuid');
+// Define the return URL structure
+// Define the return URL structure
+interface ReturnToData {
+    returnTo: string | undefined;
+}
 
+declare module 'express-session' {
+    interface Session {
+        returnTo?: ReturnToData;
+    }
+}
+
+declare module 'passport' {
+    interface AuthInfo {
+        returnTo?: ReturnToData;
+    }
+}
+
+declare module 'express-session' {
+    interface Session {
+        returnTo?: ReturnToData;
+    }
+}
+
+declare module 'passport' {
+    interface AuthInfo {
+        returnTo?: ReturnToData;
+    }
+}
 
 interface GoogleClientProps{
     clientID: string,
     clientSecret: string,
     callbackURL: string
 }
-let googledata:GoogleClientProps ={};
+let googledata: GoogleClientProps = {
+    clientID: '',
+    clientSecret: '',
+    callbackURL: ''
+};
 if(process.env.NODE_ENV == 'production'){
     if(process.env.PROD_GOOGLE_CLIENT_ID && process.env.PROD_GOOGLE_CLIENT_SECRET && process.env.PROD_GOOGLE_CALLBACK_URL){
         googledata = {
