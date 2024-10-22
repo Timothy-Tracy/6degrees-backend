@@ -117,6 +117,9 @@ export class USERInitializer {
                 await result.relateTo({alias:'USER',
                   where:{
                     uuid:this.uuid,
+                  },
+                  properties:{
+                    uuid: uuid()
                   }
                 })
                 

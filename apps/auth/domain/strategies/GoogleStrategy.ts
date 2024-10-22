@@ -8,12 +8,40 @@ const logger = applogger.child({'module': 'GoogleStrategy'})
 const { v7: uuidv7 } = require('uuid');
 
 
+interface GoogleClientProps{
+    clientID: string,
+    clientSecret: string,
+    callbackURL: string
+}
+let googledata:GoogleClientProps ={};
+if(process.env.NODE_ENV == 'production'){
+    if(process.env.PROD_GOOGLE_CLIENT_ID && process.env.PROD_GOOGLE_CLIENT_SECRET && process.env.PROD_GOOGLE_CALLBACK_URL){
+        googledata = {
+            clientID:process.env.PROD_GOOGLE_CLIENT_ID,
+            clientSecret: process.env.PROD_GOOGLE_CLIENT_SECRET,
+            callbackURL: process.env.PROD_GOOGLE_CALLBACK_URL,
+        }
+    } else {
+        throw new AppError('google env var error', 500)
+    }
+    
+    
 
-
+} else if(process.env.NODE_ENV == 'development'){
+    if(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_CALLBACK_URL){
+        googledata = {
+            clientID:process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: process.env.GOOGLE_CALLBACK_URL,
+        }
+    } else {
+        throw new AppError('google env var error', 500)
+    }
+}
 export default passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID || "",
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || "",
+    clientID: googledata.clientID || "",
+    clientSecret: googledata.clientSecret || "",
+    callbackURL: googledata.callbackURL || "",
     passReqToCallback:true   
     }, 
     async (request:any, accessToken:any, refreshToken:any, profile:any, done:any) => {

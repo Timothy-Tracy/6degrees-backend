@@ -40,18 +40,19 @@ class RedisService {
 
     private initClient(): void {
         try {
-            const options = {
-                url: this.url,
-                socket: {
-                    reconnectStrategy: (retries: number) => {
-                        if (retries > 10) {
-                            logger.error('RedisService: Max reconnection attempts reached');
-                            return new Error('Max reconnection attempts reached');
-                        }
-                        return Math.min(retries * 100, 3000);
-                    },
-                },
-            };
+            let options;
+            // const options = {
+            //     url: this.url,
+            //     socket: {
+            //         reconnectStrategy: (retries: number) => {
+            //             if (retries > 10) {
+            //                 logger.error('RedisService: Max reconnection attempts reached');
+            //                 return new Error('Max reconnection attempts reached');
+            //             }
+            //             return Math.min(retries * 100, 3000);
+            //         },
+            //     },
+            // };
             assertEnvironmentVariable(process.env.NODE_ENV, "NODE_ENV")
 
             if (process.env.NODE_ENV === 'production') {
@@ -59,31 +60,36 @@ class RedisService {
                 assertEnvironmentVariable(process.env.PROD_REDIS_PASSWORD, "PROD_REDIS_PASSWORD")
                 assertEnvironmentVariable(process.env.PROD_REDIS_HOST, "PROD_REDIS_HOST")
                 assertEnvironmentVariable(process.env.PROD_REDIS_PORT, "PROD_REDIS_PORT")
-
-                Object.assign(options, {
+                console.log(process.env.PROD_REDIS_PASSWORD)
+                console.log(process.env.PROD_REDIS_HOST)
+                console.log(process.env.PROD_REDIS_PORT)
+                //`redis[s]://[[username][:password]@][host][:port][/db-number]`
+                this.client = createClient({
                     password: process.env.PROD_REDIS_PASSWORD,
+                  
                     socket: {
                         host: process.env.PROD_REDIS_HOST,
-                        port: parseInt(process.env.PROD_REDIS_PORT || '6379', 10),
-                        tls: true,
+                        port: parseInt(process.env.PROD_REDIS_PORT)
+                        
                     },
-                });
+                })
             } else {
                 logger.info('Environment = development')
                 assertEnvironmentVariable(process.env.REDIS_URL, "REDIS_URL")
-
-                Object.assign(options, {
+                this.client = createClient({
                     url: process.env.REDIS_URL
-                });
+                })
+                
             }
 
-            this.client = createClient(options);
-
-            this.client.on('error', (err) => logger.error('RedisService Error:', err));
+            ;
+            this.client.connect()
+            this.initStore();
+            this.client.on('error', (err) => console.log(err));
             this.client.on('reconnecting', () => logger.info('RedisService: Reconnecting to Redis'));
             this.client.on('ready', () => logger.info('RedisService: Redis is ready'));
 
-            this.connectWithRetry();
+            //this.connectWithRetry();
         } catch (error) {
             logger.error(`RedisService Error: Failed to initialize client for ${this.url}`);
             throw new AppError("RedisService Error: Error initializing client", 500, error);
