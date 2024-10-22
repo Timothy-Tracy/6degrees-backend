@@ -20,7 +20,7 @@ export const USER = ModelFactory<USERProperties, USERRelatedNodes, USERStatics, 
 // SHARENODE model
 export const SHARENODE = ModelFactory<SHARENODEProperties, SHARENODERelatedNodes, SHARENODEStatics, SHARENODEMethods>({
     label: "SHARENODE",
-    schema: {uuid:{},createdAt:{},updatedAt:{},anon:{}},
+    schema: {uuid:{},createdAt:{},username:{}, updatedAt:{},anon:{}},
     primaryKeyField: 'uuid',
 }, neogma);
 

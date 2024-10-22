@@ -15,7 +15,7 @@ CREATE CONSTRAINT NEXT_uuid_unique IF NOT EXISTS FOR ()-[x:NEXT]->() REQUIRE x.u
 CREATE CONSTRAINT NEXT_uuid_not_null IF NOT EXISTS FOR ()-[x:NEXT]->() REQUIRE x.uuid IS NOT NULL;
 CREATE INDEX NEXT_uuid_index IF NOT EXISTS FOR ()-[x:NEXT]->() ON (x.uuid);
 
-CREATE CONSTRAINT NEXT_post_uuid_not_null IF NOT EXISTS FOR ()-[x:NEXT]->() REQUIRE x.post_uuid IS NOT NULL;
+//CREATE CONSTRAINT NEXT_post_uuid_not_null IF NOT EXISTS FOR ()-[x:NEXT]->() REQUIRE x.post_uuid IS NOT NULL;
 CREATE INDEX NEXT_post_uuid_index IF NOT EXISTS FOR ()-[x:NEXT]->() ON (x.post_uuid);
 
 CREATE CONSTRAINT parent_user_uuid_unique IF NOT EXISTS FOR ()-[x:PARENT_USER]->() REQUIRE x.uuid IS UNIQUE;
@@ -32,6 +32,9 @@ CREATE CONSTRAINT user_username_not_null IF NOT EXISTS FOR (u:USER) REQUIRE u.us
 CREATE CONSTRAINT post_query_unique IF NOT EXISTS FOR (p:POST) REQUIRE p.query IS UNIQUE;
 CREATE CONSTRAINT post_title_not_null IF NOT EXISTS FOR (p:POST) REQUIRE p.title IS NOT NULL;
 CREATE CONSTRAINT post_body_not_null IF NOT EXISTS FOR (p:POST) REQUIRE p.body IS NOT NULL;
+
+
+CREATE CONSTRAINT NEXT_ONE_PER_POST IF NOT EXISTS FOR ()-[x:NEXT]->() REQUIRE x.hash IS UNIQUE; 
 
 // Section 4: SHARENODE constraints
 // Create a uniqueness constraint on PARENT_USER relationship

@@ -8,6 +8,7 @@ import { POSTInstance } from "./POST";
 
 export const SHARENODEPropertiesSchema = z.object({
     uuid: uuidSchema,
+    username: z.string(),
     anon: z.boolean(),
     createdAt: Neo4jDateTimeSchema.optional(),
     updatedAt: Neo4jDateTimeSchema.optional(),

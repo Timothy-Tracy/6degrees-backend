@@ -66,7 +66,9 @@ export class NodeService {
         return result.records[0].get('next').properties
     }
     static async createEdge(post: POSTInstance, shareNode: SHARENODEInstance, sourceShareNode?: SHARENODEInstance){
-        if(!sourceShareNode){
+      const log = logger.child({'function': 'createEdge'})  
+      log.info('EDGE BEING CREATED')
+      if(!sourceShareNode){
             const postToNext= await post.relateTo({
                 alias: "SHARENODE",
                 where: {
@@ -86,7 +88,7 @@ export class NodeService {
 
         } else {
             const prev = await sourceShareNode.prevEdge(post)
-            const result = models.SHARENODE.relateTo({
+            const resultt = await models.SHARENODE.relateTo({
                 alias: "SHARENODE",
                 where: {
                     source: {uuid: sourceShareNode.uuid},
@@ -96,13 +98,15 @@ export class NodeService {
                     uuid: uuidv7(),
                     post_uuid: post.uuid,
                     degree:Number(prev.degree) + 1,
-                   
+                    hash:`${sourceShareNode.username}<-${post.uuid}->${shareNode.username}`,
                     method: 'default',
                     createdAt: generateDateTime(),
                     updatedAt: generateDateTime()
                 },
                 assertCreatedRelationships: 1
             })
+
+            
         }
     }
     static async createAnonSharenode(){

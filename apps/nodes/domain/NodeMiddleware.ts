@@ -11,6 +11,7 @@ import { SHARENODEInstance } from "../../db/neo4j/models/types/nodes/SHARENODE";
 const logger = applogger.child({'module':'NodeMiddleware'});
 
 export class NodeMiddleware{
+    static inProgOp = false
     static safe(anyVariable:any, name:string='unknownVariable'){
         logger.debug(`safety checking ${name}`)
         if(anyVariable == null){
@@ -111,11 +112,12 @@ export class NodeMiddleware{
     static async interact(req: any, res: any, next:NextFunction){
         const log = logger.child({'function': 'interact'});
         log.trace('')
+        const hash = new Date().toISOString()
         let message = ''
         //If no target_sharenode has been provided, we will assume it is an anon interaction, so we need to create anon sharenode
         const post = NodeMiddleware.safe(res.locals.post, 'res.locals.post')
         const source_sharenode = NodeMiddleware.safe(res.locals.source_sharenode, 'res.locals.source_sharenode')
-        logger.error(res.locals)
+        //logger.error(res.locals)
         if (res.locals.target_sharenode==null){
             if (false){
                 res.locals.target_sharenode = await models.SHARENODE.findOne({where:{uuid: req.cookies.target_sharenode_uuid}})
@@ -134,24 +136,27 @@ export class NodeMiddleware{
         //check if the sharenode has interacted with the post before
         const targetHasNodeInPost = await target_sharenode.isRelatedToPost(post)
         if (targetHasNodeInPost){
-            logger.info('target has node in post=true')
+            logger.info({'hash':hash}, 'target has node in post=true')
             message = message + `SHARENODE uuid=${target_sharenode.uuid} has already interacted with POST uuid=${post.uuid}, `
             logger.info(message)
             res.result = {
                 data: target_sharenode.getDataValues(),
                 message: message
             }
-            next()
+            res.status(200).json(res.result)
         } else {
-            logger.info('target has node in post=false')
-
+            logger.info({'hash':hash},'target has node in post=false')
+          
             await NodeService.createEdge(post, target_sharenode, source_sharenode)
             message = message+`target SHARENODE uuid=${target_sharenode.uuid} interacted with POST uuid=${post.uuid} through source SHARENODE uuid=${source_sharenode.uuid}`
             res.result = {
                 message: message
             }
-        }
-        res.status(201).json(res.result)
+            res.status(201).json(res.result)
+           
+        } 
+        
+        
     }
 
     static async graph(req: any, res: any, next:NextFunction){

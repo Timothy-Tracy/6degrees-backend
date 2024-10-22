@@ -88,20 +88,35 @@ export class USERInitializer {
         }
         models.USER.prototype.createSharenode = async function(this: USERInstance){
             const alreadyHasSharenode = await this.shareNode()
+            const username = this.username
+            
+            console.log(this)
+            console.log(this)
+            console.log(this)
+            console.log(this)
+            console.log(username)
+            console.log(username)
+            console.log(username)
+            console.log(username)
+            console.log(username)
             if(alreadyHasSharenode != null){
                 throw new AppError('User already has sharenode', 500)
             } else {
                 const result = await models.SHARENODE.createOne({
                   uuid:uuid(),
                   anon:false,
+                  username:username,
                   createdAt: generateDateTime(),
                   updatedAt: generateDateTime()
                 })
+                console.log(result)
+                console.log(result)
+                console.log(result)
+                console.log(result)
+                console.log(result)
                 await result.relateTo({alias:'USER',
                   where:{
                     uuid:this.uuid,
-                    createdAt: generateDateTime(),
-                    updatedAt: generateDateTime()
                   }
                 })
                 

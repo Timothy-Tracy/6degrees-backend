@@ -68,6 +68,14 @@ export class SHARENODEInitializer {
                             conform:(value) => uuidSchema.safeParse(value).success
                         }
                     },
+                    hash:{
+                        property: 'hash',
+                        schema:{
+                            type:'string',
+                            required: false,
+                            
+                        }
+                    },
                     degree:{
                         property: 'degree',
                         schema:{
@@ -126,7 +134,7 @@ export class SHARENODEInitializer {
                 .return('n')
                 .run(queryRunner)
         
-                log.error(result.records[0] ? true: false)
+                log.debug(result.records[0] ? true: false)
                 return result.records[0] ? true: false;
           }
           models.SHARENODE.prototype.safeIsRelatedToPost = async function(this:SHARENODEInstance, post:POSTInstance){

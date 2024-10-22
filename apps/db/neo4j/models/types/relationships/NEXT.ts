@@ -9,6 +9,7 @@ export const methodSchema = z.enum(['default']).default('default')
 export const NEXTPropertiesSchema = z.object({
     uuid: uuidSchema.optional(),
     post_uuid: uuidSchema,
+    hash: z.string(),
     createdAt: Neo4jDateTimeSchema.optional(),
     updatedAt: Neo4jDateTimeSchema.optional(),
     method: methodSchema,

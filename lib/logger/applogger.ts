@@ -20,13 +20,13 @@ import pino from 'pino';
 */
 
 const applogger = pino({
-    level : process.env.PINO_LOG_LEVEL || 'trace',
+    level : 'info' ,
     transport : {
         targets : [
             
             {
                 target : 'pino-pretty',
-                level : process.env.PINO_LOG_LEVEL|| 'trace',
+                level : process.env.PINO_LOG_LEVEL|| 'info',
                 options : {
                     destination: process.stdout.fd,
                     colorize: true
