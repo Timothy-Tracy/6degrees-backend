@@ -57,6 +57,7 @@ app.use(session({
     sameSite: process.env.NODE_ENV == 'production'? 'none':undefined,
     domain: process.env.NODE_ENV == 'production'? '.6degrees.app':''
   }
+  ,proxy: process.env.NODE_ENV == 'production'? true:false
 }));
 
 app.use(passport.initialize());
