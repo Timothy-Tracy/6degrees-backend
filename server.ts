@@ -53,7 +53,7 @@ app.use(session({
   cookie: { 
     secure: process.env.NODE_ENV == 'production'? true:false,
     httpOnly: process.env.NODE_ENV == 'production'? true:false,
-    maxAge: 24*60*60*1000,
+    maxAge: 3*4*7*24*60*60*1000,
     // sameSite: process.env.NODE_ENV == 'production'? 'none':undefined,
     domain: process.env.NODE_ENV == 'production'? '6degrees.app':'localhost'
   }
