@@ -68,7 +68,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(globalErrorHandler);
-app.listen(80, () => {
+app.listen({port: 10000, host:'0.0.0.0'}, () => {
     console.log(`🌍 Now listening on http://localhost:${3003}`);
 });
 
