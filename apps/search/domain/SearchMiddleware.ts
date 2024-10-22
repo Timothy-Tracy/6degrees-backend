@@ -8,7 +8,7 @@ import neogma from "../../db/neo4j/neogma/neogma";
 import { Integer } from "neo4j-driver";
 
 export class SearchMiddleware{
-    static getPostFeed = async function(req:Request, res:Response, next:NextFunction){
+    static getPostFeed = async function(req:any, res:any, next:NextFunction){
         let result:any = {}
         /*Get pagination data from query parameters*/
 
@@ -23,14 +23,14 @@ export class SearchMiddleware{
         })
         
         /*Format the data into strign friendly values*/ 
-        const output = await Promise.all(result.data.map(async (result) => {
+        const output = await Promise.all(result.data.map(async (result:any) => {
             return await PostService.extractData(result)
         }))
 
         res.result = output
         next();
     }
-    static getAllActivity = async function(req:Request, res:Response, next:NextFunction){
+    static getAllActivity = async function(req:any, res:any, next:NextFunction){
     
         /*Get pagination data from query parameters*/
         const size = z.string().optional().transform(Number).parse(req.query.size) || 3

@@ -37,6 +37,14 @@ export class POSTInitializer {
                             conform:(value) => uuidSchema.safeParse(value).success
                         }
                     },
+                    hash:{
+                        property: 'hash',
+                        schema:{
+                            type:'string',
+                            required: false,
+                            
+                        }
+                    },
                     degree:{
                         property: 'degree',
                         schema:{

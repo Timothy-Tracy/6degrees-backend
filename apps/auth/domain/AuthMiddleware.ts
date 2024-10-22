@@ -1,10 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 // command to initiate prisma 
-import bcrypt from "bcrypt";
+
 import applogger from "../../../lib/logger/applogger";
-import JWTService from "../../jwt/domain/JWTService";
 import { AppError } from "../../../lib/error/customErrors";
-import { error } from "console";
 const logger = applogger.child({'module':'AuthMiddleware'})
 import passport from "passport";
 import { Strategy } from "passport-local";

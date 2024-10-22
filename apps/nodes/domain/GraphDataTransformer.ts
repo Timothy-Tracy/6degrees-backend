@@ -31,7 +31,7 @@ class GraphDataTransformer {
     const links = new Map<string, TransformedLink>();
 
     paths.forEach(path => {
-      path.segments.forEach(segment => {
+      path.segments.forEach((segment: { start: any; end: any; relationship: any; }) => {
         const startNode = this.transformNode(segment.start);
         startNode.createdAt = translateDateTime(startNode.createdAt)?.toString()
         startNode.updatedAt = translateDateTime(startNode.updatedAt)?.toString()

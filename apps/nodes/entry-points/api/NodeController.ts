@@ -31,16 +31,16 @@ router.get('/path-to-target',
     }
 )
 //Get backwards path from a anon SHARENODE to its source POST
-router.get('/backwardpath',
-    catchAsync(requireQueryParameter(['post_uuid','post_query'])),
-    catchAsync(NodeMiddleware.getPostByQuery),
-    catchAsync(requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
-    catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
-    catchAsync(NodeMiddleware.backwardPath),
-    async function(req:any, res:any, next: NextFunction){
-        res.status(200).json(res.result);
-    }
-)
+// router.get('/backwardpath',
+//     catchAsync(requireQueryParameter(['post_uuid','post_query'])),
+//     catchAsync(NodeMiddleware.getPostByQuery),
+//     catchAsync(requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
+//     catchAsync(NodeMiddleware.getSourceSharenodeByQuery),
+//     catchAsync(NodeMiddleware.backwardPath),
+//     async function(req:any, res:any, next: NextFunction){
+//         res.status(200).json(res.result);
+//     }
+// )
 
 //Get forwards path from a anon SHARENODE to other SHARENODES
 router.get('/forwardpath',

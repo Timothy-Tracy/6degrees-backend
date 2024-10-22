@@ -1,12 +1,8 @@
 import './../../domain/strategies/AuthStrategy';
 import './../../domain/strategies/GoogleStrategy';
-import { Express, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import passport from 'passport';
 import { Router } from 'express';
-
-import AuthService from '../../domain/AuthService';
-import { catchAsync } from '../../../../lib/error/customErrors';
-import redisService from '../../../db/redis/RedisService';
 import applogger from '../../../../lib/logger/applogger';
 export const router = Router();
 export const apiRoot = '/api/v2/auth'
@@ -39,13 +35,6 @@ router.post('/passport', passport.authenticate("local"), (req: Request, res: Res
 }
 );
 
-router.post('/login', 
-   
-    catchAsync(AuthService.login), 
-    (req: any, res: any) => {
-    res.status(200).json({ token: res.locals.auth });
-}
-);
 
 // router.post('/register', 
    
@@ -90,32 +79,32 @@ router.get('/logout', (req: any, res: any) => {
 });
 
 
-router.get('/hello', (req: any, res: any) => {
-    if (req.session?.viewCount == undefined) {
-        req.session.viewCount = 0;
-    }
-    else {
-        req.session.viewCount++;
-    }
-    res.send(`Hello! You have visited this page ${req.session.viewCount} times`);
-}
-);
+// router.get('/hello', (req: any, res: any) => {
+//     if (req.session?.viewCount == undefined) {
+//         req.session.viewCount = 0;
+//     }
+//     else {
+//         req.session.viewCount++;
+//     }
+//     res.send(`Hello! You have visited this page ${req.session.viewCount} times`);
+// }
+// );
 
-router.get('/profile', (req: Request, res: Response) => {
-    if (req.isAuthenticated()) {
-        res.json({ user: req.user });
-    } else {
-        res.status(401).json({ message: 'Not authenticated' });
-    }
-});
-router.get('/debug-session/', async (req, res) => {
-    const x = await redisService.store.client.get(`sess:${req.sessionID.user}`);
-    console.log(x )
-    res.json({
-        test: x,
-      sessionID: req.sessionID,
-      sessionData: req.session
-    });
-  });
+// router.get('/profile', (req: Request, res: Response) => {
+//     if (req.isAuthenticated()) {
+//         res.json({ user: req.user });
+//     } else {
+//         res.status(401).json({ message: 'Not authenticated' });
+//     }
+// });
+// router.get('/debug-session/', async (req, res) => {
+//     const x = await redisService.store.client.get(`sess:${req.sessionID.user}`);
+//     console.log(x )
+//     res.json({
+//         test: x,
+//       sessionID: req.sessionID,
+//       sessionData: req.session
+//     });
+//   });
 
 export default {router, apiRoot}

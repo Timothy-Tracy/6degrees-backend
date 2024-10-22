@@ -2,7 +2,6 @@ import { NextFunction } from "express";
 import { models } from "../../db/neo4j/models/models";
 import { AppError } from "../../../lib/error/customErrors";
 import { NodeService } from "./NodeService";
-import { integer } from "neo4j-driver";
 import applogger from '../../../lib/logger/applogger';
 import { POSTInstance } from "../../db/neo4j/models/types/nodes/POST";
 import GraphProcessor from "./GraphProcessor";
@@ -89,22 +88,25 @@ export class NodeMiddleware{
         next()
     }
     
-    static async backwardPath(req: any, res: any, next:NextFunction){
-        const log = logger.child({'function': 'backwardPath'});
-        log.trace('')
-        const rawPathData = await res.locals.source_sharenode.backwardPath(res.locals.post)
-        res.result = {
-            data: await NodeService.transformPathData(rawPathData),
-            message: `Found backward path data for SHARENODE ${res.locals.source_sharenode.uuid}`
-        }
-        next()
-    }
+    // static async backwardPath(req: any, res: any, next:NextFunction){
+    //     const log = logger.child({'function': 'backwardPath'});
+    //     log.trace('')
+    //     const rawPathData = await res.locals.source_sharenode.backwardPath(res.locals.post)
+    //     res.result = {
+    //         data: await NodeService.transformPathData(rawPathData),
+    //         message: `Found backward path data for SHARENODE ${res.locals.source_sharenode.uuid}`
+    //     }
+    //     next()
+    // }
     static async forwardPath(req: any, res: any, next:NextFunction){
         const log = logger.child({'function': 'forwardPath'});
         log.trace('')
-        const rawPathData = await res.locals.source_sharenode.forwardPath(res.locals.post)
+        const gp = new GraphProcessor()
+        const gdt = new GraphDataTransformer()
+        const forwardPaths = await gp.getForwardPaths(res.locals.source_sharenode.uuid, res.locals.post.uuid)
+        const output = await gdt.transformPathsToData(forwardPaths.records.map((record)=> record.get('path')))
         res.result = {
-            data: await NodeService.transformPathData(rawPathData),
+            data: output,
             message: `Found forward path data for SHARENODE ${res.locals.source_sharenode.uuid}`
         }
         next()
@@ -118,18 +120,18 @@ export class NodeMiddleware{
         const post = NodeMiddleware.safe(res.locals.post, 'res.locals.post')
         const source_sharenode = NodeMiddleware.safe(res.locals.source_sharenode, 'res.locals.source_sharenode')
         //logger.error(res.locals)
-        if (res.locals.target_sharenode==null){
-            if (false){
-                res.locals.target_sharenode = await models.SHARENODE.findOne({where:{uuid: req.cookies.target_sharenode_uuid}})
-                logger.info('got target sharenode from cookie')
-            } else {
-                logger.info('creating anon')
-                res.locals.target_sharenode = await NodeService.createAnonSharenode()
-                logger.info(`Created anon SHARENODE uuid=${res.locals.target_sharenode.uuid}`)
-                message = message + `Created anon SHARENODE uuid=${res.locals.target_sharenode.uuid}, `
-            }
+        // if (res.locals.target_sharenode==null){
+        //     if (false){
+        //         res.locals.target_sharenode = await models.SHARENODE.findOne({where:{uuid: req.cookies.target_sharenode_uuid}})
+        //         logger.info('got target sharenode from cookie')
+        //     } else {
+        //         logger.info('creating anon')
+        //         res.locals.target_sharenode = await NodeService.createAnonSharenode()
+        //         logger.info(`Created anon SHARENODE uuid=${res.locals.target_sharenode.uuid}`)
+        //         message = message + `Created anon SHARENODE uuid=${res.locals.target_sharenode.uuid}, `
+        //     }
             
-        }
+        // }
         const target_sharenode = NodeMiddleware.safe(res.locals.target_sharenode, 'res.locals.target_sharenode')
         logger.error(req.query)
         

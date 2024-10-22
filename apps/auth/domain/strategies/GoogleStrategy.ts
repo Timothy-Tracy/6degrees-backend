@@ -37,7 +37,7 @@ export default passport.use(new GoogleStrategy({
             } else {
                 logger.debug(`user username=${user.username} found`)
             }
-            return done(null, {uuid:user.uuid}, {returnTo: request.session.returnTo});
+            return done(null, {uuid:user.uuid}, {returnTo: request.session.returnTo||process.env.FRONTEND_URL || ''});
         } catch (error) {
             return done(error);
         }

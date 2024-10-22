@@ -1,24 +1,16 @@
-import { NextFunction, Request, Response } from "express";
-// command to initiate prisma 
-import bcrypt from "bcrypt";
 import applogger from "../../../lib/logger/applogger";
-import JWTService from "../../jwt/domain/JWTService";
-import { AppError } from "../../../lib/error/customErrors";
-import { error } from "console";
 const logger = applogger.child({'module':'AuthService'})
-import passport from "passport";
-import { Strategy } from "passport-local";
 import { models } from "../../db/neo4j/models/models";
 
 
 
-const comparePassword = async (password: string, hash: string) => {
-    const log = logger.child({'function': "comparePassword" });
-    log.trace("comparePassword");
-    let match = await bcrypt.compare(password, hash);
-    console.log("match", match);
-    return match;
-};
+// const comparePassword = async (password: string, hash: string) => {
+//     const log = logger.child({'function': "comparePassword" });
+//     log.trace("comparePassword");
+//     let match = await bcrypt.compare(password, hash);
+//     console.log("match", match);
+//     return match;
+// };
 
 const checkUserExists = async (email: string, username: string) => {
     const log = logger.child({'function': "checkUserExists" });
@@ -31,24 +23,24 @@ const checkUserExists = async (email: string, username: string) => {
 
 
 
-const login = async (req: Request, res: Response, next: NextFunction) => {
-    const log = logger.child({'function': "login" });
-    log.trace("login");
-        let { email, password } = req.body;
-        let user = await models.USER.findOne({where:{email: email}})
-        if (!user) {
-            throw new AppError("User not found", 404);
-        } else {
-            let token = JWTService.signToken(user.uuid);
-            res.locals.auth = token;
-            next();
-        }
-        // let passwordMatch = await comparePassword(password, user.password);
-        // if (!passwordMatch) {
-        //     throw new AuthorizationError({ message: "Invalid password", statusCode: 401, error: null });
-        // }
+// const login = async (req: Request, res: Response, next: NextFunction) => {
+//     const log = logger.child({'function': "login" });
+//     log.trace("login");
+//         let { email, password } = req.body;
+//         let user = await models.USER.findOne({where:{email: email}})
+//         if (!user) {
+//             throw new AppError("User not found", 404);
+//         } else {
+//             let token = JWTService.signToken(user.uuid);
+//             res.locals.auth = token;
+//             next();
+//         }
+//         // let passwordMatch = await comparePassword(password, user.password);
+//         // if (!passwordMatch) {
+//         //     throw new AuthorizationError({ message: "Invalid password", statusCode: 401, error: null });
+//         // }
         
-}
+// }
 
 // const register = async (req: Request, res: Response, next: NextFunction) => {
 //     const log = logger.child({'function': "register" });
@@ -72,7 +64,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 // }
 
 
-export default { login, comparePassword, checkUserExists };
+export default { checkUserExists };
 
 
 

@@ -16,7 +16,7 @@ export const apiRoot = '/api/v2/search'
 router.get('/posts/all', 
     
     catchAsync(SearchMiddleware.getPostFeed),
-    (req:Request, res:Response, next:NextFunction) => {
+    (req:any, res:any, next:NextFunction) => {
         res.status(200).json(res.result)
     }
 );
@@ -24,7 +24,7 @@ router.get('/posts/all',
 router.get('/activity/all', 
     
     catchAsync(SearchMiddleware.getAllActivity),
-    (req:Request, res:Response, next:NextFunction) => {
+    (req:any, res:any, next:NextFunction) => {
         res.status(200).json(res.result)
     }
 );

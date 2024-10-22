@@ -29,9 +29,7 @@ assertEnvironmentVariable(process.env.DB_URL,"DB_URL")
 assertEnvironmentVariable(process.env.DB_USERNAME,"DB_USERNAME")
 assertEnvironmentVariable(process.env.DB_PASSWORD,"DB_PASSWORD")
 assertEnvironmentVariable(process.env.DB_DATABASE,"DB_DATABASE")
-applogger.info(redis.checkConnection())
 
-applogger.info(redis.isStoreInitialized())
 const app = express();
 app.use(cors({
   origin: 'http://localhost:3000',
