@@ -43,7 +43,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 //app.use(limiter);
-
+app.set('trust proxy', 1); 
 app.use(session({
   name: '6degrees_session_id',
   store: redis.store,
@@ -51,10 +51,11 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: true,
-    httpOnly: false,
+    secure: process.env.NODE_ENV == 'production'? true:false,
+    httpOnly: process.env.NODE_ENV == 'production'? true:false,
     maxAge: 24*60*60*1000,
-    sameSite: 'none'
+    sameSite: process.env.NODE_ENV == 'production'? 'none':undefined,
+    domain: process.env.NODE_ENV == 'production'? '.6degrees.app':''
   }
 }));
 
@@ -73,7 +74,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(globalErrorHandler);
-app.listen({port: 10000, host:'0.0.0.0'}, () => {
+app.listen({port: 3003}, () => {
     console.log(`🌍 Now listening on http://localhost:${3003}`);
 });
 
