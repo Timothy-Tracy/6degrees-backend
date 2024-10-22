@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node ./dist/server.js",
     "dev": "tsc -w & nodemon ./dist/server.js",
-    "build": "rimraf dist & npx tsc"
+    "build": "npx tsc"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
