@@ -33,7 +33,7 @@ assertEnvironmentVariable(process.env.DB_DATABASE,"DB_DATABASE")
 const app = express();
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-  ? process.env.FRONTEND_URL  // Make sure this is set in your production env
+  ? 'https://6degrees.app'  // Make sure this is set in your production env
   : 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -51,9 +51,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: { 
-    secure: false,
+    secure: true,
     httpOnly: false,
-    maxAge: 24*60*60*1000
+    maxAge: 24*60*60*1000,
+    sameSite: 'none'
   }
 }));
 
