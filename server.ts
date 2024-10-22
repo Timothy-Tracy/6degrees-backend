@@ -74,7 +74,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(globalErrorHandler);
-app.listen({port: 3003}, () => {
+app.listen({port: process.env.NODE_ENV == 'production'? 10000: 3003, host: process.env.NODE_ENV == 'production'? '0.0.0.0':''}, () => {
     console.log(`🌍 Now listening on http://localhost:${3003}`);
 });
 
