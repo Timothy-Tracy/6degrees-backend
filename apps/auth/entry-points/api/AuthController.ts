@@ -47,6 +47,7 @@ router.get('/google',
         };
         
         if(req.isAuthenticated()) {
+            applogger.info('user is already authenticated')
             const redirectUrl = req.session.returnTo?.returnTo || process.env.FRONTEND_URL || '';
             res.redirect(redirectUrl);
         }
@@ -58,6 +59,7 @@ router.get('/google',
 router.get('/google/callback', 
     passport.authenticate("google"), 
     (req: Request & { authInfo: ExtendedAuthInfo }, res: Response) => {
+        console.log(res)
         const redirectUrl = req.authInfo?.returnTo?.returnTo || process.env.FRONTEND_URL || '';
         res.redirect(redirectUrl);
     }
