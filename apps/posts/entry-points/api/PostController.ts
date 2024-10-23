@@ -45,32 +45,32 @@ router.delete('/',
     res.status(200).json(res.result)
 });
 
-//Create noauth
-router.post('/noauth', 
-    catchAsync(requireQueryParameter(['username'])),
-    catchAsync(PostMiddleware.validateInput(NewPostSchema)),
-    catchAsync(PostMiddleware.createPost),
-    function (req:any, res:any) {
-    res.status(200).json(res.result)
-});
+// //Create noauth
+// router.post('/noauth', 
+//     catchAsync(requireQueryParameter(['username'])),
+//     catchAsync(PostMiddleware.validateInput(NewPostSchema)),
+//     catchAsync(PostMiddleware.createPost),
+//     function (req:any, res:any) {
+//     res.status(200).json(res.result)
+// });
 
-//Update noauth
-router.put('/noauth', 
-    catchAsync(requireQueryParameter(['post_uuid'])),
-    catchAsync(requireQueryParameter(['username'])),
-    catchAsync(PostMiddleware.validateInput(UpdatePostSchema)),
-    catchAsync(PostMiddleware.updatePost),
-    function (req:any, res:any) {
-    res.status(200).json(res.result)
-});
+// //Update noauth
+// router.put('/noauth', 
+//     catchAsync(requireQueryParameter(['post_uuid'])),
+//     catchAsync(requireQueryParameter(['username'])),
+//     catchAsync(PostMiddleware.validateInput(UpdatePostSchema)),
+//     catchAsync(PostMiddleware.updatePost),
+//     function (req:any, res:any) {
+//     res.status(200).json(res.result)
+// });
 
-//Delete noauth
-router.delete('/noauth', 
-    catchAsync(requireQueryParameter(['post_uuid'])),
-    catchAsync(requireQueryParameter(['username'])),
-    catchAsync(PostMiddleware.deletePost),
-    function (req:any, res:any) {
-    res.status(200).json(res.result)
-});
+// //Delete noauth
+// router.delete('/noauth', 
+//     catchAsync(requireQueryParameter(['post_uuid'])),
+//     catchAsync(requireQueryParameter(['username'])),
+//     catchAsync(PostMiddleware.deletePost),
+//     function (req:any, res:any) {
+//     res.status(200).json(res.result)
+// });
 
 export default {router,apiRoot}
