@@ -12,7 +12,8 @@ export const USER = ModelFactory<USERProperties, USERRelatedNodes, USERStatics, 
         email: {},
         uuid: {},
         createdAt:{},
-        updatedAt:{}
+        updatedAt:{},
+        role:{}
     },
     primaryKeyField: 'uuid',
 }, neogma);

@@ -11,6 +11,7 @@ import authRouterv2 from './apps/auth/entry-points/api/AuthController';
 import nodesV2Router from './apps/nodes/entry-points/api/NodeController';
 import postsV2Router from './apps/posts/entry-points/api/PostController';
 import searchRouter from './apps/search/entry-points/api/SearchController';
+import adminpostsV2Router from './apps/posts/entry-points/api/AdminPostController';
 
 import limiter from './lib/util/limiter';
 import assertEnvironmentVariable from './lib/util/assertEnvironmentVariable';
@@ -67,6 +68,7 @@ app.use(authRouterv2.apiRoot, authRouterv2.router);
 app.use(nodesV2Router.apiRoot, nodesV2Router.router);
 app.use(postsV2Router.apiRoot, postsV2Router.router);
 app.use(searchRouter.apiRoot, searchRouter.router);
+app.use(adminpostsV2Router.apiRoot, adminpostsV2Router.router);
 
 
 // catch 404 and forward to error handler

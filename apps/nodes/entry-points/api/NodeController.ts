@@ -4,6 +4,7 @@ import applogger from '../../../../lib/logger/applogger'
 import { NodeMiddleware } from '../../domain/NodeMiddleware';
 import { AuthMiddleware } from '../../../auth/domain/AuthMiddleware';
 import { requireQueryParameter } from '../../../../lib/util/middleware/requireQueryParameters';
+import logRequest from '../../../../lib/util/middleware/logRequest';
 
 const logger = applogger.child({'module':'NodeController'});
 
@@ -11,6 +12,8 @@ export const router = express.Router();
 export const apiRoot = '/api/v2/nodes'
 
 router.get('/graph',
+    logRequest(logger.child({'route':apiRoot+'/graph'})),
+
     catchAsync(requireQueryParameter(['post_uuid','post_query'])),
     catchAsync(NodeMiddleware.getPostByQuery),
     catchAsync(NodeMiddleware.graph),
@@ -19,6 +22,8 @@ router.get('/graph',
     }
 )
 router.get('/path-to-target',
+    logRequest(logger.child({'route':apiRoot+'/path-to-target'})),
+
     catchAsync(requireQueryParameter(['post_uuid','post_query'])),
     catchAsync(requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
     catchAsync(requireQueryParameter(['target_sharenode_username','target_sharenode_uuid'])),
@@ -44,6 +49,8 @@ router.get('/path-to-target',
 
 //Get forwards path from a anon SHARENODE to other SHARENODES
 router.get('/forwardpath',
+    logRequest(logger.child({'route':apiRoot+'/forwardpath'})),
+
     catchAsync(requireQueryParameter(['post_uuid','post_query'])),
     catchAsync(NodeMiddleware.getPostByQuery),
     catchAsync(requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),
@@ -73,7 +80,10 @@ router.get('/forwardpath',
 //     }
 // )
 router.get('/interact',
+    logRequest(logger.child({'route':apiRoot+'/interact'})),
+
     catchAsync(AuthMiddleware.requireAuthSession),
+    catchAsync(AuthMiddleware.initUserObject),
     catchAsync(requireQueryParameter(['post_uuid','post_query'])),
     catchAsync(NodeMiddleware.getPostByQuery),
     catchAsync(requireQueryParameter(['source_sharenode_username','source_sharenode_uuid'])),

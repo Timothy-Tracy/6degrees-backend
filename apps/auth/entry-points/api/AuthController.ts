@@ -1,6 +1,6 @@
 import './../../domain/strategies/AuthStrategy';
 import './../../domain/strategies/GoogleStrategy';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import passport from 'passport';
 import { Router } from 'express';
 import applogger from '../../../../lib/logger/applogger';
@@ -8,7 +8,11 @@ export const router = Router();
 export const apiRoot = '/api/v2/auth'
 import { ParsedQs } from 'qs';
 import dotenv from 'dotenv';
+import { AuthMiddleware } from '../../domain/AuthMiddleware';
+import { catchAsync } from '../../../../lib/error/customErrors';
+import logRequest from '../../../../lib/util/middleware/logRequest';
 dotenv.config();
+const logger = applogger.child({'module':'AuthController'})
 // Define the return URL structure
 interface ReturnToData {
     returnTo: string | undefined;
@@ -41,6 +45,8 @@ function getReturnToString(value: string | string[] | ParsedQs | ParsedQs[] | un
 
 
 router.get('/google', 
+    logRequest(logger.child({'route':apiRoot+'/google'})),
+
     (req, res, next) => {
         req.session.returnTo = {
             returnTo: getReturnToString(req.query.returnTo)
@@ -57,6 +63,8 @@ router.get('/google',
 );
 
 router.get('/google/callback', 
+    logRequest(logger.child({'route':apiRoot+'/google/callback'})),
+
     passport.authenticate("google"), 
     (req: Request & { authInfo: ExtendedAuthInfo }, res: Response) => {
         console.log(res)
@@ -69,6 +77,17 @@ router.post('/passport', passport.authenticate("local"), (req: Request, res: Res
     res.status(200).json({ token: req.user });
 }
 );
+
+
+router.get('/admin-test', 
+    logRequest(logger.child({'route':apiRoot+'/admin-test'})),
+    catchAsync(AuthMiddleware.requireAuthSession),
+    catchAsync(AuthMiddleware.initUserObject),
+    catchAsync(AuthMiddleware.requireAdmin),
+
+    function (req:any, res:any) {
+    res.status(200).json({message: 'ADMIN=true'})
+});
 
 
 // router.post('/register', 

@@ -91,7 +91,8 @@ export default passport.use(new GoogleStrategy({
                     email: profile.emails[0].value,
                     username: profile.displayName.toLowerCase().replace(' ', '').concat(`${parseInt(((Math.random()*10)+1).toString())}${parseInt(((Math.random()*10)+1).toString())}${parseInt(((Math.random()*10)+1).toString())}${parseInt(((Math.random()*10)+1).toString())}`),
                     createdAt: generateDateTime(),
-                    updatedAt: generateDateTime()
+                    updatedAt: generateDateTime(),
+                    role:'USER'
                 })
                 await user.createSharenode()
             } else {

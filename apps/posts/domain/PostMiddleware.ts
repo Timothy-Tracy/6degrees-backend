@@ -37,17 +37,24 @@ export class PostMiddleware{
         res.locals.postData = data;
         next()
     }
+    static async initPostObject(req: any, res:any, next:NextFunction){
+
+        if(req.query.post_uuid){
+            res.locals.post = await PostService.safeFindPostByUUID(req.query.post_uuid)
+        } else if(req.query.post_query){
+            res.locals.post = await PostService.safeFindPostByQuery(req.query.post_query)
+        } else {
+            throw new PostError('Error Initializing POST from query parameters. req.query.post_uuid or req.query.post_query not detected. It is possible that query parameters where unintentionally not required for this route', 400)
+        }
+        next()
+    }
 
     static async createPost(req: any, res:any, next:NextFunction){
-        if(!res.locals.user){
-            logger.warn('no user yet')
+        const log = logger.child({'function': 'createPost'})
 
-            let username = req.query.username
-            res.locals.user = await models.USER.findOne({where:{username:username}})
-            if (!res.locals.user){
-                throw new UserError("error finding user from username", 500)
-            }
-          
+        if(!res.locals.user){
+            log.error("res.locals.user not initialized")
+                throw new UserError("res.locals.user not initialized", 500)
         }
         const user = res.locals.user
         logger.warn(res.locals)
@@ -60,7 +67,6 @@ export class PostMiddleware{
                 createdAt: toNeo4jDateTime(generateDateTime()),
                 updatedAt: toNeo4jDateTime(generateDateTime())
         })
-        logger.warn(post)
         if (!post){
             throw new PostError("error creating post", 500)
         }
@@ -75,7 +81,6 @@ export class PostMiddleware{
 
             }
         });
-        logger.warn(parent_user_relation)
 
         let userSN = await user?.shareNode()
         if (!userSN){
@@ -84,60 +89,62 @@ export class PostMiddleware{
         await NodeService.createEdge(post, userSN)
         
         res.result ={
-            data: post.dataValues
+            data: post.dataValues,
+            response_data: post.dataValues
         }
         next()
     }
     static async updatePost(req: any, res:any, next:NextFunction){
+        const log = logger.child({'function': 'updatePost'})
         if(!res.locals.user){
-            logger.warn('no user yet')
-            let username = req.query.username
-            const user = await models.USER.findOne({where:{username:username}})
-            if (!user){
-                throw new UserError("error finding user from username", 500)
-            }
-            res.locals.user = user;
+            log.error("res.locals.user not initialized")
+                throw new UserError("res.locals.user not initialized", 500)
         }
-        
-        let post = await PostService.safeFindPostByUUID(req.query.post_uuid)
-        await PostService.verifyParentUser(post, res.locals.user)
-        await PostService.updatePost(post, res.locals.postData)
+        await PostService.verifyParentUser(res.locals.post, res.locals.user)
+        await PostService.updatePost(res.locals.post, res.locals.postData)
         next()
     }
     static async deletePost(req: any, res:any, next:NextFunction){
+        const log = logger.child({'function': 'deletePost'})
         if(!res.locals.user){
-            let username = req.query.username
-            const user = await models.USER.findOne({where:{username:username}})
-            if (!user){
-                throw new UserError("error finding user from username", 500)
-            }
-            res.locals.user = user;
+            log.error("res.locals.user not initialized")
+                throw new UserError("res.locals.user not initialized", 500)
         }
-        
-        logger.warn(res.locals)
-        let post = await PostService.safeFindPostByUUID(req.query.post_uuid)
-        await PostService.verifyParentUser(post, res.locals.user)
-        await PostService.deletePost(post)
-        res.result = {data:post.dataValues,message: `Post uuid=${post.uuid} successfully deleted`}
+        await PostService.verifyParentUser(res.locals.post, res.locals.user)
+        await PostService.deletePost(res.locals.post)
+        res.result = {response_data:res.locals.post.dataValues,message: `Post uuid=${res.locals.post.uuid} successfully deleted`}
         next()
     }
     static async fetchPost(req: any, res:any, next:NextFunction){
-        let post;
-        if(req.query.post_uuid){
-            z.string().uuid().safeParse(req.query.post_uuid)
-
-            post = await PostService.safeFindPostByUUID(req.query.post_uuid)
-        } else if (req.query.post_query){
-            post = await PostService.safeFindPostByQuery(req.query.post_query)
-        } else {
-            throw new PostError('Query parameters insufficient', 403)
-        }
-    //    let data:any=post
-        let data = PostService.processDataValues(post)
-        let user = await post.user()
+        let data = PostService.processDataValues(res.locals.post)
+        let user = await res.locals.post.user()
         data = {...data, username:user.username}
         logger.info(data)
-        res.result = {data:data,message: `Post uuid=${post.uuid} found`}
+        res.result = {data:data,response_data:data,message: `Post uuid=${res.locals.post.uuid} found`}
         next()
     }
+
+
+    static async adminDeletePost(req: any, res:any, next:NextFunction){
+        const log = logger.child({'function': 'adminDeletePost'})
+        if(!res.locals.user || res.locals.user.role != 'ADMIN'){
+            log.error("res.locals.user not initialized")
+                throw new UserError("res.locals.user not initialized or not admin", 500)
+        }
+        await PostService.deletePost(res.locals.post)
+        res.result = {response_data:res.locals.post.dataValues,message: `Post uuid=${res.locals.post.uuid} successfully deleted by ADMIN`}
+        next()
+    }
+
+    static async adminUpdatePost(req: any, res:any, next:NextFunction){
+        const log = logger.child({'function': 'adminUpdatePost'})
+        if(!res.locals.user || res.locals.user.role != 'ADMIN'){
+            log.error("res.locals.user not initialized")
+                throw new UserError("res.locals.user not initialized or not admin", 500)
+        }
+        await PostService.updatePost(res.locals.post, res.locals.postData)
+        next()
+    }
+
+    
 }

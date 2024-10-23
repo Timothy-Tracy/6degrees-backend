@@ -11,6 +11,7 @@ export const USERPropertiesSchema = z.object({
     uuid: uuidSchema,
     createdAt: Neo4jDateTimeSchema.optional(),
     updatedAt: Neo4jDateTimeSchema.optional(),
+    role:z.enum(['USER', 'ADMIN']).default('USER')
 
 
 })
